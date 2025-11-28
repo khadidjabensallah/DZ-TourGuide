@@ -1,0 +1,230 @@
+# ============================================
+# Python
+# ============================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# ============================================
+# Django
+# ============================================
+*.log
+*.pot
+*.pyc
+__pycache__/
+
+# Database - IMPORTANT: Don't commit databases
+db.sqlite3
+db.sqlite3-journal
+*.db
+*.sqlite
+*.sql
+
+# Media files (user uploads) - Don't commit uploaded files
+media/
+!media/.gitkeep
+
+# Static files (collected by collectstatic)
+staticfiles/
+!staticfiles/.gitkeep
+static/collected/
+
+# Local settings - Each developer has their own
+local_settings.py
+settings_local.py
+
+# ============================================
+# Virtual Environment - CRITICAL: Never commit venv
+# ============================================
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+virtualenv/
+
+# ============================================
+# Environment Variables - CRITICAL for security
+# ============================================
+.env
+.env.local
+.env.development
+.env.production
+.env.*.local
+*.env
+.envrc
+
+# IMPORTANT: Create .env.example for team
+# (This should be committed as a template)
+
+# ============================================
+# IDE and Editors
+# ============================================
+# VSCode
+.vscode/
+!.vscode/settings.json.example
+!.vscode/extensions.json
+
+# PyCharm / IntelliJ
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+
+# ============================================
+# Operating System Files
+# ============================================
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.AppleDouble
+.LSOverride
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+.directory
+.Trash-*
+
+# ============================================
+# Testing and Coverage
+# ============================================
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+.pytest_cache/
+
+# ============================================
+# Django Migrations - IMPORTANT DECISION
+# ============================================
+# Option 1: Track migrations (RECOMMENDED for team work)
+# Keep migrations in git so team has same database schema
+
+# Option 2: Don't track migrations (Uncomment if you prefer)
+# */migrations/*.py
+# !*/migrations/__init__.py
+
+# RECOMMENDATION: Keep migrations tracked for team collaboration
+# Only ignore if you have a different migration strategy
+
+# ============================================
+# Jupyter Notebook
+# ============================================
+.ipynb_checkpoints
+*.ipynb_checkpoints/
+
+# ============================================
+# Python Version Managers
+# ============================================
+.python-version
+.pyenv
+
+# ============================================
+# Task Runners / Build Tools
+# ============================================
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# ============================================
+# Documentation
+# ============================================
+/site
+docs/_build/
+docs/.build/
+
+# ============================================
+# Type Checkers / Linters
+# ============================================
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+
+# ============================================
+# Backup Files
+# ============================================
+*.bak
+*.backup
+*.tmp
+*.swp
+*~
+
+# ============================================
+# Project Specific - CUSTOMIZE FOR YOUR PROJECT
+# ============================================
+# Don't commit secret keys or credentials
+secrets.json
+credentials.json
+service-account.json
+
+# Don't commit large datasets (if any)
+/data/raw/
+/data/processed/
+
+# Don't commit compiled assets (if using frontend build tools)
+/node_modules/
+/dist/
+/build/
+
+# Don't commit certificates
+*.pem
+*.key
+*.crt
+*.cer
