@@ -204,15 +204,11 @@ def guide_signup(request):
             'errors': form.errors
         }, status=400)
 
-
 @csrf_exempt
 @require_http_methods(["POST"])
 def verify_email(request):
-    """
-    API endpoint for email verification
-    Returns JSON response
-    """
-    user_id = request.session.get('pending_verification_user_id')
+    # Try to get user_id from POST data first, then session
+    user_id = request.POST.get('user_id') or request.session.get('pending_verification_user_id')
     
     if not user_id:
         return JsonResponse({
@@ -220,7 +216,13 @@ def verify_email(request):
             'message': 'No pending verification found. Please sign up first.'
         }, status=400)
     
-    user = get_object_or_404(User, id=user_id)
+    try:
+        user = User.objects.get(id=user_id, email_verified=False)
+    except User.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'message': 'Invalid verification request or email already verified.'
+        }, status=400)
     
     form = VerificationForm(request.POST)
     
@@ -253,6 +255,7 @@ def verify_email(request):
             'message': 'Validation failed',
             'errors': form.errors
         }, status=400)
+
 
 
 @csrf_exempt
