@@ -144,7 +144,7 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'tguidadz@gmail.com'
-EMAIL_HOST_PASSWORD = 'abcdefghijklmnop'  # Replace with your actual app password (no spaces)
+EMAIL_HOST_PASSWORD = 'sbam nzsa oajc xenn '  
 DEFAULT_FROM_EMAIL = 'tguidadz@gmail.com'
 SITE_URL = 'http://127.0.0.1:8000'
 import os

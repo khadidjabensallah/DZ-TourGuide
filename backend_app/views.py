@@ -61,7 +61,7 @@ def tourist_signup(request):
     form = TouristSignupForm(request.POST)
     
     if form.is_valid():
-        # Step 1: Create User instance
+  
         user = User.objects.create(
             email=form.cleaned_data['email'],
             firstname=form.cleaned_data['firstname'],
@@ -71,11 +71,11 @@ def tourist_signup(request):
             email_verified=False
         )
         
-        # Step 2: Hash and set password
+
         user.set_password(form.cleaned_data['password'])
         user.save()
         
-        # Step 3: Create Tourist profile
+
         tourist = Tourist.objects.create(
             user=user,
             nationality=form.cleaned_data.get('nationality', '')
