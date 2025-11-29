@@ -62,7 +62,10 @@ export default function Header() {
               Sign In
             </button>
 
-            <button className="px-7 py-2 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 text-sm">
+            <button 
+              onClick={() => navigate("/selectType")}
+              className="px-7 py-2 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 text-sm"
+            >
               Sign Up
             </button>
           </div>
