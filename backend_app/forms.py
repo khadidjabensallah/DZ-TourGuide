@@ -329,3 +329,80 @@ class VerificationForm(forms.Form):
             raise forms.ValidationError('Code must be exactly 6 digits')
         
         return code
+
+
+class ForgotPasswordForm(forms.Form):
+    """
+    Form for forgot password - user enters email
+    """
+    email = forms.EmailField(
+        max_length=100,
+        widget=forms.EmailInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Enter your email address'
+        }),
+        label='Email Address'
+    )
+    
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        
+        # Check if email exists in database
+        if not User.objects.filter(email=email).exists():
+            raise forms.ValidationError(
+                'No account found with this email address.'
+            )
+        
+        return email
+
+
+class VerifyPasswordResetCodeForm(forms.Form):
+    """
+    Form for verifying password reset code (Step 1)
+    """
+    verification_code = forms.CharField(
+        max_length=6,
+        min_length=6,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': '000000',
+            'maxlength': '6',
+            'pattern': '[0-9]{6}'
+        }),
+        label='Verification Code',
+        help_text='Enter the 6-digit code sent to your email'
+    )
+    
+    def clean_verification_code(self):
+        code = self.cleaned_data.get('verification_code')
+        
+        # Ensure it's exactly 6 digits
+        if not code.isdigit():
+            raise forms.ValidationError('Code must contain only numbers')
+        
+        if len(code) != 6:
+            raise forms.ValidationError('Code must be exactly 6 digits')
+        
+        return code
+
+
+class ResetPasswordForm(PasswordValidationMixin, forms.Form):
+    """
+    Form for resetting password after verification code is confirmed (Step 2)
+    """
+    password = forms.CharField(
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Min 8 characters, letters & numbers'
+        }),
+        label='New Password',
+        help_text='Must be at least 8 characters with letters and numbers'
+    )
+    
+    confirm_password = forms.CharField(
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Re-enter new password'
+        }),
+        label='Confirm New Password'
+    )

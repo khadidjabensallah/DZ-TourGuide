@@ -9,7 +9,7 @@ import os
 import uuid
 import json
 
-from .forms import TouristSignupForm, GuideSignupForm, VerificationForm
+from .forms import TouristSignupForm, GuideSignupForm, VerificationForm, ForgotPasswordForm, VerifyPasswordResetCodeForm, ResetPasswordForm
 from .models import Tourist, Guide, CoverageZone, User, Admin
 
 
@@ -48,6 +48,44 @@ Tour Guide Platform Team
         return True
     except Exception as e:
         print(f"Error sending email: {e}")
+        return False
+
+
+def send_password_reset_email(user):
+    """
+    Send password reset verification code to user's email
+    Returns True if successful, False otherwise
+    """
+    try:
+        # Generate 6-digit code
+        code = user.generate_verification_code()
+        
+        subject = 'Password Reset - Tour Guide Platform'
+        message = f"""
+Hello {user.firstname},
+
+You requested to reset your password.
+
+Your verification code is: {code}
+
+This code will expire in 10 minutes.
+
+If you didn't request a password reset, please ignore this email and your password will remain unchanged.
+
+Best regards,
+Tour Guide Platform Team
+        """
+        
+        send_mail(
+            subject,
+            message,
+            settings.DEFAULT_FROM_EMAIL,
+            [user.email],
+            fail_silently=False,
+        )
+        return True
+    except Exception as e:
+        print(f"Error sending password reset email: {e}")
         return False
 
 
@@ -379,3 +417,313 @@ def admin_reject_guide(request, guide_id):
             'is_verified': guide.is_verified
         }
     }, status=200)
+
+    # ========================================
+# AUTHENTICATION - Sign In (Login)
+# ========================================
+
+from django.contrib.auth import authenticate
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def signin(request):
+    # TEMPORARY DEBUG - Print everything
+    print("=" * 50)
+    print("SIGNIN DEBUG")
+    print(f"Content-Type: {request.content_type}")
+    print(f"POST data: {request.POST}")
+    print(f"Body: {request.body}")
+    print("=" * 50)
+   
+    try:
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+       
+        print(f"Email received: '{email}'")
+        print(f"Password received: '{password}'")
+        print(f"Email is None: {email is None}")
+        print(f"Password is None: {password is None}")
+       
+        if not email or not password:
+            return JsonResponse({
+                'success': False,
+                'message': 'Email and password are required',
+                'debug': {
+                    'email_received': email,
+                    'password_received': 'Yes' if password else 'No'
+                }
+            }, status=400)
+       
+        try:
+            user = User.objects.get(email=email)
+            print(f"✅ User found: {user.email}")
+        except User.DoesNotExist:
+            print(f"❌ User NOT found with email: {email}")
+            return JsonResponse({
+                'success': False,
+                'message': 'Invalid credentials - user not found'
+            }, status=401)
+       
+        password_check = user.check_password(password)
+        print(f"Password check result: {password_check}")
+       
+        if not password_check:
+            print(f"❌ Password WRONG")
+            print(f"Stored hash: {user.password[:50]}")
+            return JsonResponse({
+                'success': False,
+                'message': 'Invalid credentials - wrong password'
+            }, status=401)
+       
+        print(f"✅ Password CORRECT")
+       
+        if not user.email_verified:
+            return JsonResponse({
+                'success': False,
+                'message': 'Please verify your email before signing in.'
+            }, status=403)
+       
+        if not user.isActive:
+            return JsonResponse({
+                'success': False,
+                'message': 'Your account is not active.'
+            }, status=403)
+       
+        # Store user session data for authentication
+        request.session['user_id'] = user.id
+        request.session['user_email'] = user.email
+        request.session['user_type'] = user.user_type
+        request.session['is_authenticated'] = True
+        
+        user_data = {
+            'user_id': user.id,
+            'email': user.email,
+            'firstname': user.firstname,
+            'lastname': user.lastname,
+            'user_type': user.user_type
+        }
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Sign in successful!',
+            'data': user_data
+        }, status=200)
+       
+    except Exception as e:
+        print(f"❌ ERROR: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({
+            'success': False,
+            'message': f'Error: {str(e)}'
+        }, status=500)
+
+
+    # ========================================
+# AUTHENTICATION - Logout
+# ========================================
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def logout(request):
+    """
+    API endpoint for user logout
+    Clears session data
+    """
+    try:
+        # Clear all session data
+        request.session.flush()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Logged out successfully!'
+        }, status=200)
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': 'An error occurred during logout'
+        }, status=500)
+
+
+# ========================================
+# PASSWORD RESET - Forgot Password
+# ========================================
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def forgot_password(request):
+    """
+    API endpoint for forgot password
+    Sends verification code to user's email
+    """
+    form = ForgotPasswordForm(request.POST)
+    
+    if form.is_valid():
+        email = form.cleaned_data['email']
+        
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'message': 'No account found with this email address.'
+            }, status=404)
+        
+        # Check if user's email is verified
+        if not user.email_verified:
+            return JsonResponse({
+                'success': False,
+                'message': 'Please verify your email first before resetting password.'
+            }, status=403)
+        
+        # Send password reset verification code
+        email_sent = send_password_reset_email(user)
+        
+        # Store user_id in session for password reset verification
+        request.session['pending_password_reset_user_id'] = user.id
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Password reset code sent to your email! Please check your inbox.',
+            'data': {
+                'user_id': user.id,
+                'email': user.email,
+                'email_sent': email_sent
+            }
+        }, status=200)
+    else:
+        return JsonResponse({
+            'success': False,
+            'message': 'Validation failed',
+            'errors': form.errors
+        }, status=400)
+
+
+# ========================================
+# PASSWORD RESET - Verify Code (Step 1)
+# ========================================
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def verify_password_reset_code(request):
+    """
+    API endpoint for verifying password reset code (Step 1)
+    User enters verification code, if correct, they can proceed to reset password
+    """
+    # Try to get user_id from POST data first, then session
+    user_id = request.POST.get('user_id') or request.session.get('pending_password_reset_user_id')
+    
+    if not user_id:
+        return JsonResponse({
+            'success': False,
+            'message': 'No pending password reset found. Please request a password reset first.'
+        }, status=400)
+    
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'message': 'Invalid password reset request.'
+        }, status=400)
+    
+    form = VerifyPasswordResetCodeForm(request.POST)
+    
+    if form.is_valid():
+        verification_code = form.cleaned_data['verification_code']
+        
+        # Verify the code (using password reset verification method)
+        if user.verify_password_reset_code(verification_code):
+            # Code is valid, mark as verified in session
+            request.session['password_reset_code_verified'] = True
+            request.session['password_reset_user_id'] = user.id
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Verification code confirmed! You can now reset your password.',
+                'data': {
+                    'user_id': user.id,
+                    'email': user.email,
+                    'code_verified': True
+                }
+            }, status=200)
+        else:
+            return JsonResponse({
+                'success': False,
+                'message': 'Invalid or expired verification code. Please try again.'
+            }, status=400)
+    else:
+        return JsonResponse({
+            'success': False,
+            'message': 'Validation failed',
+            'errors': form.errors
+        }, status=400)
+
+
+# ========================================
+# PASSWORD RESET - Reset Password (Step 2)
+# ========================================
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def reset_password(request):
+    """
+    API endpoint for resetting password after verification code is confirmed (Step 2)
+    User must have verified the code first, then provides new password (twice)
+    """
+    # Check if code was verified
+    if not request.session.get('password_reset_code_verified'):
+        return JsonResponse({
+            'success': False,
+            'message': 'Please verify the code first before resetting your password.'
+        }, status=403)
+    
+    # Get user_id from session
+    user_id = request.session.get('password_reset_user_id')
+    
+    if not user_id:
+        return JsonResponse({
+            'success': False,
+            'message': 'No pending password reset found. Please request a password reset first.'
+        }, status=400)
+    
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'message': 'Invalid password reset request.'
+        }, status=400)
+    
+    form = ResetPasswordForm(request.POST)
+    
+    if form.is_valid():
+        new_password = form.cleaned_data['password']
+        
+        # Reset the password
+        user.set_password(new_password)
+        user.save()
+        
+        # Clear all password reset session data
+        if 'password_reset_code_verified' in request.session:
+            del request.session['password_reset_code_verified']
+        if 'password_reset_user_id' in request.session:
+            del request.session['password_reset_user_id']
+        if 'pending_password_reset_user_id' in request.session:
+            del request.session['pending_password_reset_user_id']
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Password reset successfully! You can now sign in with your new password.',
+            'data': {
+                'user_id': user.id,
+                'email': user.email
+            }
+        }, status=200)
+    else:
+        return JsonResponse({
+            'success': False,
+            'message': 'Validation failed',
+            'errors': form.errors
+        }, status=400)
