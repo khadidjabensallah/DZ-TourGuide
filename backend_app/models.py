@@ -4,6 +4,8 @@ from django.contrib.auth.hashers import make_password, check_password
 from django.utils import timezone
 from datetime import timedelta
 import secrets
+from django.db.models import Avg
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 class User(models.Model):
     """
@@ -182,6 +184,15 @@ class Guide(models.Model):
         self.reviewed_by = admin_user
         self.reviewed_at = timezone.now()
         self.save()
+    def update_rating(self):
+   
+        reviews = self.reviews.all()
+        self.number_of_reviews = reviews.count()
+        if self.number_of_reviews > 0:
+          self.average_rating = reviews.aggregate(Avg('rating'))['rating__avg'] or 0
+        else:
+          self.average_rating = 0
+        self.save(update_fields=['average_rating', 'number_of_reviews'])
 
 
 class Wilaya(models.Model):
@@ -215,3 +226,217 @@ class CoverageZone(models.Model):
 
     def __str__(self):
         return f"{self.guide.user.firstname} covers {self.wilaya.name}"
+
+class Tour(models.Model):
+    """
+    Tour model - Guides create predefined tour offerings
+    """
+    # Basic Information
+    id = models.AutoField(primary_key=True)
+    guide = models.ForeignKey(
+        'Guide',
+        on_delete=models.CASCADE,
+        related_name='tours'
+    )
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    
+    # Itinerary
+    itinerary = models.TextField(
+        help_text="Suggested itinerary and route"
+    )
+    highlights = models.TextField(
+        help_text="Key attractions"
+    )
+    whats_included = models.TextField()
+    whats_excluded = models.TextField()
+    
+    # Duration (in hours)
+    estimated_duration = models.DecimalField(
+        max_digits=4,
+        decimal_places=2,
+        help_text="Duration in hours (e.g., 3.5)"
+    )
+    
+    # Auto-calculated price from guide's pricing grid
+    calculated_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        editable=False
+    )
+    
+    # Location (must be in guide's coverage zones)
+    wilaya = models.ForeignKey(
+        'Wilaya',
+        on_delete=models.PROTECT,
+        related_name='tours'
+    )
+    starting_point = models.CharField(max_length=200)
+    
+    # GPS for weather API
+    latitude = models.DecimalField(max_digits=9, decimal_places=6)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6)
+    
+    # AVAILABLE PLACES - This is what you asked for!
+    available_places = models.IntegerField(
+        validators=[MinValueValidator(1)],
+        help_text="Number of available places for this tour"
+    )
+    
+    # Photos
+    photo_urls = models.JSONField(default=list)
+    cover_photo = models.CharField(max_length=500, blank=True, null=True)
+    
+    # Status
+    is_active = models.BooleanField(default=True)
+    
+    # Ratings
+    average_rating = models.DecimalField(
+        max_digits=3,
+        decimal_places=2,
+        default=0.00,
+        validators=[MinValueValidator(0), MaxValueValidator(5)]
+    )
+    number_of_reviews = models.IntegerField(default=0)
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    class Meta:
+        db_table = 'tour'
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.title} by {self.guide.user.firstname}"
+    
+    def save(self, *args, **kwargs):
+        # Validate wilaya is in guide's coverage zones
+        if not self.guide.coverage_zones.filter(wilaya=self.wilaya).exists():
+            raise ValueError("Tour location must be in guide's coverage zones")
+        
+        # Auto-calculate price
+        self.calculated_price = self.calculate_price()
+        
+        super().save(*args, **kwargs)
+    
+    def calculate_price(self):
+        """Calculate price from guide's pricing grid"""
+        duration = float(self.estimated_duration)
+        
+        if duration <= 4:
+            return self.guide.half_day_price
+        elif duration <= 8:
+            return self.guide.full_day_price
+        else:
+            additional_hours = duration - 8
+            return (
+                self.guide.full_day_price + 
+                                self.guide.full_day_price + 
+                (Decimal(str(additional_hours)) * self.guide.additional_hour_price)
+            )
+    
+    def has_available_places(self, requested_places):
+        """Check if enough places available"""
+        return self.available_places >= requested_places
+    
+    def update_rating(self):
+        """Update rating from reviews"""
+        from django.db.models import Avg
+        reviews = self.reviews.all()
+        self.number_of_reviews = reviews.count()
+        if self.number_of_reviews > 0:
+            self.average_rating = reviews.aggregate(Avg('rating'))['rating__avg'] or 0
+        else:
+            self.average_rating = 0
+        self.save(update_fields=['average_rating', 'number_of_reviews'])
+
+
+class Reservation(models.Model):
+    """
+    Reservation - Tourist books a tour
+    Status is AUTOMATIC: accepted if places available
+    """
+    STATUS_CHOICES = [
+        ('accepted', 'Accepted'),
+        ('completed', 'Completed'),
+        ('cancelled', 'Cancelled'),
+    ]
+    
+    id = models.AutoField(primary_key=True)
+    tour = models.ForeignKey(
+        'Tour',
+        on_delete=models.CASCADE,
+        related_name='reservations'
+    )
+    guide = models.ForeignKey(
+        'Guide',
+        on_delete=models.CASCADE,
+        related_name='reservations'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        db_table = 'reservation'
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.tour.title} - {self.tourist.user.email} ({self.number_of_people} people)"
+    
+    def save(self, *args, **kwargs):
+        # Check if this is a new reservation
+        is_new = self.pk is None
+        
+        if is_new:
+            # Check available places
+            if not self.tour.has_available_places(self.number_of_people):
+                raise ValueError("Not enough available places for this tour")
+            
+            # Calculate price
+            self.final_price = self.tour.calculated_price
+            
+            # Decrease available places
+            self.tour.available_places -= self.number_of_people
+            self.tour.save(update_fields=['available_places'])
+        super().save(*args, **kwargs)
+class Review(models.Model):
+    """
+    Review - Anyone can review a tour (not just those with reservations)
+    """
+    id = models.AutoField(primary_key=True)
+    
+    tour = models.ForeignKey(
+        'Tour',
+        on_delete=models.CASCADE,
+        related_name='reviews'
+    )
+    guide = models.ForeignKey(
+        'Guide',
+        on_delete=models.CASCADE,
+        related_name='reviews'
+    )
+    tourist = models.ForeignKey(
+        'Tourist',
+        on_delete=models.CASCADE,
+        related_name='reviews'
+    )
+    
+    rating = models.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)]
+    )
+    comment = models.TextField()
+    
+    publication_date = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = 'review'
+        ordering = ['-publication_date']
+    
+    def __str__(self):
+        return f"Review by {self.tourist.user.email} - {self.rating}★"
+    
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        # Update tour and guide ratings
+        self.tour.update_rating()
+        self.guide.update_rating()

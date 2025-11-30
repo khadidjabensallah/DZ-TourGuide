@@ -74,14 +74,16 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+import os  # Make sure this is at the top of settings.py
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'dz_tourguide',      
-        'USER': 'dz_user',             
-        'PASSWORD': 'dz_tourguide5',   
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'NAME': os.environ.get('DATABASE_NAME', 'dz_tourguide'),
+        'USER': os.environ.get('DATABASE_USER', 'dz_user'),
+        'PASSWORD': os.environ.get('DATABASE_PASSWORD', 'dz_tourguide5'),
+        'HOST': os.environ.get('DATABASE_HOST', 'localhost'),
+        'PORT': os.environ.get('DATABASE_PORT', '5432'),
     }
 }
 
