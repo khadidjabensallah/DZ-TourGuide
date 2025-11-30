@@ -88,7 +88,7 @@ export default function SignInPage() {
                 value={formData.firstName}
                 onChange={handleInputChange}
                 placeholder="Enter Your name"
-                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm autofill:shadow-[inset_0_0_0px_1000px_rgb(255,255,255)] ${
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm ${
                   errors.firstName
                     ? "border-red-500 focus:ring-red-500"
                     : "border-gray-300 focus:ring-orange-500"
@@ -110,7 +110,7 @@ export default function SignInPage() {
                 value={formData.familyName}
                 onChange={handleInputChange}
                 placeholder="Enter Your name"
-                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm autofill:shadow-[inset_0_0_0px_1000px_rgb(255,255,255)] ${
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm ${
                   errors.familyName
                     ? "border-red-500 focus:ring-red-500"
                     : "border-gray-300 focus:ring-orange-500"
@@ -132,7 +132,7 @@ export default function SignInPage() {
                 value={formData.email}
                 onChange={handleInputChange}
                 placeholder="Enter your email"
-                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm autofill:shadow-[inset_0_0_0px_1000px_rgb(255,255,255)] ${
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm ${
                   errors.email
                     ? "border-red-500 focus:ring-red-500"
                     : "border-gray-300 focus:ring-orange-500"
@@ -155,7 +155,7 @@ export default function SignInPage() {
                   value={formData.password}
                   onChange={handleInputChange}
                   placeholder="••••••••••"
-                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm pr-10 autofill:shadow-[inset_0_0_0px_1000px_rgb(255,255,255)] ${
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm pr-10 ${
                     errors.password
                       ? "border-red-500 focus:ring-red-500"
                       : "border-gray-300 focus:ring-orange-500"
@@ -164,7 +164,7 @@ export default function SignInPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors autofill:shadow-[inset_0_0_0px_1000px_rgb(255,255,255)]"
                 >
                   {showPassword ? (
                     <EyeOff className="w-4 h-4" />
@@ -187,7 +187,7 @@ export default function SignInPage() {
             </button>
 
             {/* Already have an account */}
-            <div className="mt-0 -mb-2 text-center text-sm text-gray-600">
+            <div className="mt-4 text-center text-sm text-gray-600">
               Already have an account?
               <button
                 onClick={() => navigate("/signin")}

@@ -6,6 +6,7 @@ import { createBrowserRouter } from "react-router-dom";
 import SelectType from "./Routes/Auth/selectType";
 import Example from "./Layout/example";
 import VerifyEmail from "./Routes/Auth/VerifyEmail";
+import SignIn from "./Routes/Auth/signin";
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -34,5 +35,9 @@ export const router = createBrowserRouter([
   {
     path: "/verifyEmail",
     element: <VerifyEmail />,
+  },
+  {
+    path: "/signin",
+    element: <SignIn />,
   },
 ]);

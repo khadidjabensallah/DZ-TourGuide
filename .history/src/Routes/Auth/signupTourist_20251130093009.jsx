@@ -187,7 +187,7 @@ export default function SignInPage() {
             </button>
 
             {/* Already have an account */}
-            <div className="mt-0 -mb-2 text-center text-sm text-gray-600">
+            <div className="mt-0 -mb-0 text-center text-sm text-gray-600">
               Already have an account?
               <button
                 onClick={() => navigate("/signin")}

@@ -209,7 +209,7 @@ export default function DZTourGuideSignIn() {
             <span className="font-medium">Back</span>
           </button>
         </div>
-
+       
         <div className="w-full bg-white rounded-2xl shadow-xl p-8">
           {/* Logo and Header */}
           <div className="text-center mb-8">
@@ -450,7 +450,7 @@ export default function DZTourGuideSignIn() {
                 {submitting ? "Signing up..." : "Sign up"}
               </span>
             </button>
-            <div className="-mt-1 -mb-3 text-center text-sm text-gray-600">
+            <div className="-mt-3 -mb-3 text-center text-sm text-gray-600">
               Already have an account?
               <a
                 href="/signin"

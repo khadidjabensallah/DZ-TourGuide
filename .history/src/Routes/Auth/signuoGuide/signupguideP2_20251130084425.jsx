@@ -210,6 +210,7 @@ export default function DZTourGuideSignIn() {
           </button>
         </div>
 
+        {/* Main Card (same dimensions as signupguideP1) */}
         <div className="w-full bg-white rounded-2xl shadow-xl p-8">
           {/* Logo and Header */}
           <div className="text-center mb-8">
@@ -229,17 +230,17 @@ export default function DZTourGuideSignIn() {
           </div>
 
           {/* Form */}
-          <div className="space-y-4 max-w-md mx-auto">
+          <div className="space-y-6">
             {/* Languages Spoken */}
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+              <label className="block text-sm font-bold text-gray-800 mb-3">
                 Languages Spoken
               </label>
               <div className="relative">
                 <button
                   type="button"
                   onClick={() => setLanguagesOpen(!languagesOpen)}
-                  className="w-full px-4 py-2 border rounded-lg flex items-center justify-between hover:border-orange-500 transition focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm autofill:shadow-[inset_0_0_0px_1000px_rgb(255,255,255)]"
+                  className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg flex items-center justify-between hover:border-orange-500 transition focus:outline-none focus:ring-2 focus:ring-orange-500"
                 >
                   <span className="text-gray-700">
                     {formData.languages.length > 0
@@ -292,14 +293,14 @@ export default function DZTourGuideSignIn() {
 
             {/* Coverage Zone (Wilayas) */}
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+              <label className="block text-sm font-bold text-gray-800 mb-3">
                 Coverage Zone (Wilayas)
               </label>
               <div className="relative">
                 <button
                   type="button"
                   onClick={() => setWilayasOpen(!wilayasOpen)}
-                  className="w-full px-4 py-2 border rounded-lg flex items-center justify-between hover:border-orange-500 transition focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm autofill:shadow-[inset_0_0_0px_1000px_rgb(255,255,255)"
+                  className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg flex items-center justify-between hover:border-orange-500 transition focus:outline-none focus:ring-2 focus:ring-orange-500"
                 >
                   <span className="text-gray-700">
                     {formData.wilayas.length > 0
@@ -358,7 +359,7 @@ export default function DZTourGuideSignIn() {
 
               {/* Half-day */}
               <div className="mb-4">
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Half-day (≤ 4h)
                 </label>
                 <div className="relative">
@@ -368,7 +369,7 @@ export default function DZTourGuideSignIn() {
                     value={formData.halfDayPrice}
                     onChange={handleInputChange}
                     inputMode="numeric"
-                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm pr-16"
+                    className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition pr-16"
                   />
                   <span className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-semibold">
                     DZD
@@ -386,7 +387,7 @@ export default function DZTourGuideSignIn() {
 
               {/* Full-day */}
               <div className="mb-4">
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Full-day (4-8h)
                 </label>
                 <div className="relative">
@@ -396,7 +397,7 @@ export default function DZTourGuideSignIn() {
                     value={formData.fullDayPrice}
                     onChange={handleInputChange}
                     inputMode="numeric"
-                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm pr-16"
+                    className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition pr-16"
                   />
                   <span className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-semibold">
                     DZD
@@ -414,7 +415,7 @@ export default function DZTourGuideSignIn() {
 
               {/* Additional hour */}
               <div className="mb-4">
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Additional hour
                 </label>
                 <div className="relative">
@@ -424,7 +425,7 @@ export default function DZTourGuideSignIn() {
                     value={formData.additionalHourPrice}
                     onChange={handleInputChange}
                     inputMode="numeric"
-                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm pr-16"
+                    className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition pr-16"
                   />
                   <span className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-semibold">
                     DZD
@@ -443,14 +444,12 @@ export default function DZTourGuideSignIn() {
             {/* Sign In Button */}
             <button
               onClick={handleSignIn}
-              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 rounded-xl transition-colors shadow-lg hover:shadow-xl"
+              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 rounded-lg transition duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
               disabled={submitting}
             >
-              <span className="drop-shadow-sm">
-                {submitting ? "Signing up..." : "Sign up"}
-              </span>
+              {submitting ? "Signing up..." : "Sign up"}
             </button>
-            <div className="-mt-1 -mb-3 text-center text-sm text-gray-600">
+            <div className="-mt-3 -mb-3 text-center text-sm text-gray-600">
               Already have an account?
               <a
                 href="/signin"

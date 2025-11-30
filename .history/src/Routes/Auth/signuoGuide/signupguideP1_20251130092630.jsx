@@ -211,7 +211,7 @@ export default function SignUpGuideP1() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors autofill:shadow-[inset_0_0_0px_1000px_rgb(255,255,255)]"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors "
               >
                 {showPassword ? (
                   <EyeOff className="w-4 h-4" />
@@ -265,7 +265,7 @@ export default function SignUpGuideP1() {
           {/* NEXT BUTTON */}
           <button
             onClick={handleSubmit}
-            className="w-full bg-orange-500 py-2 hover:bg-orange-600 text-white font-semibold rounded-xl transition-colors shadow-lg hover:shadow-xl autofill:shadow-[inset_0_0_0px_1000px_rgb(255,255,255)]"
+            className="w-full bg-orange-500 py-2 hover:bg-orange-600 text-white font-semibold rounded-xl transition-colors shadow-lg hover:shadow-xl"
           >
             <span className="drop-shadow-sm">Next</span>
           </button>

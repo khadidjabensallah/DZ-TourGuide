@@ -104,7 +104,7 @@ export default function SignUpGuideP1() {
               value={formData.firstName}
               onChange={handleInputChange}
               placeholder="Enter your name"
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm autofill:shadow-[inset_0_0_0px_1000px_rgb(255,255,255)] ${
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm ${
                 errors.firstName
                   ? "border-red-500 focus:ring-red-500"
                   : "border-gray-300 focus:ring-orange-500"
@@ -126,7 +126,7 @@ export default function SignUpGuideP1() {
               value={formData.familyName}
               onChange={handleInputChange}
               placeholder="Enter your family name"
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm autofill:shadow-[inset_0_0_0px_1000px_rgb(255,255,255)] ${
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm ${
                 errors.familyName
                   ? "border-red-500 focus:ring-red-500"
                   : "border-gray-300 focus:ring-orange-500"
@@ -148,7 +148,7 @@ export default function SignUpGuideP1() {
               value={formData.email}
               onChange={handleInputChange}
               placeholder="Enter your email"
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm autofill:shadow-[inset_0_0_0px_1000px_rgb(255,255,255)] ${
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm ${
                 errors.email
                   ? "border-red-500 focus:ring-red-500"
                   : "border-gray-300 focus:ring-orange-500"
@@ -178,7 +178,7 @@ export default function SignUpGuideP1() {
                 onChange={handleInputChange}
                 placeholder="enter 9 digits"
                 maxLength={9}
-                className={`w-full px-4 py-2 border rounded-r-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm  ${
+                className={`w-full px-4 py-2 border rounded-r-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm ${
                   errors.phone
                     ? "border-red-500 focus:ring-red-500"
                     : "border-gray-300 focus:ring-orange-500"
@@ -211,7 +211,7 @@ export default function SignUpGuideP1() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors autofill:shadow-[inset_0_0_0px_1000px_rgb(255,255,255)]"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
               >
                 {showPassword ? (
                   <EyeOff className="w-4 h-4" />
@@ -265,7 +265,7 @@ export default function SignUpGuideP1() {
           {/* NEXT BUTTON */}
           <button
             onClick={handleSubmit}
-            className="w-full bg-orange-500 py-2 hover:bg-orange-600 text-white font-semibold rounded-xl transition-colors shadow-lg hover:shadow-xl autofill:shadow-[inset_0_0_0px_1000px_rgb(255,255,255)]"
+            className="w-full bg-orange-500 py-2 hover:bg-orange-600 text-white font-semibold rounded-xl transition-colors shadow-lg hover:shadow-xl"
           >
             <span className="drop-shadow-sm">Next</span>
           </button>

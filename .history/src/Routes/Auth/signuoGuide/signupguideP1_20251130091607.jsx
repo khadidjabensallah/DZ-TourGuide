@@ -104,7 +104,7 @@ export default function SignUpGuideP1() {
               value={formData.firstName}
               onChange={handleInputChange}
               placeholder="Enter your name"
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm autofill:shadow-[inset_0_0_0px_1000px_rgb(255,255,255)] ${
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm ${
                 errors.firstName
                   ? "border-red-500 focus:ring-red-500"
                   : "border-gray-300 focus:ring-orange-500"
@@ -126,7 +126,7 @@ export default function SignUpGuideP1() {
               value={formData.familyName}
               onChange={handleInputChange}
               placeholder="Enter your family name"
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm autofill:shadow-[inset_0_0_0px_1000px_rgb(255,255,255)] ${
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm ${
                 errors.familyName
                   ? "border-red-500 focus:ring-red-500"
                   : "border-gray-300 focus:ring-orange-500"
@@ -148,7 +148,7 @@ export default function SignUpGuideP1() {
               value={formData.email}
               onChange={handleInputChange}
               placeholder="Enter your email"
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm autofill:shadow-[inset_0_0_0px_1000px_rgb(255,255,255)] ${
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm ${
                 errors.email
                   ? "border-red-500 focus:ring-red-500"
                   : "border-gray-300 focus:ring-orange-500"
@@ -178,7 +178,7 @@ export default function SignUpGuideP1() {
                 onChange={handleInputChange}
                 placeholder="enter 9 digits"
                 maxLength={9}
-                className={`w-full px-4 py-2 border rounded-r-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm  ${
+                className={`w-full px-4 py-2 border rounded-r-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm ${
                   errors.phone
                     ? "border-red-500 focus:ring-red-500"
                     : "border-gray-300 focus:ring-orange-500"

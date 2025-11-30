@@ -209,7 +209,7 @@ export default function DZTourGuideSignIn() {
             <span className="font-medium">Back</span>
           </button>
         </div>
-
+       
         <div className="w-full bg-white rounded-2xl shadow-xl p-8">
           {/* Logo and Header */}
           <div className="text-center mb-8">
@@ -299,7 +299,7 @@ export default function DZTourGuideSignIn() {
                 <button
                   type="button"
                   onClick={() => setWilayasOpen(!wilayasOpen)}
-                  className="w-full px-4 py-2 border rounded-lg flex items-center justify-between hover:border-orange-500 transition focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm autofill:shadow-[inset_0_0_0px_1000px_rgb(255,255,255)"
+                  className="w-full px-4 py-2 border rounded-lg flex items-center justify-between hover:border-orange-500 transition focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm autofill:shadow-[inset_0_0_0px_1000px_rgb(255,255,255)] autofill:shadow-[inset_0_0_0px_1000px_rgb(255,255,255)] *a"
                 >
                   <span className="text-gray-700">
                     {formData.wilayas.length > 0
@@ -450,7 +450,7 @@ export default function DZTourGuideSignIn() {
                 {submitting ? "Signing up..." : "Sign up"}
               </span>
             </button>
-            <div className="-mt-1 -mb-3 text-center text-sm text-gray-600">
+            <div className="-mt-3 -mb-3 text-center text-sm text-gray-600">
               Already have an account?
               <a
                 href="/signin"

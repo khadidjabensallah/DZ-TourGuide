@@ -57,9 +57,9 @@ export default function SignInPage() {
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Main Card */}
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+        <div className="bg-white rounded-3xl shadow-xl px-11 py-6">
           {/* Logo and Header */}
-          <div className="text-center mb-8">
+          <div className="text-center mb-6">
             <div className="flex justify-center mb-1">
               <img
                 src={logo}
@@ -76,10 +76,10 @@ export default function SignInPage() {
           </div>
 
           {/* Form Fields */}
-          <div className="space-y-4 max-w-md mx-auto">
+          <div>
             {/* First Name */}
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+            <div className="mb-3">
+              <label className="block text-xs font-medium text-gray-700 mb-1.5">
                 First Name
               </label>
               <input
@@ -88,10 +88,8 @@ export default function SignInPage() {
                 value={formData.firstName}
                 onChange={handleInputChange}
                 placeholder="Enter Your name"
-                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm autofill:shadow-[inset_0_0_0px_1000px_rgb(255,255,255)] ${
-                  errors.firstName
-                    ? "border-red-500 focus:ring-red-500"
-                    : "border-gray-300 focus:ring-orange-500"
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm ${
+                  errors.firstName ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-orange-500"
                 }`}
               />
               {errors.firstName && (
@@ -100,8 +98,8 @@ export default function SignInPage() {
             </div>
 
             {/* Family Name */}
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+            <div className="mb-3">
+              <label className="block text-xs font-medium text-gray-700 mb-1.5">
                 Family Name
               </label>
               <input
@@ -110,10 +108,8 @@ export default function SignInPage() {
                 value={formData.familyName}
                 onChange={handleInputChange}
                 placeholder="Enter Your name"
-                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm autofill:shadow-[inset_0_0_0px_1000px_rgb(255,255,255)] ${
-                  errors.familyName
-                    ? "border-red-500 focus:ring-red-500"
-                    : "border-gray-300 focus:ring-orange-500"
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm ${
+                  errors.familyName ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-orange-500"
                 }`}
               />
               {errors.familyName && (
@@ -122,8 +118,8 @@ export default function SignInPage() {
             </div>
 
             {/* Email */}
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+            <div className="mb-3">
+              <label className="block text-xs font-medium text-gray-700 mb-1.5">
                 Email
               </label>
               <input
@@ -132,10 +128,8 @@ export default function SignInPage() {
                 value={formData.email}
                 onChange={handleInputChange}
                 placeholder="Enter your email"
-                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm autofill:shadow-[inset_0_0_0px_1000px_rgb(255,255,255)] ${
-                  errors.email
-                    ? "border-red-500 focus:ring-red-500"
-                    : "border-gray-300 focus:ring-orange-500"
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm ${
+                  errors.email ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-orange-500"
                 }`}
               />
               {errors.email && (
@@ -144,8 +138,8 @@ export default function SignInPage() {
             </div>
 
             {/* Password */}
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+            <div className="mb-5">
+              <label className="block text-gray-900 font-semibold mb-2">
                 Password
               </label>
               <div className="relative">
@@ -154,23 +148,17 @@ export default function SignInPage() {
                   name="password"
                   value={formData.password}
                   onChange={handleInputChange}
-                  placeholder="••••••••••"
-                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm pr-10 autofill:shadow-[inset_0_0_0px_1000px_rgb(255,255,255)] ${
-                    errors.password
-                      ? "border-red-500 focus:ring-red-500"
-                      : "border-gray-300 focus:ring-orange-500"
-                  }`}
+                  placeholder="············"
+                  className={`w-full px-4 py-2 rounded-lg border ${
+                    errors.password ? "border-red-500" : "border-gray-300"
+                  } focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent pr-12 autofill:bg-white autofill:shadow-[inset_0_0_0px_1000px_rgb(255,255,255)]`}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
-                  {showPassword ? (
-                    <EyeOff className="w-4 h-4" />
-                  ) : (
-                    <Eye className="w-4 h-4" />
-                  )}
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
               {errors.password && (
@@ -183,11 +171,11 @@ export default function SignInPage() {
               onClick={handleSubmit}
               className="w-full bg-orange-500 py-2 hover:bg-orange-600 text-white font-semibold rounded-xl transition-colors shadow-lg hover:shadow-xl"
             >
-              <span className="drop-shadow-sm">Sign Up</span>
+              Sign Up
             </button>
 
             {/* Already have an account */}
-            <div className="mt-0 -mb-2 text-center text-sm text-gray-600">
+            <div className="mt-4 text-center text-sm text-gray-600">
               Already have an account?
               <button
                 onClick={() => navigate("/signin")}
