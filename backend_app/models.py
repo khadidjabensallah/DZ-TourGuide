@@ -73,6 +73,26 @@ class User(models.Model):
         self.verification_code_created = None
         self.save()
         return True
+    
+    def verify_password_reset_code(self, code):
+        """Verify password reset code without changing email verification status"""
+        if not self.verification_code or not self.verification_code_created:
+            return False
+        
+        # Check if code matches
+        if self.verification_code != code:
+            return False
+        
+        # Check if code is expired (10 minutes validity)
+        time_difference = timezone.now() - self.verification_code_created
+        if time_difference > timedelta(minutes=10):
+            return False
+        
+        # Clear verification code (but don't change email_verified or isActive)
+        self.verification_code = None
+        self.verification_code_created = None
+        self.save()
+        return True
 
 
 class Admin(models.Model):

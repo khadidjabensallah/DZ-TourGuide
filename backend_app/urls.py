@@ -10,6 +10,17 @@ urlpatterns = [
     path('signup/resend-code/', views.resend_verification_code, name='resend_verification_code'),  # POST
  
     path('signup/success/', views.signup_success, name='signup_success'),
+    
+    # Authentication
+    path('signin/', views.signin, name='signin'),
+    path('logout/', views.logout, name='logout'),
+    
+    # Password Reset
+    path('password/forgot/', views.forgot_password, name='forgot_password'),  # POST - Step 1: Request reset
+    path('password/verify-code/', views.verify_password_reset_code, name='verify_password_reset_code'),  # POST - Step 2: Verify code
+    path('password/reset/', views.reset_password, name='reset_password'),  # POST - Step 3: Reset password
+    
+    # Admin Routes
     path('admin/dashboard/', admin_views.admin_dashboard, name='admin_dashboard'),
     
     # Guide Management
@@ -27,6 +38,8 @@ urlpatterns = [
     path('admin/api/guides/<int:guide_id>/approve/', admin_views.admin_approve_guide_ajax, name='admin_approve_guide_ajax'),
     path('admin/api/guides/<int:guide_id>/reject/', admin_views.admin_reject_guide_ajax, name='admin_reject_guide_ajax'),
     path('admin/api/users/<int:user_id>/toggle-status/', admin_views.admin_toggle_user_status_ajax, name='admin_toggle_user_status_ajax'),
+    
+    # Guide - Tours
     path('guide/<int:guide_id>/tours/create/', views.guide_create_tour, name='guide_create_tour'),
     path('guide/<int:guide_id>/tours/', views.guide_my_tours, name='guide_my_tours'),
     path('guide/<int:guide_id>/tours/<int:tour_id>/update/', views.guide_update_tour, name='guide_update_tour'),
