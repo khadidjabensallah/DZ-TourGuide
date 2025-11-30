@@ -205,13 +205,27 @@ class Guide(models.Model):
         self.reviewed_at = timezone.now()
         self.save()
     def update_rating(self):
-   
-        reviews = self.reviews.all()
-        self.number_of_reviews = reviews.count()
+        """
+        Update guide rating from the average of all individual review ratings across all tours.
+        Guide rating = average of all review ratings from all tours.
+        """
+        # Get all tours for this guide
+        tours = self.tours.all()
+        
+        # Collect all individual review ratings from all tours
+        all_ratings = []
+        for tour in tours:
+            for review in tour.reviews.all():
+                all_ratings.append(review.rating)
+        
+        self.number_of_reviews = len(all_ratings)
+        
+        # Calculate average rating from all individual review ratings
         if self.number_of_reviews > 0:
-          self.average_rating = reviews.aggregate(Avg('rating'))['rating__avg'] or 0
+            self.average_rating = sum(all_ratings) / self.number_of_reviews
         else:
-          self.average_rating = 0
+            self.average_rating = 0
+        
         self.save(update_fields=['average_rating', 'number_of_reviews'])
 
 
@@ -421,17 +435,13 @@ class Reservation(models.Model):
         super().save(*args, **kwargs)
 class Review(models.Model):
     """
-    Review - Anyone can review a tour (not just those with reservations)
+    Review - Users can only rate tours, not guides directly.
+    Guide rating is calculated as the average of all their tour ratings.
     """
     id = models.AutoField(primary_key=True)
     
     tour = models.ForeignKey(
         'Tour',
-        on_delete=models.CASCADE,
-        related_name='reviews'
-    )
-    guide = models.ForeignKey(
-        'Guide',
         on_delete=models.CASCADE,
         related_name='reviews'
     )
@@ -457,6 +467,7 @@ class Review(models.Model):
     
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
-        # Update tour and guide ratings
+        # Update tour rating first
         self.tour.update_rating()
-        self.guide.update_rating()
+        # Then update guide rating from all tour ratings
+        self.tour.guide.update_rating()
