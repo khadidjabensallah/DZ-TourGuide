@@ -18,6 +18,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(primary_key=True, serialize=False)),
                 ('title', models.CharField(max_length=200)),
                 ('description', models.TextField()),
+                ('date', models.DateField(help_text='Scheduled date of the tour')),
                 ('itinerary', models.TextField(help_text='Suggested itinerary and route')),
                 ('highlights', models.TextField(help_text='Key attractions')),
                 ('whats_included', models.TextField()),
@@ -63,10 +64,14 @@ class Migration(migrations.Migration):
             name='Reservation',
             fields=[
                 ('id', models.AutoField(primary_key=True, serialize=False)),
+                ('number_of_people', models.PositiveIntegerField(default=1, validators=[django.core.validators.MinValueValidator(1)])),
+                ('status', models.CharField(choices=[('accepted', 'Accepted'), ('completed', 'Completed'), ('cancelled', 'Cancelled')], default='accepted', max_length=20)),
+                ('final_price', models.DecimalField(blank=True, decimal_places=2, max_digits=10, null=True)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('completed_at', models.DateTimeField(blank=True, null=True)),
                 ('guide', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='reservations', to='backend_app.guide')),
                 ('tour', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='reservations', to='backend_app.tour')),
+                ('tourist', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='reservations', to='backend_app.tourist')),
             ],
             options={
                 'db_table': 'reservation',

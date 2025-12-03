@@ -3,6 +3,7 @@ from . import views
 from . import guide_views
 from . import tour_views
 from . import reservations_views
+from . import admin_views
 
 urlpatterns = [
     # ========================================
@@ -42,9 +43,33 @@ urlpatterns = [
     path('guide/<int:guide_id>/tours/<int:tour_id>/delete/', tour_views.guide_delete_tour, name='guide_delete_tour'),
     
     # ========================================
+    # ADMIN URLS (admin_views.py)
+    # ========================================
+    path('admin/users/', admin_views.admin_users_list, name='admin_users_list'),
+    path('admin/users/<int:user_id>/block/', admin_views.admin_block_user, name='admin_block_user'),
+    path('admin/users/<int:user_id>/unblock/', admin_views.admin_unblock_user, name='admin_unblock_user'),
+    
+    # AJAX Endpoints (Optional - for dynamic UI without page reload)
+    path('admin/api/guides/<int:guide_id>/approve/', admin_views.admin_approve_guide_ajax, name='admin_approve_guide_ajax'),
+    path('admin/api/guides/<int:guide_id>/reject/', admin_views.admin_reject_guide_ajax, name='admin_reject_guide_ajax'),
+    path('admin/api/users/<int:user_id>/toggle-status/', admin_views.admin_toggle_user_status_ajax, name='admin_toggle_user_status_ajax'),
+    
+    # ========================================
+    # GUIDE RESERVATIONS & REVIEWS URLS (views.py)
+    # ========================================
+    path('guide/<int:guide_id>/reservations/', views.guide_my_reservations, name='guide_my_reservations'),
+    path('guide/<int:guide_id>/reservations/<int:reservation_id>/update/', views.guide_update_reservation_status, name='guide_update_reservation'),
+    path('guide/<int:guide_id>/reviews/', views.guide_my_reviews, name='guide_my_reviews'),
+    
+    # ========================================
     # RESERVATION URLS (reservations_views.py)
     # ========================================
     path('reservations/create/', reservations_views.create_reservation, name='create_reservation'),
     path('tourist/<int:tourist_id>/reservations/', reservations_views.tourist_my_reservations, name='tourist_my_reservations'),
     path('reservations/<int:reservation_id>/cancel/', reservations_views.cancel_reservation, name='cancel_reservation'),
+    
+    # ========================================
+    # WEATHER API URLS (views.py)
+    # ========================================
+    path('weather/<int:tour_id>/', views.get_weather, name='get_weather'),
 ]
