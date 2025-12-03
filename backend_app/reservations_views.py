@@ -13,6 +13,11 @@ def create_reservation(request):
     Tourist reserves spots for a tour (date already set by guide in tour)
     Only requires: tour_id, tourist_id, and number_of_people
     The tour already has its scheduled date set by the guide
+    
+    RESERVATION IS AUTOMATICALLY ACCEPTED if:
+    - There are enough available places (available_places >= number_of_people)
+    - Tour is active
+    - Tour date is in the future
     """
     tour_id = request.POST.get('tour_id')
     tourist_id = request.POST.get('tourist_id')
@@ -86,28 +91,32 @@ def create_reservation(request):
         }, status=400)
     
     try:
-        # Create reservation with tour's scheduled date
+        # Create reservation - automatically accepted if places available
+        # The Reservation.save() method handles:
+        # - Checking available places
+        # - Calculating final price
+        # - Decreasing available places
+        # - Auto-accepting the reservation
         reservation = Reservation.objects.create(
             tour=tour,
             guide=tour.guide,
             tourist=tourist,
             number_of_people=number_of_people,
-            final_price=tour.calculated_price * number_of_people,  # Price per person
         )
         
-        # Decrease available places
-        tour.available_places -= number_of_people
-        tour.save(update_fields=['available_places'])
+        # Refresh tour to get updated available_places
+        tour.refresh_from_db()
         
         return JsonResponse({
             'success': True,
-            'message': f'Reservation confirmed! {number_of_people} place(s) reserved.',
+            'message': f'Reservation automatically accepted! {number_of_people} place(s) reserved.',
             'data': {
                 'reservation_id': reservation.id,
+                'status': 'accepted',  # Automatically accepted
                 'tour_title': tour.title,
                 'tour_id': tour.id,
-                'tour_date': tour.date.isoformat(),
-                'tour_time': tour.scheduled_time.strftime("%H:%M") if tour.scheduled_time else "TBD",
+                'tour_date': tour.date.isoformat() if tour.date else None,
+                'tour_time': tour.scheduled_time.strftime("%H:%M") if tour.scheduled_time else None,
                 'guide': {
                     'id': tour.guide.user_id,
                     'name': f"{tour.guide.user.firstname} {tour.guide.user.lastname}",
@@ -116,6 +125,7 @@ def create_reservation(request):
                 'number_of_people': reservation.number_of_people,
                 'price_per_person': str(tour.calculated_price),
                 'final_price': str(reservation.final_price),
+                'max_places': tour.max_places,
                 'remaining_places': tour.available_places,
                 'created_at': reservation.created_at.isoformat()
             }
@@ -214,7 +224,7 @@ def cancel_reservation(request, reservation_id):
         }, status=400)
     
     # Check if tour date is in the past
-    if reservation.tour.scheduled_date and reservation.tour.scheduled_date < timezone.now().date():
+    if reservation.tour.date and reservation.tour.date < timezone.now().date():
         return JsonResponse({
             'success': False,
             'message': 'Cannot cancel a past reservation'
@@ -257,7 +267,7 @@ def guide_my_reservations(request, guide_id):
     reservations_data = []
     for res in reservations:
         is_completed = res.completed_at is not None
-        tour_date = res.tour.scheduled_date if res.tour.scheduled_date else None
+        tour_date = res.tour.date if res.tour.date else None
         is_past = tour_date < timezone.now().date() if tour_date else False
         
         reservations_data.append({
@@ -266,7 +276,7 @@ def guide_my_reservations(request, guide_id):
                 'id': res.tour.id,
                 'title': res.tour.title,
                 'cover_photo': res.tour.cover_photo,
-                'scheduled_date': res.tour.scheduled_date.isoformat() if res.tour.scheduled_date else None,
+                'scheduled_date': res.tour.date.isoformat() if res.tour.date else None,
                 'scheduled_time': res.tour.scheduled_time.strftime("%H:%M") if res.tour.scheduled_time else None
             },
             'tourist': {
@@ -277,6 +287,7 @@ def guide_my_reservations(request, guide_id):
             },
             'number_of_people': res.number_of_people,
             'final_price': str(res.final_price),
+            'status': 'accepted',  # Reservations are automatically accepted when places available
             'is_completed': is_completed,
             'is_past': is_past,
             'can_complete': not is_completed and is_past,

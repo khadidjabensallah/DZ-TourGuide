@@ -312,9 +312,15 @@ class Tour(models.Model):
     longitude = models.DecimalField(max_digits=9, decimal_places=6)
     
     # AVAILABLE PLACES - This is what you asked for!
-    available_places = models.IntegerField(
+    max_places = models.IntegerField(
         validators=[MinValueValidator(1)],
-        help_text="Number of available places for this tour"
+        default=10,  # Default value for existing tours
+        help_text="Maximum number of places for this tour (set by guide)"
+    )
+    available_places = models.IntegerField(
+        validators=[MinValueValidator(0)],
+        default=10,  # Default value for existing tours
+        help_text="Number of available places remaining for this tour"
     )
     
     # Photos
@@ -350,6 +356,12 @@ class Tour(models.Model):
         
         # Auto-calculate price
         self.calculated_price = self.calculate_price()
+        
+        # If this is a new tour, set available_places to max_places
+        if self.pk is None:
+            # For new tours, available_places should equal max_places
+            if self.available_places is None or self.available_places == 10:  # If using default
+                self.available_places = self.max_places
         
         super().save(*args, **kwargs)
     
@@ -429,12 +441,17 @@ class Reservation(models.Model):
             if not self.tour.has_available_places(self.number_of_people):
                 raise ValueError("Not enough available places for this tour")
             
-            # Calculate price
-            self.final_price = self.tour.calculated_price
+            # Calculate price (per person)
+            self.final_price = self.tour.calculated_price * Decimal(str(self.number_of_people))
+            
+            # Automatically accept reservation if places are available
+            # Reservation is automatically accepted when available_places < max_places
+            # This means there are still spots available
             
             # Decrease available places
             self.tour.available_places -= self.number_of_people
             self.tour.save(update_fields=['available_places'])
+            
         super().save(*args, **kwargs)
 class Review(models.Model):
     """

@@ -34,11 +34,14 @@ def guide_profile(request, guide_id):
     total_reservations = guide.reservations.count()
     completed_reservations = guide.reservations.filter(status='completed').count()
     
-    # Get recent reviews
+    # Get recent reviews from all tours
+    from .models import Review
     recent_reviews = []
-    for review in guide.reviews.all()[:5]:
+    all_reviews = Review.objects.filter(tour__guide=guide).order_by('-publication_date')[:5]
+    for review in all_reviews:
         recent_reviews.append({
             'id': review.id,
+            'tour_title': review.tour.title,
             'tourist_name': f"{review.tourist.user.firstname} {review.tourist.user.lastname}",
             'rating': review.rating,
             'comment': review.comment,
@@ -316,8 +319,9 @@ def guide_dashboard(request, guide_id):
     total_reservations = guide.reservations.count()
     completed_reservations = guide.reservations.filter(status='completed').count()
     upcoming_reservations = guide.reservations.filter(
-        status='accepted',
-        proposed_date__gte=timezone.now().date()
+        completed_at__isnull=True
+    ).exclude(
+        tour__date__lt=timezone.now().date()
     ).count()
     
     return JsonResponse({

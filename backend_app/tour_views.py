@@ -37,7 +37,7 @@ def guide_create_tour(request, guide_id):
     available_places = request.POST.get('available_places')
     
     # Validation
-    if not all([title, description, date,  itinerary, estimated_duration, wilaya_code, 
+    if not all([title, description, date, itinerary, estimated_duration, wilaya_code, 
                 starting_point, latitude, longitude, available_places]):
         return JsonResponse({
             'success': False,
@@ -61,12 +61,27 @@ def guide_create_tour(request, guide_id):
         }, status=400)
     
     try:
+        # Parse date if it's a string
+        from datetime import datetime
+        if isinstance(date, str):
+            try:
+                tour_date = datetime.strptime(date, '%Y-%m-%d').date()
+            except ValueError:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Invalid date format. Use YYYY-MM-DD'
+                }, status=400)
+        else:
+            tour_date = date
+        
+        max_places = int(available_places)
+        
         # Create tour
         tour = Tour.objects.create(
             guide=guide,
             title=title,
             description=description,
-            date=date,
+            date=tour_date,
             itinerary=itinerary,
             highlights=highlights or '',
             whats_included=whats_included or '',
@@ -76,7 +91,8 @@ def guide_create_tour(request, guide_id):
             starting_point=starting_point,
             latitude=Decimal(latitude),
             longitude=Decimal(longitude),
-            available_places=int(available_places),
+            max_places=max_places,
+            available_places=max_places,  # Initially, all places are available
             is_active=True
         )
         
@@ -107,8 +123,10 @@ def guide_create_tour(request, guide_id):
                 'tour_id': tour.id,
                 'title': tour.title,
                 'calculated_price': str(tour.calculated_price),
+                'max_places': tour.max_places,
                 'available_places': tour.available_places,
-                'wilaya': wilaya.name
+                'wilaya': wilaya.name,
+                'date': tour.date.isoformat() if tour.date else None
             }
         }, status=201)
         
@@ -157,8 +175,22 @@ def guide_update_tour(request, guide_id, tour_id):
         tour.whats_excluded = data['whats_excluded']
     if 'estimated_duration' in data:
         tour.estimated_duration = Decimal(str(data['estimated_duration']))
-    if 'available_places' in data:
-        tour.available_places = int(data['available_places'])
+    if 'max_places' in data:
+        # When updating max_places, adjust available_places accordingly
+        old_max = tour.max_places
+        new_max = int(data['max_places'])
+        difference = new_max - old_max
+        tour.max_places = new_max
+        tour.available_places = max(0, tour.available_places + difference)
+    elif 'available_places' in data:
+        # Only allow updating available_places if it doesn't exceed max_places
+        new_available = int(data['available_places'])
+        if new_available > tour.max_places:
+            return JsonResponse({
+                'success': False,
+                'message': f'Available places cannot exceed max places ({tour.max_places})'
+            }, status=400)
+        tour.available_places = new_available
     if 'is_active' in data:
         tour.is_active = bool(data['is_active'])
     
