@@ -8,3 +8,10 @@ class URLNormalizeMiddleware:
         request.path = request.path.strip()
         response = self.get_response(request)
         return response
+MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',  # Add this at the top
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    # ... rest of middleware
+]

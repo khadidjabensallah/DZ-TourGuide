@@ -1,35 +1,50 @@
 from django.urls import path
-from backend_app import views
-from backend_app import admin_views
-urlpatterns = [
+from . import views
+from . import guide_views
+from . import tour_views
+from . import reservations_views
+from . import admin_views
 
-    path('signup/', views.choose_role, name='choose_role'),
+urlpatterns = [
+    # ========================================
+    # AUTHENTICATION URLS (views.py)
+    # ========================================
+    path('choose-role/', views.choose_role, name='choose_role'),
     path('signup/tourist/', views.tourist_signup, name='tourist_signup'),
     path('signup/guide/', views.guide_signup, name='guide_signup'),
-    path('signup/verify/', views.verify_email, name='verify_email'),  # ← ADD THIS - POST only
-    path('signup/resend-code/', views.resend_verification_code, name='resend_verification_code'),  # POST
- 
-    path('signup/success/', views.signup_success, name='signup_success'),
-    
-    # Authentication
+    path('verify-email/', views.verify_email, name='verify_email'),
+    path('resend-verification/', views.resend_verification_code, name='resend_verification_code'),
+    path('signup-success/', views.signup_success, name='signup_success'),
     path('signin/', views.signin, name='signin'),
     path('logout/', views.logout, name='logout'),
     
-    # Password Reset
-    path('password/forgot/', views.forgot_password, name='forgot_password'),  # POST - Step 1: Request reset
-    path('password/verify-code/', views.verify_password_reset_code, name='verify_password_reset_code'),  # POST - Step 2: Verify code
-    path('password/reset/', views.reset_password, name='reset_password'),  # POST - Step 3: Reset password
+    # ========================================
+    # PASSWORD RESET URLS (views.py)
+    # ========================================
+    path('forgot-password/', views.forgot_password, name='forgot_password'),
+    path('verify-password-reset-code/', views.verify_password_reset_code, name='verify_password_reset_code'),
+    path('reset-password/', views.reset_password, name='reset_password'),
     
-    # Admin Routes
-    path('admin/dashboard/', admin_views.admin_dashboard, name='admin_dashboard'),
+    # ========================================
+    # GUIDE PROFILE URLS (guide_views.py)
+    # ========================================
+    path('guide/<int:guide_id>/profile/', guide_views.guide_profile, name='guide_profile'),
+    path('guide/<int:guide_id>/update-profile/', guide_views.guide_update_profile, name='guide_update_profile'),
+    path('guide/<int:guide_id>/update-coverage-zones/', guide_views.guide_update_coverage_zones, name='guide_update_coverage_zones'),
+    path('guide/<int:guide_id>/upload-photo/', guide_views.guide_upload_photo, name='guide_upload_photo'),
+    path('guide/<int:guide_id>/dashboard/', guide_views.guide_dashboard, name='guide_dashboard'),
+    path('guide/<int:guide_id>/tours/', guide_views.guide_my_tours, name='guide_my_tours'),
     
-    # Guide Management
-    path('admin/guides/pending/', admin_views.admin_pending_guides, name='admin_pending_guides'),
-    path('admin/guides/<int:guide_id>/', admin_views.admin_guide_details, name='admin_guide_details'),
-    path('admin/guides/<int:guide_id>/approve/', admin_views.admin_approve_guide, name='admin_approve_guide'),
-    path('admin/guides/<int:guide_id>/reject/', admin_views.admin_reject_guide, name='admin_reject_guide'),
+    # ========================================
+    # TOUR MANAGEMENT URLS (tour_views.py)
+    # ========================================
+    path('guide/<int:guide_id>/tours/create/', tour_views.guide_create_tour, name='guide_create_tour'),
+    path('guide/<int:guide_id>/tours/<int:tour_id>/update/', tour_views.guide_update_tour, name='guide_update_tour'),
+    path('guide/<int:guide_id>/tours/<int:tour_id>/delete/', tour_views.guide_delete_tour, name='guide_delete_tour'),
     
-    # User Management
+    # ========================================
+    # ADMIN URLS (admin_views.py)
+    # ========================================
     path('admin/users/', admin_views.admin_users_list, name='admin_users_list'),
     path('admin/users/<int:user_id>/block/', admin_views.admin_block_user, name='admin_block_user'),
     path('admin/users/<int:user_id>/unblock/', admin_views.admin_unblock_user, name='admin_unblock_user'),
@@ -39,27 +54,22 @@ urlpatterns = [
     path('admin/api/guides/<int:guide_id>/reject/', admin_views.admin_reject_guide_ajax, name='admin_reject_guide_ajax'),
     path('admin/api/users/<int:user_id>/toggle-status/', admin_views.admin_toggle_user_status_ajax, name='admin_toggle_user_status_ajax'),
     
-    # Guide - Tours
-    path('guide/<int:guide_id>/tours/create/', views.guide_create_tour, name='guide_create_tour'),
-    path('guide/<int:guide_id>/tours/', views.guide_my_tours, name='guide_my_tours'),
-    path('guide/<int:guide_id>/tours/<int:tour_id>/update/', views.guide_update_tour, name='guide_update_tour'),
-    path('guide/<int:guide_id>/tours/<int:tour_id>/delete/', views.guide_delete_tour, name='guide_delete_tour'),
-    
-    # Guide - Reservations
+    # ========================================
+    # GUIDE RESERVATIONS & REVIEWS URLS (views.py)
+    # ========================================
     path('guide/<int:guide_id>/reservations/', views.guide_my_reservations, name='guide_my_reservations'),
     path('guide/<int:guide_id>/reservations/<int:reservation_id>/update/', views.guide_update_reservation_status, name='guide_update_reservation'),
-    
-    # Guide - Reviews & Dashboard
     path('guide/<int:guide_id>/reviews/', views.guide_my_reviews, name='guide_my_reviews'),
-    path('guide/<int:guide_id>/dashboard/', views.guide_dashboard, name='guide_dashboard'),
-
-    # Public - Tours
-   path('tours/<int:tour_id>/weather/', views.tour_weather_forecast, name='tour_weather_forecast'),
-]
-
-
-
-
-
-
     
+    # ========================================
+    # RESERVATION URLS (reservations_views.py)
+    # ========================================
+    path('reservations/create/', reservations_views.create_reservation, name='create_reservation'),
+    path('tourist/<int:tourist_id>/reservations/', reservations_views.tourist_my_reservations, name='tourist_my_reservations'),
+    path('reservations/<int:reservation_id>/cancel/', reservations_views.cancel_reservation, name='cancel_reservation'),
+    
+    # ========================================
+    # WEATHER API URLS (views.py)
+    # ========================================
+    path('weather/<int:tour_id>/', views.get_weather, name='get_weather'),
+]

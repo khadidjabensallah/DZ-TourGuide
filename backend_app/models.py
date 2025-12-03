@@ -206,13 +206,27 @@ class Guide(models.Model):
         self.reviewed_at = timezone.now()
         self.save()
     def update_rating(self):
-   
-        reviews = self.reviews.all()
-        self.number_of_reviews = reviews.count()
+        """
+        Update guide rating from the average of all individual review ratings across all tours.
+        Guide rating = average of all review ratings from all tours.
+        """
+        # Get all tours for this guide
+        tours = self.tours.all()
+        
+        # Collect all individual review ratings from all tours
+        all_ratings = []
+        for tour in tours:
+            for review in tour.reviews.all():
+                all_ratings.append(review.rating)
+        
+        self.number_of_reviews = len(all_ratings)
+        
+        # Calculate average rating from all individual review ratings
         if self.number_of_reviews > 0:
-          self.average_rating = reviews.aggregate(Avg('rating'))['rating__avg'] or 0
+            self.average_rating = sum(all_ratings) / self.number_of_reviews
         else:
-          self.average_rating = 0
+            self.average_rating = 0
+        
         self.save(update_fields=['average_rating', 'number_of_reviews'])
 
 
@@ -262,7 +276,6 @@ class Tour(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField()
     date = models.DateField(help_text="Scheduled date of the tour")
-    
     # Itinerary
     itinerary = models.TextField(
         help_text="Suggested itinerary and route"
@@ -279,7 +292,7 @@ class Tour(models.Model):
         decimal_places=2,
         help_text="Duration in hours (e.g., 3.5)"
     )
-    
+    scheduled_time = models.TimeField(null=True, blank=True, help_text="Scheduled time of the tour")
     # Auto-calculated price from guide's pricing grid
     calculated_price = models.DecimalField(
         max_digits=10,
@@ -300,9 +313,15 @@ class Tour(models.Model):
     longitude = models.DecimalField(max_digits=9, decimal_places=6)
     
     # AVAILABLE PLACES - This is what you asked for!
-    available_places = models.IntegerField(
+    max_places = models.IntegerField(
         validators=[MinValueValidator(1)],
-        help_text="Number of available places for this tour"
+        default=10,  # Default value for existing tours
+        help_text="Maximum number of places for this tour (set by guide)"
+    )
+    available_places = models.IntegerField(
+        validators=[MinValueValidator(0)],
+        default=10,  # Default value for existing tours
+        help_text="Number of available places remaining for this tour"
     )
     
     # Photos
@@ -338,6 +357,12 @@ class Tour(models.Model):
         
         # Auto-calculate price
         self.calculated_price = self.calculate_price()
+        
+        # If this is a new tour, set available_places to max_places
+        if self.pk is None:
+            # For new tours, available_places should equal max_places
+            if self.available_places is None or self.available_places == 10:  # If using default
+                self.available_places = self.max_places
         
         super().save(*args, **kwargs)
     
@@ -407,7 +432,7 @@ class Reservation(models.Model):
     final_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(null=True, blank=True)
-    
+    scheduled_time = models.TimeField(null=True, blank=True, help_text="Scheduled time of the tour")
     class Meta:
         db_table = 'reservation'
         ordering = ['-created_at']
@@ -424,12 +449,17 @@ class Reservation(models.Model):
             if not self.tour.has_available_places(self.number_of_people):
                 raise ValueError("Not enough available places for this tour")
             
-            # Calculate price
-            self.final_price = self.tour.calculated_price
+            # Calculate price (per person)
+            self.final_price = self.tour.calculated_price * Decimal(str(self.number_of_people))
+            
+            # Automatically accept reservation if places are available
+            # Reservation is automatically accepted when available_places < max_places
+            # This means there are still spots available
             
             # Decrease available places
             self.tour.available_places -= self.number_of_people
             self.tour.save(update_fields=['available_places'])
+            
         super().save(*args, **kwargs)
 
     @property
@@ -441,17 +471,13 @@ class Reservation(models.Model):
         return self.tour.date
 class Review(models.Model):
     """
-    Review - Anyone can review a tour (not just those with reservations)
+    Review - Users can only rate tours, not guides directly.
+    Guide rating is calculated as the average of all their tour ratings.
     """
     id = models.AutoField(primary_key=True)
     
     tour = models.ForeignKey(
         'Tour',
-        on_delete=models.CASCADE,
-        related_name='reviews'
-    )
-    guide = models.ForeignKey(
-        'Guide',
         on_delete=models.CASCADE,
         related_name='reviews'
     )
@@ -477,9 +503,10 @@ class Review(models.Model):
     
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
-        # Update tour and guide ratings
+        # Update tour rating first
         self.tour.update_rating()
-        self.guide.update_rating()
+        # Then update guide rating from all tour ratings
+        self.tour.guide.update_rating()
 
 
 class WeatherInfo(models.Model):

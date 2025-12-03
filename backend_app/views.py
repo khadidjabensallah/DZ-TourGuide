@@ -436,7 +436,6 @@ def guide_create_tour(request, guide_id):
     # Get data from request
     title = request.POST.get('title')
     description = request.POST.get('description')
-    date = request.POST.get('date')
     itinerary = request.POST.get('itinerary')
     highlights = request.POST.get('highlights')
     whats_included = request.POST.get('whats_included')
@@ -449,7 +448,7 @@ def guide_create_tour(request, guide_id):
     available_places = request.POST.get('available_places')
     
     # Validation
-    if not all([title, description, date, itinerary, estimated_duration, wilaya_code, 
+    if not all([title, description, itinerary, estimated_duration, wilaya_code, 
                 starting_point, latitude, longitude, available_places]):
         return JsonResponse({
             'success': False,
@@ -457,21 +456,12 @@ def guide_create_tour(request, guide_id):
         }, status=400)
     
     # Get wilaya
-    # In signup: form.cleaned_data['coverage_wilayas'] gives Wilaya objects directly
-    # In create tour: we get wilaya_code as string from POST, need to look it up
     try:
-        # Convert to string and strip (handles both string "16" and int 16)
-        wilaya_code_str = str(wilaya_code).strip()
-        wilaya = Wilaya.objects.get(code=wilaya_code_str)
+        wilaya = Wilaya.objects.get(code=wilaya_code)
     except Wilaya.DoesNotExist:
         return JsonResponse({
             'success': False,
-            'message': f'Invalid wilaya code: "{wilaya_code}". Make sure the code exists in the database.'
-        }, status=400)
-    except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'message': f'Error looking up wilaya: {str(e)}'
+            'message': 'Invalid wilaya code'
         }, status=400)
     
     # Check if wilaya is in guide's coverage zones
@@ -482,22 +472,11 @@ def guide_create_tour(request, guide_id):
         }, status=400)
     
     try:
-        # Parse date
-        from datetime import datetime
-        try:
-            tour_date = datetime.strptime(date, '%Y-%m-%d').date()
-        except ValueError:
-            return JsonResponse({
-                'success': False,
-                'message': 'Invalid date format. Use YYYY-MM-DD'
-            }, status=400)
-        
         # Create tour
         tour = Tour.objects.create(
             guide=guide,
             title=title,
             description=description,
-            date=tour_date,
             itinerary=itinerary,
             highlights=highlights or '',
             whats_included=whats_included or '',
@@ -537,7 +516,6 @@ def guide_create_tour(request, guide_id):
             'data': {
                 'tour_id': tour.id,
                 'title': tour.title,
-                'date': tour.date.isoformat(),
                 'calculated_price': str(tour.calculated_price),
                 'available_places': tour.available_places,
                 'wilaya': wilaya.name
@@ -719,8 +697,6 @@ def guide_update_tour(request, guide_id, tour_id):
         tour.available_places = int(data['available_places'])
     if 'is_active' in data:
         tour.is_active = bool(data['is_active'])
-    if 'starting_point' in data:
-        tour.starting_point = data['starting_point']
     
     tour.save()
     
@@ -806,7 +782,6 @@ def guide_my_tours(request, guide_id):
     }, status=200)
 
 
-
 # ========================================
 # GUIDE - VIEW MY RESERVATIONS
 # ========================================
@@ -824,9 +799,10 @@ def guide_my_reservations(request, guide_id):
         reservations_data.append({
             'id': res.id,
             'tour_title': res.tour.title,
-            'tourist_name': f"{res.tourist.user.firstname} {res.tourist.user.lastname}" if res.tourist else 'N/A',
-            'tourist_email': res.tourist.user.email if res.tourist else 'N/A',
-            'tour_date': res.tour_date.isoformat(),
+            'tourist_name': f"{res.tourist.user.firstname} {res.tourist.user.lastname}",
+            'tourist_email': res.tourist.user.email,
+            'proposed_date': res.proposed_date.isoformat(),
+            'proposed_time': res.proposed_time.isoformat(),
             'number_of_people': res.number_of_people,
             'final_price': str(res.final_price),
             'status': res.status,
@@ -936,7 +912,7 @@ def guide_dashboard(request, guide_id):
     completed_reservations = guide.reservations.filter(status='completed').count()
     upcoming_reservations = guide.reservations.filter(
         status='accepted',
-        tour__date__gte=timezone.now().date()
+        proposed_date__gte=timezone.now().date()
     ).count()
     
     return JsonResponse({
@@ -1136,6 +1112,7 @@ def reset_password(request):
             'message': 'Validation failed',
             'errors': form.errors
         }, status=400)
+
 
 
 

@@ -125,6 +125,3 @@ SITE_URL = 'http://127.0.0.1:8000'
 # External integrations
 # Check for both OPENWEATHERMAP_API_KEY and OPENWEATHER_API_KEY for compatibility
 OPENWEATHER_API_KEY = os.environ.get('OPENWEATHERMAP_API_KEY') or os.environ.get('OPENWEATHER_API_KEY', '')
-
-
-
