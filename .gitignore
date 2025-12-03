@@ -75,16 +75,29 @@ virtualenv/
 *.env
 .envrc
 
-# IMPORTANT: Create .env.example for team
-# (This should be committed as a template)
+# ============================================
+# Node.js / React / Vite
+# ============================================
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Logs
+logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
 # ============================================
 # IDE and Editors
 # ============================================
 # VSCode
 .vscode/
-!.vscode/settings.json.example
 !.vscode/extensions.json
+!.vscode/settings.json.example
 
 # PyCharm / IntelliJ
 .idea/
@@ -228,3 +241,6 @@ service-account.json
 *.key
 *.crt
 *.cer
+
+# History files
+.history/

@@ -3,6 +3,9 @@
 import os
 import sys
 
+# Add backend directory to Python path
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.join(BASE_DIR, 'backend'))
 
 def main():
     """Run administrative tasks."""
