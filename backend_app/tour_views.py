@@ -24,6 +24,7 @@ def guide_create_tour(request, guide_id):
     # Get data from request
     title = request.POST.get('title')
     description = request.POST.get('description')
+    date = request.POST.get('date')
     itinerary = request.POST.get('itinerary')
     highlights = request.POST.get('highlights')
     whats_included = request.POST.get('whats_included')
@@ -36,7 +37,7 @@ def guide_create_tour(request, guide_id):
     available_places = request.POST.get('available_places')
     
     # Validation
-    if not all([title, description, itinerary, estimated_duration, wilaya_code, 
+    if not all([title, description, date,  itinerary, estimated_duration, wilaya_code, 
                 starting_point, latitude, longitude, available_places]):
         return JsonResponse({
             'success': False,
@@ -65,6 +66,7 @@ def guide_create_tour(request, guide_id):
             guide=guide,
             title=title,
             description=description,
+            date=date,
             itinerary=itinerary,
             highlights=highlights or '',
             whats_included=whats_included or '',
@@ -177,6 +179,7 @@ def guide_update_tour(request, guide_id, tour_id):
 # GUIDE - DELETE TOUR
 # ========================================
 @csrf_exempt
+
 @require_http_methods(["DELETE", "POST"])
 def guide_delete_tour(request, guide_id, tour_id):
     """
@@ -185,8 +188,8 @@ def guide_delete_tour(request, guide_id, tour_id):
     guide = get_object_or_404(Guide, user_id=guide_id)
     tour = get_object_or_404(Tour, id=tour_id, guide=guide)
     
-    # Check if tour has active reservations
-    active_reservations = tour.reservations.filter(status='accepted').count()
+    # Check if tour has any reservations
+    active_reservations = tour.reservations.filter(completed_at__isnull=True).count()
     
     if active_reservations > 0:
         return JsonResponse({

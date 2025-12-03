@@ -274,7 +274,7 @@ class Tour(models.Model):
     )
     title = models.CharField(max_length=200)
     description = models.TextField()
-    
+    date = models.DateField(default=timezone.now, help_text="Scheduled date of the tour")
     # Itinerary
     itinerary = models.TextField(
         help_text="Suggested itinerary and route"
@@ -291,7 +291,7 @@ class Tour(models.Model):
         decimal_places=2,
         help_text="Duration in hours (e.g., 3.5)"
     )
-    
+    scheduled_time = models.TimeField(null=True, blank=True, help_text="Scheduled time of the tour")
     # Auto-calculated price from guide's pricing grid
     calculated_price = models.DecimalField(
         max_digits=10,
@@ -407,9 +407,12 @@ class Reservation(models.Model):
         on_delete=models.CASCADE,
         related_name='reservations'
     )
+    tourist = models.ForeignKey(Tourist, on_delete=models.CASCADE, related_name='reservations', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(null=True, blank=True)
-    
+    number_of_people = models.IntegerField(default=1)  # ← ADD THIS
+    final_price = models.DecimalField(max_digits=10, decimal_places=2)  # ← ADD THIS
+    scheduled_time = models.TimeField(null=True, blank=True, help_text="Scheduled time of the tour")
     class Meta:
         db_table = 'reservation'
         ordering = ['-created_at']

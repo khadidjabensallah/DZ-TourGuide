@@ -19,7 +19,7 @@ def guide_profile(request, guide_id):
     """
     guide = get_object_or_404(Guide, user_id=guide_id)
     
-    # Get coverage zones
+
     coverage_zones = []
     for zone in guide.coverage_zones.all():
         coverage_zones.append({
