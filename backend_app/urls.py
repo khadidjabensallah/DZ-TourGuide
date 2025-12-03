@@ -52,6 +52,9 @@ urlpatterns = [
     # Guide - Reviews & Dashboard
     path('guide/<int:guide_id>/reviews/', views.guide_my_reviews, name='guide_my_reviews'),
     path('guide/<int:guide_id>/dashboard/', views.guide_dashboard, name='guide_dashboard'),
+
+    # Public - Tours
+   path('tours/<int:tour_id>/weather/', views.tour_weather_forecast, name='tour_weather_forecast'),
 ]
 
 

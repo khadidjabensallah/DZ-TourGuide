@@ -5,14 +5,16 @@ from django.core.mail import send_mail
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
+from datetime import datetime, timedelta
 import os
 import uuid
 import json
+import requests
 from decimal import Decimal
 from django.utils import timezone
 from django.contrib.auth import authenticate
 from .forms import TouristSignupForm, GuideSignupForm, VerificationForm, ForgotPasswordForm, VerifyPasswordResetCodeForm, ResetPasswordForm
-from .models import Tourist, Guide, CoverageZone, User, Admin, Tour, Reservation, Review, Wilaya
+from .models import Tourist, Guide, CoverageZone, User, Admin, Tour, Reservation, Review, Wilaya, WeatherInfo
 
 
 def send_verification_email(user):
@@ -36,7 +38,7 @@ This code will expire in 10 minutes.
 
 If you didn't request this code, please ignore this email.
 
-Best regards,
+Best regards, 
 Tour Guide Platform Team
         """
         
@@ -434,6 +436,7 @@ def guide_create_tour(request, guide_id):
     # Get data from request
     title = request.POST.get('title')
     description = request.POST.get('description')
+    date = request.POST.get('date')
     itinerary = request.POST.get('itinerary')
     highlights = request.POST.get('highlights')
     whats_included = request.POST.get('whats_included')
@@ -446,7 +449,7 @@ def guide_create_tour(request, guide_id):
     available_places = request.POST.get('available_places')
     
     # Validation
-    if not all([title, description, itinerary, estimated_duration, wilaya_code, 
+    if not all([title, description, date, itinerary, estimated_duration, wilaya_code, 
                 starting_point, latitude, longitude, available_places]):
         return JsonResponse({
             'success': False,
@@ -454,12 +457,21 @@ def guide_create_tour(request, guide_id):
         }, status=400)
     
     # Get wilaya
+    # In signup: form.cleaned_data['coverage_wilayas'] gives Wilaya objects directly
+    # In create tour: we get wilaya_code as string from POST, need to look it up
     try:
-        wilaya = Wilaya.objects.get(code=wilaya_code)
+        # Convert to string and strip (handles both string "16" and int 16)
+        wilaya_code_str = str(wilaya_code).strip()
+        wilaya = Wilaya.objects.get(code=wilaya_code_str)
     except Wilaya.DoesNotExist:
         return JsonResponse({
             'success': False,
-            'message': 'Invalid wilaya code'
+            'message': f'Invalid wilaya code: "{wilaya_code}". Make sure the code exists in the database.'
+        }, status=400)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Error looking up wilaya: {str(e)}'
         }, status=400)
     
     # Check if wilaya is in guide's coverage zones
@@ -470,11 +482,22 @@ def guide_create_tour(request, guide_id):
         }, status=400)
     
     try:
+        # Parse date
+        from datetime import datetime
+        try:
+            tour_date = datetime.strptime(date, '%Y-%m-%d').date()
+        except ValueError:
+            return JsonResponse({
+                'success': False,
+                'message': 'Invalid date format. Use YYYY-MM-DD'
+            }, status=400)
+        
         # Create tour
         tour = Tour.objects.create(
             guide=guide,
             title=title,
             description=description,
+            date=tour_date,
             itinerary=itinerary,
             highlights=highlights or '',
             whats_included=whats_included or '',
@@ -514,6 +537,7 @@ def guide_create_tour(request, guide_id):
             'data': {
                 'tour_id': tour.id,
                 'title': tour.title,
+                'date': tour.date.isoformat(),
                 'calculated_price': str(tour.calculated_price),
                 'available_places': tour.available_places,
                 'wilaya': wilaya.name
@@ -695,6 +719,8 @@ def guide_update_tour(request, guide_id, tour_id):
         tour.available_places = int(data['available_places'])
     if 'is_active' in data:
         tour.is_active = bool(data['is_active'])
+    if 'starting_point' in data:
+        tour.starting_point = data['starting_point']
     
     tour.save()
     
@@ -780,6 +806,7 @@ def guide_my_tours(request, guide_id):
     }, status=200)
 
 
+
 # ========================================
 # GUIDE - VIEW MY RESERVATIONS
 # ========================================
@@ -797,10 +824,9 @@ def guide_my_reservations(request, guide_id):
         reservations_data.append({
             'id': res.id,
             'tour_title': res.tour.title,
-            'tourist_name': f"{res.tourist.user.firstname} {res.tourist.user.lastname}",
-            'tourist_email': res.tourist.user.email,
-            'proposed_date': res.proposed_date.isoformat(),
-            'proposed_time': res.proposed_time.isoformat(),
+            'tourist_name': f"{res.tourist.user.firstname} {res.tourist.user.lastname}" if res.tourist else 'N/A',
+            'tourist_email': res.tourist.user.email if res.tourist else 'N/A',
+            'tour_date': res.tour_date.isoformat(),
             'number_of_people': res.number_of_people,
             'final_price': str(res.final_price),
             'status': res.status,
@@ -910,7 +936,7 @@ def guide_dashboard(request, guide_id):
     completed_reservations = guide.reservations.filter(status='completed').count()
     upcoming_reservations = guide.reservations.filter(
         status='accepted',
-        proposed_date__gte=timezone.now().date()
+        tour__date__gte=timezone.now().date()
     ).count()
     
     return JsonResponse({
@@ -1110,3 +1136,159 @@ def reset_password(request):
             'message': 'Validation failed',
             'errors': form.errors
         }, status=400)
+
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def tour_weather_forecast(request, tour_id):
+    """
+    Get weather forecast for a specific tour.
+    Returns ONLY weather info if available (tour within 5 days).
+    Returns weather: null if not available (no error).
+    """
+    try:
+        import os
+        # Get the tour
+        tour = get_object_or_404(Tour, id=tour_id)
+        
+        # Calculate days until tour using tour.date
+        days_until = (tour.date - timezone.now().date()).days
+        
+        # Check if API key is configured
+        # Check for both OPENWEATHERMAP_API_KEY and OPENWEATHER_API_KEY for compatibility
+        api_key = os.getenv('OPENWEATHERMAP_API_KEY') or os.getenv('OPENWEATHER_API_KEY')
+        if not api_key:
+            return JsonResponse({
+                'weather': None,
+                'message': 'Weather API key not configured. Please set OPENWEATHERMAP_API_KEY or OPENWEATHER_API_KEY environment variable.',
+                'tour_date': tour.date.isoformat(),
+                'days_until': days_until
+            })
+        
+        # Only try to get weather if tour is within 0-5 days
+        if 0 <= days_until <= 5:
+            try:
+                weather = WeatherInfo.get_weather_for_tour(tour, tour.date)
+                
+                if weather:
+                    # Weather available - return ONLY weather info
+                    return JsonResponse({
+                        'weather': {
+                            'date': weather.date.isoformat(),
+                            'max_temperature': float(weather.max_temperature) if weather.max_temperature else None,
+                            'min_temperature': float(weather.min_temperature) if weather.min_temperature else None,
+                            'conditions': weather.conditions,
+                            'icon': weather.icon,
+                            'icon_url': f"https://openweathermap.org/img/wn/{weather.icon}@2x.png" if weather.icon else None
+                        }
+                    })
+                else:
+                    # Weather fetch failed (API error or no data)
+                    # Try to get more specific error info
+                    try:
+                        # Test the API call directly to get error details
+                        test_response = requests.get(
+                            "https://api.openweathermap.org/data/2.5/forecast",
+                            params={
+                                'lat': float(tour.latitude),
+                                'lon': float(tour.longitude),
+                                'appid': api_key,
+                                'units': 'metric',
+                                'cnt': 40
+                            },
+                            timeout=10
+                        )
+                        if test_response.status_code == 401:
+                            error_msg = 'Invalid API key. Please check your OPENWEATHERMAP_API_KEY.'
+                        elif test_response.status_code == 429:
+                            error_msg = 'API rate limit exceeded. Please try again later.'
+                        elif test_response.status_code != 200:
+                            error_msg = f'API returned error: {test_response.status_code} - {test_response.text[:200]}'
+                        else:
+                            # API returned 200, try to process data directly as fallback
+                            try:
+                                from decimal import Decimal
+                                
+                                data = test_response.json()
+                                if 'list' in data and data['list']:
+                                    # Find forecast closest to noon on tour date
+                                    target_datetime = datetime.combine(tour.date, datetime.min.time().replace(hour=12))
+                                    target_datetime = timezone.make_aware(target_datetime)
+                                    target_timestamp = int(target_datetime.timestamp())
+                                    
+                                    closest_forecast = None
+                                    min_diff = float('inf')
+                                    
+                                    for forecast in data['list']:
+                                        forecast_timestamp = forecast.get('dt', 0)
+                                        time_diff = abs(forecast_timestamp - target_timestamp)
+                                        if time_diff < min_diff:
+                                            min_diff = time_diff
+                                            closest_forecast = forecast
+                                    
+                                    if closest_forecast:
+                                        main_data = closest_forecast.get('main', {})
+                                        weather_data = closest_forecast.get('weather', [{}])[0]
+                                        
+                                        temp = main_data.get('temp')
+                                        temp_max = main_data.get('temp_max', temp)
+                                        temp_min = main_data.get('temp_min', temp)
+                                        conditions = weather_data.get('description', 'N/A')
+                                        icon = weather_data.get('icon', '')
+                                        
+                                        # Return weather data directly (fallback if DB save failed)
+                                        return JsonResponse({
+                                            'weather': {
+                                                'date': tour.date.isoformat(),
+                                                'max_temperature': float(temp_max) if temp_max else None,
+                                                'min_temperature': float(temp_min) if temp_min else None,
+                                                'conditions': conditions,
+                                                'icon': icon,
+                                                'icon_url': f"https://openweathermap.org/img/wn/{icon}@2x.png" if icon else None
+                                            }
+                                        })
+                                
+                                error_msg = 'Weather data fetched but could not be processed. Check server logs for details.'
+                            except Exception as process_error:
+                                error_msg = f'Weather data fetched but processing failed: {str(process_error)}'
+                    except requests.exceptions.Timeout:
+                        error_msg = 'API request timed out. Check your network connection.'
+                    except requests.exceptions.ConnectionError:
+                        error_msg = 'Could not connect to weather API. Check your network connection.'
+                    except Exception as e:
+                        error_msg = f'Error testing API: {str(e)}'
+                    
+                    return JsonResponse({
+                        'weather': None,
+                        'message': error_msg,
+                        'tour_date': tour.date.isoformat(),
+                        'days_until': days_until,
+                        'tour_location': {
+                            'latitude': float(tour.latitude),
+                            'longitude': float(tour.longitude)
+                        }
+                    })
+            except Exception as e:
+                return JsonResponse({
+                    'weather': None,
+                    'message': f'Error fetching weather: {str(e)}',
+                    'tour_date': tour.date.isoformat(),
+                    'days_until': days_until
+                })
+        
+        # If we reach here: tour date is outside 0-5 day window
+        return JsonResponse({
+            'weather': None,
+            'message': f'Weather forecast only available for tours within 0-5 days. This tour is {days_until} days away.',
+            'tour_date': tour.date.isoformat(),
+            'days_until': days_until
+        })
+        
+    except Tour.DoesNotExist:
+        return JsonResponse({'error': 'Tour not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'error': 'Unable to fetch weather information',
+            'details': str(e)
+        }, status=500)
