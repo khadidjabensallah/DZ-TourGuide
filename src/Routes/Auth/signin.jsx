@@ -1,14 +1,17 @@
 import React, { useState } from "react";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+
+// Backend API base URL - adjust this to match your Django server
+const API_BASE_URL = "http://localhost:8000";
 
 export default function SignInPage() {
-  const [activeTab, setActiveTab] = useState("signin");
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [emailError, setEmailError] = useState(false);
-  const navigate = useNavigate();
+  const [passwordError, setPasswordError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -18,6 +21,7 @@ export default function SignInPage() {
   const handleEmailChange = (e) => {
     const value = e.target.value;
     setEmail(value);
+    setErrorMessage("");
     if (value.length > 0) {
       setEmailError(!validateEmail(value));
     } else {
@@ -25,12 +29,78 @@ export default function SignInPage() {
     }
   };
 
-  const handleSubmit = () => {
+  const handlePasswordChange = (e) => {
+    setPassword(e.target.value);
+    setErrorMessage("");
+    setPasswordError("");
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter" && !isLoading) {
+      handleSubmit();
+    }
+  };
+
+  const handleSubmit = async () => {
+    // Reset errors
+    setErrorMessage("");
+    setPasswordError("");
+
+    // Validate email
     if (!validateEmail(email)) {
       setEmailError(true);
       return;
     }
-    console.log("Sign in attempted with:", { email, password });
+
+    // Validate password
+    if (!password || password.trim() === "") {
+      setPasswordError("Password is required");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Create FormData to send to backend
+      const formData = new FormData();
+      formData.append("email", email.trim());
+      formData.append("password", password);
+
+      // Make API call to backend
+      const response = await fetch(`${API_BASE_URL}/signin/`, {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Store user data in localStorage
+        localStorage.setItem("user", JSON.stringify(data.data));
+        localStorage.setItem("isAuthenticated", "true");
+
+        // Navigate based on user type
+        console.log("Login successful:", data.data.user_type);
+      } else {
+        setErrorMessage(data.message || "Sign in failed. Please try again.");
+        if (data.message?.includes("password")) {
+          setPasswordError(data.message);
+        }
+      }
+    } catch (error) {
+      console.error("Sign in error:", error);
+      setErrorMessage(
+        "Network error. Please check your connection and try again."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleForgotPassword = () => {
+    console.log("Forgot password clicked");
+    // Add your forgot password logic here
   };
 
   return (
@@ -38,8 +108,8 @@ export default function SignInPage() {
       <div className="w-full max-w-md">
         {/* Back Button */}
         <button
-          className="flex items-center text-gray-700 mb-6 hover:text-gray-900 transition-colors "
-          onClick={() => navigate(-1)}
+          className="flex items-center text-gray-700 mb-6 hover:text-gray-900 transition-colors"
+          onClick={() => console.log("Back clicked")}
         >
           <ArrowLeft className="w-5 h-5 mr-2" />
           <span className="text-sm">Back</span>
@@ -80,8 +150,9 @@ export default function SignInPage() {
                 id="email"
                 value={email}
                 onChange={handleEmailChange}
+                onKeyPress={handleKeyPress}
                 placeholder="Enter your email"
-                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm autofill:shadow-[inset_0_0_0px_1000px_rgb(255,255,255)] ${
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm ${
                   emailError
                     ? "border-red-500 focus:ring-red-500"
                     : "border-gray-300 focus:ring-orange-500"
@@ -107,14 +178,19 @@ export default function SignInPage() {
                   type={showPassword ? "text" : "password"}
                   id="password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={handlePasswordChange}
+                  onKeyPress={handleKeyPress}
                   placeholder="••••••••••"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all text-sm pr-10"
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm pr-10 ${
+                    passwordError
+                      ? "border-red-500 focus:ring-red-500"
+                      : "border-gray-300 focus:ring-orange-500"
+                  }`}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors autofill:shadow-[inset_0_0_0px_1000px_rgb(255,255,255)]"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                 >
                   {showPassword ? (
                     <EyeOff className="w-4 h-4" />
@@ -123,14 +199,38 @@ export default function SignInPage() {
                   )}
                 </button>
               </div>
+              {passwordError && (
+                <p className="text-red-500 text-xs mt-1">{passwordError}</p>
+              )}
+
+              {/* General Error Message */}
+              {errorMessage && (
+                <p className="text-red-500 text-xs mt-1">{errorMessage}</p>
+              )}
+
+              {/* Forgot Password Link */}
+              <div className="text-right mt-2">
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  className="text-xs text-orange-500 hover:text-orange-600 font-semibold transition-colors"
+                >
+                  Forgot Password?
+                </button>
+              </div>
             </div>
 
             {/* Submit Button */}
             <button
               onClick={handleSubmit}
-              className="w-full bg-orange-500 py-2 hover:bg-orange-600 text-white font-semibold rounded-xl transition-colors shadow-lg hover:shadow-xl"
+              disabled={isLoading}
+              className={`w-full bg-orange-500 py-2 hover:bg-orange-600 text-white font-semibold rounded-xl transition-colors shadow-lg hover:shadow-xl ${
+                isLoading ? "opacity-70 cursor-not-allowed" : ""
+              }`}
             >
-              <span className="drop-shadow-sm">Sign In</span>
+              <span className="drop-shadow-sm">
+                {isLoading ? "Signing in..." : "Sign In"}
+              </span>
             </button>
           </div>
 
@@ -139,7 +239,7 @@ export default function SignInPage() {
             <p className="text-sm text-gray-600">
               Don't have an Account?{" "}
               <button
-                onClick={() => navigate("/selectType")}
+                onClick={() => console.log("Register clicked")}
                 className="text-orange-500 font-semibold hover:text-orange-600 transition-colors"
               >
                 Register

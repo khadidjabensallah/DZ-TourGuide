@@ -5,9 +5,13 @@ export default function Header() {
   const navigate = useNavigate();
 
   return (
-    <header className="bg-[#edf3fd] border-gray-200">
-      <nav className="max-w-7xl mx-auto  px-2.5">
+    <header
+      className="border-gray-200"
+      style={{ backgroundColor: "#FFFFFFFF" }}
+    >
+      <nav className="max-w-7xl mx-auto px-2.5">
         <div className="flex items-center justify-between h-16 relative">
+          {/* Logo */}
           <div className="flex items-center -ml-4">
             <img
               src={logo}
@@ -15,6 +19,8 @@ export default function Header() {
               className="w-44 h-44 object-cover"
             />
           </div>
+
+          {/* Navigation Links */}
           <div className="hidden md:flex gap-15 absolute left-1/2 -translate-x-1/2">
             <a
               href="/example"
@@ -41,6 +47,8 @@ export default function Header() {
               Contact
             </a>
           </div>
+
+          {/* Right Buttons */}
           <div className="flex items-center gap-3">
             <button className="text-orange-500 hover:text-orange-600 p-1">
               <svg
