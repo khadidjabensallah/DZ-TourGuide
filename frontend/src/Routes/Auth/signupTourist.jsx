@@ -14,6 +14,7 @@ export default function SignInPage() {
     familyName: "",
     email: "",
     password: "",
+    confirmPassword: "",
     nationality: "", // Optional field
   });
 
@@ -43,6 +44,9 @@ export default function SignInPage() {
     if (!formData.password) newErrors.password = "Password is required";
     else if (formData.password.length < 8)
       newErrors.password = "Password must be at least 8 characters";
+    // confirm password validation
+    if (!formData.confirmPassword) newErrors.confirmPassword = "Please confirm your password";
+    else if (formData.confirmPassword !== formData.password) newErrors.confirmPassword = "Passwords do not match";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -62,6 +66,7 @@ export default function SignInPage() {
         lastname: formData.familyName,
         email: formData.email,
         password: formData.password,
+        confirm_password: formData.confirmPassword,
         nationality: formData.nationality || "", // Optional
       };
 
@@ -83,6 +88,8 @@ export default function SignInPage() {
       }
     } catch (error) {
       console.error("Signup error:", error);
+      // apiRequest throws Error with message, but backend may return useful
+      // message in error.message. Show it if present.
       setApiError(error.message || "Failed to create account. Please try again.");
     } finally {
       setSubmitting(false);
@@ -213,6 +220,28 @@ export default function SignInPage() {
                 <p className="text-xs text-red-500 mt-0">{errors.password}</p>
               )}
             </div>
+
+              {/* Confirm Password */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                  Confirm Password
+                </label>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleInputChange}
+                  placeholder="••••••••••"
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm pr-10 autofill:shadow-[inset_0_0_0px_1000px_rgb(255,255,255)] ${
+                    errors.confirmPassword
+                      ? "border-red-500 focus:ring-red-500"
+                      : "border-gray-300 focus:ring-orange-500"
+                  }`}
+                />
+                {errors.confirmPassword && (
+                  <p className="text-xs text-red-500 mt-0">{errors.confirmPassword}</p>
+                )}
+              </div>
 
             {/* API Error Message */}
             {apiError && (

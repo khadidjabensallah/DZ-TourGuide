@@ -14,7 +14,7 @@ from decimal import Decimal
 from django.utils import timezone
 from django.contrib.auth import authenticate
 from .forms import TouristSignupForm, GuideSignupForm, VerificationForm, ForgotPasswordForm, VerifyPasswordResetCodeForm, ResetPasswordForm
-from .models import Tourist, Guide, CoverageZone, User, Admin, Tour, Reservation, Review, Wilaya, WeatherInfo
+from .models import Tourist, Guide, CoverageZone, User, Admin, Tour, Reservation, Review, Wilaya
 
 
 def send_verification_email(user):
@@ -398,6 +398,54 @@ def admin_approve_guide(request, guide_id):
     API endpoint for admin to approve guide
     """
     # TODO: Add authentication check
+
+
+# ========================================
+# WEATHER VIEW
+# ========================================
+@require_http_methods(["GET"])
+def get_weather(request, tour_id):
+    """
+    Return current weather for the tour's coordinates.
+    If `OPENWEATHER_API_KEY` is set in Django settings we'll call OpenWeatherMap,
+    otherwise return a small mocked payload so frontend can work during local dev.
+    """
+    # Ensure tour exists
+    tour = get_object_or_404(Tour, id=tour_id)
+
+    try:
+        lat = float(tour.latitude)
+        lon = float(tour.longitude)
+    except Exception:
+        return JsonResponse({
+            'success': False,
+            'message': 'Invalid coordinates for tour'
+        }, status=400)
+
+    api_key = getattr(settings, 'OPENWEATHER_API_KEY', None)
+    if api_key:
+        try:
+            url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&units=metric&appid={api_key}"
+            resp = requests.get(url, timeout=5)
+            resp.raise_for_status()
+            payload = resp.json()
+            data = {
+                'temperature': payload.get('main', {}).get('temp'),
+                'description': (payload.get('weather') or [{}])[0].get('description'),
+                'wind_speed': payload.get('wind', {}).get('speed'),
+                'raw': payload,
+            }
+            return JsonResponse({'success': True, 'data': data}, status=200)
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': 'Weather provider error', 'error': str(e)}, status=502)
+
+    # No API key configured — return a mocked response for local dev
+    mock = {
+        'temperature': 25.0,
+        'description': 'clear sky',
+        'wind_speed': 3.5
+    }
+    return JsonResponse({'success': True, 'message': 'Mock data (no API key configured)', 'data': mock}, status=200)
     # if not request.user.is_authenticated or request.user.user_type != 'admin':
     #     return JsonResponse({'success': False, 'message': 'Unauthorized'}, status=403)
     
@@ -560,36 +608,40 @@ def guide_create_tour(request, guide_id):
 # AUTHENTICATION - Sign In (Login)
 # ========================================
 
+import json
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+from django.http import JsonResponse
+from .models import User
+
 @csrf_exempt
 @require_http_methods(["POST"])
 def signin(request):
-    # TEMPORARY DEBUG - Print everything
     print("=" * 50)
     print("SIGNIN DEBUG")
     print(f"Content-Type: {request.content_type}")
-    print(f"POST data: {request.POST}")
-    print(f"Body: {request.body}")
     print("=" * 50)
-   
+    
     try:
-        email = request.POST.get('email')
-        password = request.POST.get('password')
-       
+        # Parse JSON body instead of form data
+        if request.content_type == 'application/json':
+            data = json.loads(request.body)
+            email = data.get('email')
+            password = data.get('password')
+        else:
+            # Fallback to form data
+            email = request.POST.get('email')
+            password = request.POST.get('password')
+        
         print(f"Email received: '{email}'")
-        print(f"Password received: '{password}'")
-        print(f"Email is None: {email is None}")
-        print(f"Password is None: {password is None}")
-       
+        print(f"Password received: '{'*' * len(password) if password else None}'")
+        
         if not email or not password:
             return JsonResponse({
                 'success': False,
-                'message': 'Email and password are required',
-                'debug': {
-                    'email_received': email,
-                    'password_received': 'Yes' if password else 'No'
-                }
+                'message': 'Email and password are required'
             }, status=400)
-       
+        
         try:
             user = User.objects.get(email=email)
             print(f"✅ User found: {user.email}")
@@ -597,35 +649,31 @@ def signin(request):
             print(f"❌ User NOT found with email: {email}")
             return JsonResponse({
                 'success': False,
-                'message': 'Invalid credentials - user not found'
+                'message': 'Invalid email or password'
             }, status=401)
-       
-        password_check = user.check_password(password)
-        print(f"Password check result: {password_check}")
-       
-        if not password_check:
-            print(f"❌ Password WRONG")
-            print(f"Stored hash: {user.password[:50]}")
+        
+        if not user.check_password(password):
+            print(f"❌ Password incorrect")
             return JsonResponse({
                 'success': False,
-                'message': 'Invalid credentials - wrong password'
+                'message': 'Invalid email or password'
             }, status=401)
-       
-        print(f"✅ Password CORRECT")
-       
+        
+        print(f"✅ Password correct")
+        
         if not user.email_verified:
             return JsonResponse({
                 'success': False,
                 'message': 'Please verify your email before signing in.'
             }, status=403)
-       
+        
         if not user.isActive:
             return JsonResponse({
                 'success': False,
                 'message': 'Your account is not active.'
             }, status=403)
-       
-        # Store user session data for authentication
+        
+        # Store session data
         request.session['user_id'] = user.id
         request.session['user_email'] = user.email
         request.session['user_type'] = user.user_type
@@ -644,16 +692,20 @@ def signin(request):
             'message': 'Sign in successful!',
             'data': user_data
         }, status=200)
-       
+        
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'message': 'Invalid JSON format'
+        }, status=400)
     except Exception as e:
         print(f"❌ ERROR: {str(e)}")
         import traceback
         traceback.print_exc()
         return JsonResponse({
             'success': False,
-            'message': f'Error: {str(e)}'
+            'message': 'An error occurred during sign in'
         }, status=500)
-
 
     # ========================================
 # AUTHENTICATION - Logout

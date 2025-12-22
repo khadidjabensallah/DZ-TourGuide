@@ -34,12 +34,41 @@ export async function apiRequest(endpoint, options = {}) {
     
     try {
         const response = await fetch(url, config);
-        const data = await response.json();
-        
-        if (!response.ok) {
-            throw new Error(data.message || `HTTP error! status: ${response.status}`);
+
+        const contentType = response.headers.get('content-type') || '';
+
+        let data = null;
+
+        if (contentType.includes('application/json')) {
+            // Safe JSON parse with fallback to text if parsing fails
+            try {
+                data = await response.json();
+            } catch (err) {
+                const text = await response.text();
+                const message = text || 'Invalid JSON response from server';
+                const parseError = new Error(message);
+                parseError.data = text;
+                throw parseError;
+            }
+        } else {
+            // Not JSON (could be HTML error page or plain text). Read text.
+            const text = await response.text();
+            if (text) {
+                // If server responded with plain text but status is OK, wrap it
+                data = { message: text };
+            } else {
+                data = {};
+            }
         }
-        
+
+        if (!response.ok) {
+            const errMsg = (data && data.message) ? data.message : `HTTP error! status: ${response.status}`;
+            const err = new Error(errMsg);
+            err.status = response.status;
+            err.data = data;
+            throw err;
+        }
+
         return data;
     } catch (error) {
         console.error('API Request Error:', error);
