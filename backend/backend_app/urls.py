@@ -57,9 +57,9 @@ urlpatterns = [
     # ========================================
     # GUIDE RESERVATIONS & REVIEWS URLS (views.py)
     # ========================================
-    path('guide/<int:guide_id>/reservations/', views.guide_my_reservations, name='guide_my_reservations'),
-    path('guide/<int:guide_id>/reservations/<int:reservation_id>/update/', views.guide_update_reservation_status, name='guide_update_reservation'),
-    path('guide/<int:guide_id>/reviews/', views.guide_my_reviews, name='guide_my_reviews'),
+    path('guide/<int:guide_id>/reservations/', reservations_views.guide_my_reservations, name='guide_my_reservations'),
+    path('guide/<int:guide_id>/reservations/<int:reservation_id>/update/', reservations_views.complete_reservation, name='guide_update_reservation'),
+    path('guide/<int:guide_id>/reviews/', guide_views.guide_my_reviews, name='guide_my_reviews'),
     
     # ========================================
     # RESERVATION URLS (reservations_views.py)
@@ -72,4 +72,6 @@ urlpatterns = [
     # WEATHER API URLS (views.py)
     # ========================================
     path('weather/<int:tour_id>/', views.get_weather, name='get_weather'),
+    # Debug/test endpoint for SMTP issues
+    path('test-email/', views.test_email, name='test_email'),
 ]

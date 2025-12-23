@@ -174,3 +174,6 @@ npm run dev
 - Run `python manage.py migrate`
 - Check database connection in settings
 
+
+
+

@@ -120,3 +120,6 @@ Frontend will run on: **http://localhost:3000**
 - [ ] Sign in works after verification
 - [ ] User data is stored in sessionStorage
 
+
+
+

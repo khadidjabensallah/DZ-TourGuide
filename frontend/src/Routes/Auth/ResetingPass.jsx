@@ -1,21 +1,18 @@
-import { Eye, EyeOff, Check, X, LockOpen } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+// ==================== FILE 3: ResetPassword.jsx ====================
+import React, { useState } from 'react';
+import { KeyRound, Eye, EyeOff, Check, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { AuthAPI } from '../../utils/api';
 
 export default function ResetPassword() {
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [passwordTouched, setPasswordTouched] = useState(false);
-  const [confirmTouched, setConfirmTouched] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const newPassRef = useRef(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    if (newPassRef.current) newPassRef.current.focus();
-  }, []);
-
-  // Password validation criteria
   const criteria = {
     length: password.length >= 8,
     uppercase: /[A-Z]/.test(password),
@@ -25,107 +22,138 @@ export default function ResetPassword() {
 
   const allCriteriaMet = Object.values(criteria).every(Boolean);
   const passwordsMatch = password && confirmPassword && password === confirmPassword;
+  const canSubmit = allCriteriaMet && passwordsMatch;
 
-  // Password strength calculation
-  const getPasswordStrength = () => {
-    const metCount = Object.values(criteria).filter(Boolean).length;
-    if (metCount === 0) return { level: 0, text: "", color: "" };
-    if (metCount <= 2) return { level: 1, text: "Weak", color: "bg-red-500" };
-    if (metCount === 3) return { level: 2, text: "Fair", color: "bg-yellow-500" };
-    return { level: 3, text: "Strong", color: "bg-green-500" };
-  };
+  const handleSubmit = async () => {
+    if (!canSubmit) return;
 
-  const strength = getPasswordStrength();
+    setIsLoading(true);
+    setError('');
 
-  const handleReset = async () => {
-    setPasswordTouched(true);
-    setConfirmTouched(true);
+    try {
+      const response = await AuthAPI.resetPassword(password, confirmPassword);
+      
+      if (response.success) {
+        const email = response.data?.email || sessionStorage.getItem('reset_email');
 
-    if (!allCriteriaMet || !passwordsMatch) {
-      return;
+        // Try automatic sign-in
+        if (email) {
+          try {
+            const signinResp = await AuthAPI.signin(email, password);
+            if (signinResp?.success) {
+              sessionStorage.setItem('user', JSON.stringify(signinResp.data));
+              sessionStorage.setItem('is_authenticated', 'true');
+              
+              // Clear reset data
+              sessionStorage.removeItem('reset_email');
+              sessionStorage.removeItem('reset_user_id');
+              
+                // Navigate to success with auto-login info
+                navigate('/password-changed', {
+                state: { 
+                  autoSignedIn: true, 
+                  userData: signinResp.data 
+                }
+              });
+              return;
+            }
+          } catch (signinErr) {
+            console.warn('Auto sign-in failed:', signinErr);
+          }
+        }
+
+        // Clear reset data
+        sessionStorage.removeItem('reset_email');
+        sessionStorage.removeItem('reset_user_id');
+        
+          // Navigate to success without auto-login
+          navigate('/password-changed', {
+          state: { autoSignedIn: false }
+        });
+      }
+    } catch (err) {
+      const message = err?.data?.message || err.message || 'Failed to reset password';
+      setError(message);
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsSubmitting(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    console.log("Password reset successful:", password);
-    setIsSubmitting(false);
-  };
-
-  const preventPaste = (e) => {
-    e.preventDefault();
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 p-4">
       <div className="flex flex-col items-center justify-center min-h-screen relative">
         <button
-          onClick={() => window.history.back()}
+           onClick={() => navigate('/verify-reset')}
           className="absolute top-4 left-4 flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-          aria-label="Go back"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
+          <ArrowLeft className="w-5 h-5" />
           Back
         </button>
 
         <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md">
+          <div className="flex justify-center mb-6">
+            <div className="bg-orange-100 p-4 rounded-full">
+              <KeyRound className="w-8 h-8 text-orange-500" />
+            </div>
+          </div>
+
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Set a New Password
+              Set New Password
             </h1>
             <p className="text-sm text-gray-600">
-              Create a strong password to secure your account
+              Create a strong password for your account
             </p>
           </div>
 
-          {/* New Password Field */}
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          )}
+
+          {/* Password Field */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               New Password
             </label>
             <div className="relative">
               <input
-                ref={newPassRef}
-                type={showPassword ? "text" : "password"}
+                type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                onBlur={() => setPasswordTouched(true)}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition-all pr-12"
-                aria-label="New password"
-                aria-describedby="password-requirements"
+                disabled={isLoading}
+                className="w-full px-4 py-3 pr-12 border-2 border-gray-300 rounded-lg focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition-all"
               />
               <button
                 type="button"
-                onClick={() => setShowPassword((s) => !s)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-600 hover:text-gray-900 rounded"
-                aria-label={showPassword ? "Hide password" : "Show password"}
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
               >
                 {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
 
-            {/* Password Requirements */}
-            <div id="password-requirements" className="mt-3 space-y-2">
+            {/* Password Criteria */}
+            <div className="mt-3 space-y-2">
               {[
-                { key: "length", text: "At least 8 characters" },
-                { key: "uppercase", text: "One uppercase letter" },
-                { key: "lowercase", text: "One lowercase letter" },
-                { key: "number", text: "One number" },
+                { key: 'length', text: 'At least 8 characters' },
+                { key: 'uppercase', text: 'One uppercase letter' },
+                { key: 'lowercase', text: 'One lowercase letter' },
+                { key: 'number', text: 'One number' },
               ].map(({ key, text }) => (
                 <div
                   key={key}
-                  className={`flex items-center gap-2 text-xs transition-all duration-200 ${
-                    criteria[key] ? "text-green-600" : "text-gray-500"
+                  className={`flex items-center gap-2 text-xs ${
+                    criteria[key] ? 'text-green-600' : 'text-gray-500'
                   }`}
                 >
                   {criteria[key] ? (
-                    <Check className="w-4 h-4 flex-shrink-0" />
+                    <Check className="w-4 h-4" />
                   ) : (
-                    <div className="w-4 h-4 rounded-full border-2 border-gray-300 flex-shrink-0" />
+                    <div className="w-4 h-4 rounded-full border-2 border-gray-300" />
                   )}
-                  <span className={criteria[key] ? "font-medium" : ""}>{text}</span>
+                  <span>{text}</span>
                 </div>
               ))}
             </div>
@@ -138,50 +166,44 @@ export default function ResetPassword() {
             </label>
             <div className="relative">
               <input
-                onPaste={preventPaste}
-                type={showConfirm ? "text" : "password"}
+                type={showConfirm ? 'text' : 'password'}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                onBlur={() => setConfirmTouched(true)}
-                className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-orange-200 outline-none transition-all pr-12 ${
-                  confirmTouched && confirmPassword && !passwordsMatch
-                    ? "border-red-300 focus:border-red-500"
-                    : "border-gray-300 focus:border-orange-500"
+                onPaste={(e) => e.preventDefault()}
+                disabled={isLoading}
+                className={`w-full px-4 py-3 pr-12 border-2 rounded-lg outline-none transition-all ${
+                  confirmPassword && !passwordsMatch
+                    ? 'border-red-300 focus:border-red-500 focus:ring-2 focus:ring-red-200'
+                    : 'border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200'
                 }`}
-                aria-label="Confirm password"
-                aria-invalid={confirmTouched && confirmPassword && !passwordsMatch}
               />
               <button
                 type="button"
-                onClick={() => setShowConfirm((s) => !s)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-600 hover:text-gray-900 rounded"
-                aria-label={showConfirm ? "Hide confirm password" : "Show confirm password"}
+                onClick={() => setShowConfirm(!showConfirm)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
               >
                 {showConfirm ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
+            {confirmPassword && !passwordsMatch && (
+              <p className="text-xs text-red-500 mt-1">Passwords do not match</p>
+            )}
           </div>
 
           <button
-            onClick={handleReset}
-            disabled={isSubmitting || !allCriteriaMet || !passwordsMatch}
-            className={`w-full font-semibold py-3 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 ${
-              isSubmitting || !allCriteriaMet || !passwordsMatch
-                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                : "bg-orange-500 hover:bg-orange-600 text-white shadow-md hover:shadow-lg"
+            onClick={handleSubmit}
+            disabled={!canSubmit || isLoading}
+            className={`w-full font-semibold py-3 rounded-lg transition-all duration-200 ${
+              !canSubmit || isLoading
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-orange-500 hover:bg-orange-600 text-white'
             }`}
           >
-            {isSubmitting ? (
-              <>
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Setting Password...
-              </>
-            ) : (
-              "Set Password"
-            )}
+            {isLoading ? 'Resetting Password...' : 'Reset Password'}
           </button>
         </div>
       </div>
     </div>
   );
 }
+

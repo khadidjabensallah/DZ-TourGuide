@@ -213,3 +213,6 @@ if (typeof module !== 'undefined' && module.exports) {
     module.exports = { apiRequest, AuthAPI, TourAPI, ReservationAPI, GuideAPI };
 }
 
+
+
+

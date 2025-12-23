@@ -124,3 +124,6 @@ All API endpoints are prefixed with `/api/`:
 - CORS is enabled for development
 - Session-based authentication is used
 
+
+
+

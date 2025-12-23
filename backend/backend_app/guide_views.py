@@ -11,6 +11,7 @@ import os
 import uuid
 from decimal import Decimal
 from .models import Guide, User, CoverageZone, Wilaya
+from .models import Review
 @csrf_exempt
 @require_http_methods(["GET"])
 def guide_profile(request, guide_id):
@@ -337,4 +338,39 @@ def guide_dashboard(request, guide_id):
             'completed_reservations': completed_reservations,
             'upcoming_reservations': upcoming_reservations
         }
+    }, status=200)
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def guide_my_reviews(request, guide_id):
+    """
+    Return all reviews for a guide across their tours
+    """
+    guide = get_object_or_404(Guide, user_id=guide_id)
+
+    all_reviews = Review.objects.filter(tour__guide=guide).select_related('tour', 'tourist__user').order_by('-publication_date')
+
+    reviews_data = []
+    for r in all_reviews:
+        reviews_data.append({
+            'id': r.id,
+            'tour': {
+                'id': r.tour.id,
+                'title': r.tour.title,
+            },
+            'tourist': {
+                'id': r.tourist.user_id,
+                'name': f"{r.tourist.user.firstname} {r.tourist.user.lastname}",
+                'photo_url': r.tourist.user.photo_url
+            },
+            'rating': r.rating,
+            'comment': r.comment,
+            'publication_date': r.publication_date.isoformat() if r.publication_date else None
+        })
+
+    return JsonResponse({
+        'success': True,
+        'total_reviews': len(reviews_data),
+        'data': reviews_data
     }, status=200)

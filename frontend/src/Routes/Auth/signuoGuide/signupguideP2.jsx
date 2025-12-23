@@ -1,37 +1,33 @@
 import React, { useState, useEffect } from "react";
 import { ArrowLeft, ChevronDown, Check } from "lucide-react";
-import logo from "../../../assets/logo.png";
-import { useNavigate, useLocation } from "react-router-dom";
-import { AuthAPI } from "../../../utils/api";
+import { useLocation, useNavigate } from 'react-router-dom';
 
-export default function DZTourGuideSignIn() {
-  const navigate = useNavigate();
-  const location = useLocation();
-
+export default function SignUpGuideP2() {
   const [languagesOpen, setLanguagesOpen] = useState(false);
   const [wilayasOpen, setWilayasOpen] = useState(false);
 
-  // page2 fields
   const [formData, setFormData] = useState({
     languages: [],
     wilayas: [],
+    biography: "",
     halfDayPrice: "",
     fullDayPrice: "",
     additionalHourPrice: "",
+    customRequestMarkup: "",
   });
 
-  // page1 data (received via navigate state)
   const [page1Data, setPage1Data] = useState(null);
-
-  // validation errors state
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [apiError, setApiError] = useState("");
+  const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // read page1 data passed via navigate(..., { state: formData })
     if (location && location.state) {
       setPage1Data(location.state);
+    } else {
+      setPage1Data(null);
     }
   }, [location]);
 
@@ -48,80 +44,46 @@ export default function DZTourGuideSignIn() {
   ];
 
   const wilayas = [
-    "Adrar",
-    "Chlef",
-    "Laghouat",
-    "Oum El Bouaghi",
-    "Batna",
-    "Béjaïa",
-    "Biskra",
-    "Béchar",
-    "Blida",
-    "Bouira",
-    "Tamanrasset",
-    "Tébessa",
-    "Tlemcen",
-    "Tiaret",
-    "Tizi Ouzou",
-    "Algiers",
-    "Djelfa",
-    "Jijel",
-    "Sétif",
-    "Saïda",
-    "Skikda",
-    "Sidi Bel Abbès",
-    "Annaba",
-    "Guelma",
-    "Constantine",
-    "Médéa",
-    "Mostaganem",
-    "M'Sila",
-    "Mascara",
-    "Ouargla",
-    "Oran",
-    "El Bayadh",
-    "Illizi",
-    "Bordj Bou Arréridj",
-    "Boumerdès",
-    "El Tarf",
-    "Tindouf",
-    "Tissemsilt",
-    "El Oued",
-    "Khenchela",
-    "Souk Ahras",
-    "Tipaza",
-    "Mila",
-    "Aïn Defla",
-    "Naâma",
-    "Aïn Témouchent",
-    "Ghardaïa",
-    "Relizane",
-    "Timimoun",
-    "Bordj Badji Mokhtar",
-    "Ouled Djellal",
-    "Béni Abbès",
-    "Aïn Salah",
-    "Aïn Guezzam",
-    "Touggourt",
-    "Djanet",
-    "El M'Ghair",
-    "El Menia",
+    "Adrar", "Chlef", "Laghouat", "Oum El Bouaghi", "Batna", "Béjaïa",
+    "Biskra", "Béchar", "Blida", "Bouira", "Tamanrasset", "Tébessa",
+    "Tlemcen", "Tiaret", "Tizi Ouzou", "Algiers", "Djelfa", "Jijel",
+    "Sétif", "Saïda", "Skikda", "Sidi Bel Abbès", "Annaba", "Guelma",
+    "Constantine", "Médéa", "Mostaganem", "M'Sila", "Mascara", "Ouargla",
+    "Oran", "El Bayadh", "Illizi", "Bordj Bou Arréridj", "Boumerdès",
+    "El Tarf", "Tindouf", "Tissemsilt", "El Oued", "Khenchela",
+    "Souk Ahras", "Tipaza", "Mila", "Aïn Defla", "Naâma",
+    "Aïn Témouchent", "Ghardaïa", "Relizane", "Timimoun",
+    "Bordj Badji Mokhtar", "Ouled Djellal", "Béni Abbès",
+    "Aïn Salah", "Aïn Guezzam", "Touggourt", "Djanet",
+    "El M'Ghair", "El Menia",
   ];
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    // prices: allow only digits (no spinners) and trim leading zeros
     let val = value;
-    if (
-      ["halfDayPrice", "fullDayPrice", "additionalHourPrice"].includes(name)
-    ) {
+    
+    if (["halfDayPrice", "fullDayPrice", "additionalHourPrice"].includes(name)) {
       val = value.replace(/\D/g, "");
-      // optional: prevent leading zeros
       val = val.replace(/^0+(?=\d)/, "");
     }
+    
+    if (name === "customRequestMarkup") {
+      val = value.replace(/[^\d.]/g, "");
+      const parts = val.split(".");
+      if (parts.length > 2) {
+        val = parts[0] + "." + parts.slice(1).join("");
+      }
+      if (parts[1] && parts[1].length > 2) {
+        val = parts[0] + "." + parts[1].slice(0, 2);
+      }
+    }
+    
     setFormData((prev) => ({
       ...prev,
       [name]: val,
     }));
+    
+    setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
   const toggleLanguage = (language) => {
@@ -131,6 +93,7 @@ export default function DZTourGuideSignIn() {
         ? prev.languages.filter((l) => l !== language)
         : [...prev.languages, language],
     }));
+    setErrors((prev) => ({ ...prev, languages: undefined }));
   };
 
   const toggleWilaya = (wilaya) => {
@@ -140,26 +103,39 @@ export default function DZTourGuideSignIn() {
         ? prev.wilayas.filter((w) => w !== wilaya)
         : [...prev.wilayas, wilaya],
     }));
+    setErrors((prev) => ({ ...prev, wilayas: undefined }));
   };
 
-  // validate all
   const validate = () => {
     const newErrors = {};
+    
     if (!formData.languages || formData.languages.length === 0)
       newErrors.languages = "Select at least one language";
+    
     if (!formData.wilayas || formData.wilayas.length === 0)
       newErrors.wilayas = "Select at least one wilaya";
+    
     ["halfDayPrice", "fullDayPrice", "additionalHourPrice"].forEach((k) => {
       const v = (formData[k] || "").trim();
       if (!v) newErrors[k] = "Enter a price";
       else if (!/^\d+$/.test(v)) newErrors[k] = "Price must be a number";
       else if (Number(v) <= 0) newErrors[k] = "Price must be greater than 0";
     });
+    
+    const markup = (formData.customRequestMarkup || "").trim();
+    if (!markup) {
+      newErrors.customRequestMarkup = "Enter a markup percentage";
+    } else if (!/^\d+(\.\d{1,2})?$/.test(markup)) {
+      newErrors.customRequestMarkup = "Enter a valid percentage (e.g., 15 or 15.50)";
+    } else if (Number(markup) < 0 || Number(markup) > 100) {
+      newErrors.customRequestMarkup = "Markup must be between 0 and 100";
+    }
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSignIn = async () => {
+  const handleSignUp = async () => {
     if (!validate()) return;
     
     if (!page1Data) {
@@ -171,50 +147,66 @@ export default function DZTourGuideSignIn() {
     setApiError("");
 
     try {
-      // Merge page1 + page2 data
       const mergedData = { ...page1Data, ...formData };
-
-      // Map frontend field names to backend field names
-      const signupData = {
-        firstname: mergedData.firstName,
-        lastname: mergedData.familyName,
-        email: mergedData.email,
-        password: mergedData.password,
-        phone: mergedData.phone, // Already 9 digits from P1
-        biography: mergedData.biography || "",
-        languages: mergedData.languages || [],
-        coverage_wilayas: mergedData.wilayas || [], // Send wilaya names, backend will convert to IDs
-        half_day_price: mergedData.halfDayPrice,
-        full_day_price: mergedData.fullDayPrice,
-        additional_hour_price: mergedData.additionalHourPrice,
-        custom_request_markup: "0.00", // Default, can be updated later
-        certification_files: mergedData.certificate ? [mergedData.certificate] : [],
-      };
-
-      const response = await AuthAPI.signupGuide(signupData);
-
-      if (response.success) {
-        // Store user_id for email verification
-        if (response.data?.user_id) {
-          sessionStorage.setItem('pending_verification_user_id', response.data.user_id);
-          sessionStorage.setItem('user_email', response.data.email);
-        }
-        // Navigate to verification page
-        navigate("/verifyEmail", { 
-          state: { 
-            email: response.data?.email,
-            message: response.message 
-          } 
+      const formDataToSend = new FormData();
+      
+      formDataToSend.append('firstname', mergedData.firstName);
+      formDataToSend.append('lastname', mergedData.familyName);
+      formDataToSend.append('email', mergedData.email);
+      formDataToSend.append('password', mergedData.password);
+      formDataToSend.append('confirm_password', mergedData.confirmPassword);
+      formDataToSend.append('phone', mergedData.phone);
+      formDataToSend.append('biography', mergedData.biography || '');
+      formDataToSend.append('half_day_price', mergedData.halfDayPrice);
+      formDataToSend.append('full_day_price', mergedData.fullDayPrice);
+      formDataToSend.append('additional_hour_price', mergedData.additionalHourPrice);
+      formDataToSend.append('custom_request_markup', mergedData.customRequestMarkup);
+      
+      mergedData.languages.forEach(lang => {
+        formDataToSend.append('languages', lang);
+      });
+      
+      mergedData.wilayas.forEach(wilaya => {
+        formDataToSend.append('coverage_wilayas', wilaya);
+      });
+      
+      if (mergedData.certificates && mergedData.certificates.length > 0) {
+        mergedData.certificates.forEach(file => {
+          formDataToSend.append('certification_files', file);
         });
       }
-    } catch (error) {
-      console.error("Guide signup error:", error);
-      // Handle validation errors from backend
-      if (error.message && error.message.includes("Validation failed")) {
-        setApiError("Please check all fields and try again.");
-      } else {
-        setApiError(error.message || "Failed to create guide account. Please try again.");
+
+      const response = await fetch('/api/signup/guide/', {
+        method: 'POST',
+        body: formDataToSend,
+      });
+
+      const responseText = await response.text();
+      console.log('Response status:', response.status);
+      console.log('Response body:', responseText);
+
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status} - ${responseText}`);
       }
+
+      const data = JSON.parse(responseText);
+
+      if (data.success) {
+        if (data.data?.user_id) {
+          sessionStorage.setItem('pending_verification_user_id', data.data.user_id);
+          sessionStorage.setItem('user_email', data.data.email);
+        }
+        // Navigate to verification page with email + message
+        navigate('/verifyEmail', { state: { email: data.data?.email, message: data.message } });
+      } else {
+        const errorMsg = data.errors 
+          ? Object.entries(data.errors).map(([k,v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`).join('\n')
+          : data.message || 'Signup failed';
+        setApiError(errorMsg);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      setApiError(error.message);
     } finally {
       setSubmitting(false);
     }
@@ -223,10 +215,9 @@ export default function DZTourGuideSignIn() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {/* Back Button */}
         <div className="mb-4">
           <button
-            onClick={() => navigate("/signupguideP1")}
+            onClick={() => navigate(-1)}
             className="flex items-center text-gray-700 hover:text-gray-900 transition"
           >
             <ArrowLeft size={20} className="mr-2" />
@@ -235,35 +226,46 @@ export default function DZTourGuideSignIn() {
         </div>
 
         <div className="w-full bg-white rounded-2xl shadow-xl p-8">
-          {/* Logo and Header */}
           <div className="text-center mb-8">
-            <div className="flex justify-center mb-1">
-              <img
-                src={logo}
-                alt="TGUIDA Logo"
-                className="w-32  object-contain -my-12 -mt-13"
-              />
+            <div className="flex justify-center mb-4">
+              <div className="w-32 h-16 bg-orange-500 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-2xl">TGUIDA</span>
+              </div>
             </div>
             <h1 className="text-3xl font-extrabold text-gray-900 mb-2">
-              Bienvenue sur Tguida
+              Complete Your Profile
             </h1>
             <p className="text-sm text-gray-600 font-bold">
-              Discover Algeria with our certificated guides
+              Tell us about your services
             </p>
           </div>
 
-          {/* Form */}
           <div className="space-y-4 max-w-md mx-auto">
-            {/* Languages Spoken */}
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                Languages Spoken
+                Biography (Optional)
+              </label>
+              <textarea
+                name="biography"
+                value={formData.biography}
+                onChange={handleInputChange}
+                placeholder="Tell tourists about yourself, your experience, and what makes you a great guide..."
+                rows={3}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all text-sm resize-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                Languages Spoken *
               </label>
               <div className="relative">
                 <button
                   type="button"
                   onClick={() => setLanguagesOpen(!languagesOpen)}
-                  className="w-full px-4 py-2 border rounded-lg flex items-center justify-between hover:border-orange-500 transition focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm autofill:shadow-[inset_0_0_0px_1000px_rgb(255,255,255)]"
+                  className={`w-full px-4 py-2 border rounded-lg flex items-center justify-between hover:border-orange-500 transition focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm ${
+                    errors.languages ? "border-red-500" : "border-gray-300"
+                  }`}
                 >
                   <span className="text-gray-700">
                     {formData.languages.length > 0
@@ -297,7 +299,7 @@ export default function DZTourGuideSignIn() {
               </div>
 
               {errors.languages && (
-                <p className="text-xs text-red-500 mt-0">{errors.languages}</p>
+                <p className="text-xs text-red-500 mt-1">{errors.languages}</p>
               )}
 
               {formData.languages.length > 0 && (
@@ -314,16 +316,17 @@ export default function DZTourGuideSignIn() {
               )}
             </div>
 
-            {/* Coverage Zone (Wilayas) */}
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                Coverage Zone (Wilayas)
+                Coverage Zone (Wilayas) *
               </label>
               <div className="relative">
                 <button
                   type="button"
                   onClick={() => setWilayasOpen(!wilayasOpen)}
-                  className="w-full px-4 py-2 border rounded-lg flex items-center justify-between hover:border-orange-500 transition focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm autofill:shadow-[inset_0_0_0px_1000px_rgb(255,255,255)"
+                  className={`w-full px-4 py-2 border rounded-lg flex items-center justify-between hover:border-orange-500 transition focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm ${
+                    errors.wilayas ? "border-red-500" : "border-gray-300"
+                  }`}
                 >
                   <span className="text-gray-700">
                     {formData.wilayas.length > 0
@@ -357,7 +360,7 @@ export default function DZTourGuideSignIn() {
               </div>
 
               {errors.wilayas && (
-                <p className="text-xs text-red-500 mt-0">{errors.wilayas}</p>
+                <p className="text-xs text-red-500 mt-1">{errors.wilayas}</p>
               )}
 
               {formData.wilayas.length > 0 && (
@@ -374,16 +377,14 @@ export default function DZTourGuideSignIn() {
               )}
             </div>
 
-            {/* Pricing Grid */}
             <div>
               <h3 className="text-lg font-bold text-gray-800 mb-4">
                 Pricing Grid
               </h3>
 
-              {/* Half-day */}
               <div className="mb-4">
                 <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                  Half-day (≤ 4h)
+                  Half-day (≤ 4h) *
                 </label>
                 <div className="relative">
                   <input
@@ -392,14 +393,19 @@ export default function DZTourGuideSignIn() {
                     value={formData.halfDayPrice}
                     onChange={handleInputChange}
                     inputMode="numeric"
-                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm pr-16"
+                    placeholder="e.g., 5000"
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm pr-16 ${
+                      errors.halfDayPrice
+                        ? "border-red-500 focus:ring-red-500"
+                        : "border-gray-300 focus:ring-orange-500"
+                    }`}
                   />
                   <span className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-semibold">
                     DZD
                   </span>
                 </div>
                 {errors.halfDayPrice && (
-                  <p className="text-xs text-red-500 mt-0">
+                  <p className="text-xs text-red-500 mt-1">
                     {errors.halfDayPrice}
                   </p>
                 )}
@@ -408,10 +414,9 @@ export default function DZTourGuideSignIn() {
                 </p>
               </div>
 
-              {/* Full-day */}
               <div className="mb-4">
                 <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                  Full-day (4-8h)
+                  Full-day (4-8h) *
                 </label>
                 <div className="relative">
                   <input
@@ -420,14 +425,19 @@ export default function DZTourGuideSignIn() {
                     value={formData.fullDayPrice}
                     onChange={handleInputChange}
                     inputMode="numeric"
-                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm pr-16"
+                    placeholder="e.g., 8000"
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm pr-16 ${
+                      errors.fullDayPrice
+                        ? "border-red-500 focus:ring-red-500"
+                        : "border-gray-300 focus:ring-orange-500"
+                    }`}
                   />
                   <span className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-semibold">
                     DZD
                   </span>
                 </div>
                 {errors.fullDayPrice && (
-                  <p className="text-xs text-red-500 mt-0">
+                  <p className="text-xs text-red-500 mt-1">
                     {errors.fullDayPrice}
                   </p>
                 )}
@@ -436,10 +446,9 @@ export default function DZTourGuideSignIn() {
                 </p>
               </div>
 
-              {/* Additional hour */}
               <div className="mb-4">
                 <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                  Additional hour
+                  Additional hour *
                 </label>
                 <div className="relative">
                   <input
@@ -448,39 +457,75 @@ export default function DZTourGuideSignIn() {
                     value={formData.additionalHourPrice}
                     onChange={handleInputChange}
                     inputMode="numeric"
-                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm pr-16"
+                    placeholder="e.g., 1500"
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm pr-16 ${
+                      errors.additionalHourPrice
+                        ? "border-red-500 focus:ring-red-500"
+                        : "border-gray-300 focus:ring-orange-500"
+                    }`}
                   />
                   <span className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-semibold">
                     DZD
                   </span>
                 </div>
                 {errors.additionalHourPrice && (
-                  <p className="text-xs text-red-500 mt-0">
+                  <p className="text-xs text-red-500 mt-1">
                     {errors.additionalHourPrice}
                   </p>
                 )}
                 <p className="text-xs text-gray-500 mt-1">Beyond 8 hours</p>
               </div>
+
+              <div className="mb-4">
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                  Custom Request Markup *
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    name="customRequestMarkup"
+                    value={formData.customRequestMarkup}
+                    onChange={handleInputChange}
+                    inputMode="decimal"
+                    placeholder="e.g., 15.00"
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm pr-12 ${
+                      errors.customRequestMarkup
+                        ? "border-red-500 focus:ring-red-500"
+                        : "border-gray-300 focus:ring-orange-500"
+                    }`}
+                  />
+                  <span className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-semibold">
+                    %
+                  </span>
+                </div>
+                {errors.customRequestMarkup && (
+                  <p className="text-xs text-red-500 mt-1">
+                    {errors.customRequestMarkup}
+                  </p>
+                )}
+                <p className="text-xs text-gray-500 mt-1">
+                  Percentage added for custom tour requests (0-100%)
+                </p>
+              </div>
             </div>
 
-            {/* API Error Message */}
             {apiError && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
                 {apiError}
               </div>
             )}
 
-            {/* Sign In Button */}
             <button
-              onClick={handleSignIn}
-              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 rounded-xl transition-colors shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={handleSignUp}
+              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-xl transition-colors shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={submitting}
             >
               <span className="drop-shadow-sm">
                 {submitting ? "Creating Account..." : "Sign up"}
               </span>
             </button>
-            <div className="-mt-1 -mb-3 text-center text-sm text-gray-600">
+            
+            <div className="text-center text-sm text-gray-600">
               Already have an account?
               <a
                 href="/signin"

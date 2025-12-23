@@ -128,11 +128,15 @@ export default function SignInPage() {
     }
   };
 
+  const handleForgotPassword = () => {
+    navigate("/forgot-password");
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <button
-          className="flex items-center text-gray-700 mb-6 hover:text-gray-900 transition-colors "
+          className="flex items-center text-gray-700 mb-6 hover:text-gray-900 transition-colors"
           onClick={() => navigate(-1)}
         >
           <ArrowLeft className="w-5 h-5 mr-2" />
@@ -186,9 +190,13 @@ export default function SignInPage() {
                   value={password}
                   onChange={handlePasswordChange}
                   placeholder="••••••••••"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all text-sm pr-10"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all text-sm pr-10 autofill:shadow-[inset_0_0_0px_1000px_rgb(255,255,255)]"
                 />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors autofill:shadow-[inset_0_0_0px_1000px_rgb(255,255,255)]">
+                <button 
+                  type="button" 
+                  onClick={() => setShowPassword(!showPassword)} 
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
@@ -218,7 +226,11 @@ export default function SignInPage() {
               </div>
             )}
 
-            <button type="submit" disabled={submitting} className="w-full bg-orange-500 py-2 hover:bg-orange-600 text-white font-semibold rounded-xl transition-colors shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed">
+            <button 
+              type="submit" 
+              disabled={submitting} 
+              className="w-full bg-orange-500 py-2 hover:bg-orange-600 text-white font-semibold rounded-xl transition-colors shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               <span className="drop-shadow-sm">{submitting ? "Signing in..." : "Sign In"}</span>
             </button>
           </form>
@@ -226,10 +238,23 @@ export default function SignInPage() {
           <div className="text-center mt-4">
             <p className="text-sm text-gray-600">
               Don't have an Account?{' '}
-              <button onClick={() => navigate('/selectType')} className="text-orange-500 font-semibold hover:text-orange-600 transition-colors">
+              <button 
+                onClick={() => navigate('/selectType')} 
+                className="text-orange-500 font-semibold hover:text-orange-600 transition-colors"
+              >
                 Register
               </button>
             </p>
+          </div>
+
+          {/* Forgot Password Link - Added from nouna's version */}
+          <div className="text-center mt-2">
+            <button
+              onClick={handleForgotPassword}
+              className="text-sm text-orange-500 font-medium hover:text-orange-600 transition-colors"
+            >
+              Forgot Password?
+            </button>
           </div>
         </div>
       </div>

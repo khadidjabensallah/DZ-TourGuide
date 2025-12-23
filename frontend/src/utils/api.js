@@ -40,7 +40,6 @@ export async function apiRequest(endpoint, options = {}) {
         let data = null;
 
         if (contentType.includes('application/json')) {
-            // Safe JSON parse with fallback to text if parsing fails
             try {
                 data = await response.json();
             } catch (err) {
@@ -51,10 +50,8 @@ export async function apiRequest(endpoint, options = {}) {
                 throw parseError;
             }
         } else {
-            // Not JSON (could be HTML error page or plain text). Read text.
             const text = await response.text();
             if (text) {
-                // If server responded with plain text but status is OK, wrap it
                 data = { message: text };
             } else {
                 data = {};
@@ -106,7 +103,6 @@ export const AuthAPI = {
     signupGuide: async (userData) => {
         const formData = new FormData();
         
-        // Add basic fields
         if (userData.firstname) formData.append('firstname', userData.firstname);
         if (userData.lastname) formData.append('lastname', userData.lastname);
         if (userData.email) formData.append('email', userData.email);
@@ -114,23 +110,19 @@ export const AuthAPI = {
         if (userData.phone) formData.append('phone', userData.phone);
         if (userData.biography) formData.append('biography', userData.biography);
         
-        // Handle pricing
         if (userData.half_day_price) formData.append('half_day_price', userData.half_day_price);
         if (userData.full_day_price) formData.append('full_day_price', userData.full_day_price);
         if (userData.additional_hour_price) formData.append('additional_hour_price', userData.additional_hour_price);
         if (userData.custom_request_markup) formData.append('custom_request_markup', userData.custom_request_markup);
         
-        // Handle arrays - languages
         if (userData.languages && Array.isArray(userData.languages)) {
             userData.languages.forEach(lang => formData.append('languages', lang));
         }
         
-        // Handle arrays - coverage_wilayas (send as names, backend will convert)
         if (userData.coverage_wilayas && Array.isArray(userData.coverage_wilayas)) {
             userData.coverage_wilayas.forEach(wilaya => formData.append('coverage_wilayas', wilaya));
         }
         
-        // Handle files - certification_files
         if (userData.certification_files && Array.isArray(userData.certification_files)) {
             userData.certification_files.forEach(file => formData.append('certification_files', file));
         }
@@ -161,6 +153,48 @@ export const AuthAPI = {
     resendVerificationCode: async () => {
         return apiRequest('/resend-verification/', {
             method: 'POST',
+        });
+    },
+    
+    // ✅ Password reset: request sending reset code to email
+    requestPasswordReset: async (email) => {
+        const formData = new FormData();
+        formData.append('email', email);
+        return apiRequest('/forgot-password/', {
+            method: 'POST',
+            body: formData,
+        });
+    },
+
+    // Verify the password reset code. Signature: (code, userId)
+    verifyPasswordResetCode: async (code, userId = null) => {
+        const formData = new FormData();
+        formData.append('verification_code', code);
+        if (userId) formData.append('user_id', userId);
+
+        // Include email fallback from sessionStorage if present. This helps
+        // the backend locate the user when session IDs are missing.
+        try {
+            const email = sessionStorage.getItem('reset_email');
+            if (email) formData.append('email', email);
+        } catch (e) {
+            // sessionStorage may be unavailable in some test environments
+        }
+
+        return apiRequest('/verify-password-reset-code/', {
+            method: 'POST',
+            body: formData,
+        });
+    },
+
+    // ✅ Reset password after verification
+    resetPassword: async (password, confirmPassword = null) => {
+        const formData = new FormData();
+        formData.append('password', password);
+        if (confirmPassword) formData.append('confirm_password', confirmPassword);
+        return apiRequest('/reset-password/', {
+            method: 'POST',
+            body: formData,
         });
     },
 };
@@ -262,4 +296,3 @@ export const GuideAPI = {
         });
     },
 };
-

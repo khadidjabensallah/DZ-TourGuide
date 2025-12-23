@@ -8,6 +8,10 @@ import SelectType from "./Routes/Auth/selectType";
 import Example from "./Layout/example";
 import VerifyEmail from "./Routes/Auth/VerifyEmail";
 import SignIn from "./Routes/Auth/signin";
+import EnterEmailPass from "./Routes/Auth/EnterEmailPass";
+import VerifyResetCode from "./Routes/Auth/VerifyResetCode";
+import ResetPassword from "./Routes/Auth/ResetingPass";
+import PasswordChangedPage from "./Routes/Auth/SuccessResetPass";
 import HeroSection from "./Routes/HomePage/HeroSection";
 import Rootlayout from "./Layout/Rootlayout";
 import ToursSection from "./Routes/HomePage/ToursSection";
@@ -36,4 +40,8 @@ export const router = createBrowserRouter([
   { path: "/selectType", element: <SelectType /> },
   { path: "/verifyEmail", element: <VerifyEmail /> },
   { path: "/signin", element: <SignIn /> },
+  { path: "/forgot-password", element: <EnterEmailPass /> },
+  { path: "/verify-reset", element: <VerifyResetCode /> },
+  { path: "/reset-password", element: <ResetPassword /> },
+  { path: "/password-changed", element: <PasswordChangedPage /> },
 ]);

@@ -86,6 +86,19 @@ DATABASES = {
     }
 }
 
+# Development convenience: when DEBUG=True we often don't have PostgreSQL
+# or psycopg installed in the local environment. To make `runserver`
+# work out-of-the-box for local development, default to SQLite if the
+# environment variable `USE_SQLITE_DEV` is not set to 'false'. This is
+# safe for local testing and reversible for production.
+if DEBUG and os.getenv('USE_SQLITE_DEV', 'True').lower() in ('true', '1', 'yes'):
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -120,12 +133,26 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Email Configuration - Gmail SMTP
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'tguidadz@gmail.com'
-EMAIL_HOST_PASSWORD = 'sbam nzsa oajc xenn'
-DEFAULT_FROM_EMAIL = 'tguidadz@gmail.com'
-SITE_URL = 'http://127.0.0.1:8000'
+# Email Configuration (environment-driven)
+# By default the project will use SMTP. In development (DEBUG=True)
+# the console backend will be used unless `FORCE_REAL_EMAIL` is set to a
+# truthy value in the environment. This lets you test real email delivery
+# without changing code.
+
+EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() in ('true', '1', 'yes')
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'tguidadz@gmail.com')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', 'sbam nzsa oajc xenn')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
+SITE_URL = os.getenv('SITE_URL', 'http://127.0.0.1:8000')
+
+# When DEBUG=True we normally use the console backend so emails are printed
+# to the server log. If you want to force real SMTP delivery in your local
+# environment, export FORCE_REAL_EMAIL=true (or set the env var in your
+# process manager). This is safer than editing code.
+FORCE_REAL_EMAIL = True
+
+if DEBUG and not FORCE_REAL_EMAIL:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
