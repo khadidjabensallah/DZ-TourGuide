@@ -4,6 +4,7 @@ from . import guide_views
 from . import tour_views
 from . import reservations_views
 from . import admin_views
+from . import search_views
 
 urlpatterns = [
     # ========================================
@@ -74,4 +75,11 @@ urlpatterns = [
     path('weather/<int:tour_id>/', views.get_weather, name='get_weather'),
     # Debug/test endpoint for SMTP issues
     path('test-email/', views.test_email, name='test_email'),
+    # ========================================
+    # SEARCH SUGGESTIONS URL (views.py)
+    # ========================================
+
+    path('search/', search_views.search_tours, name='search_tours'),
+    path('search/suggestions/', search_views.get_search_suggestions, name='search_suggestions'),
+    path('search/filters/', search_views.get_available_filters, name='search_filters'),
 ]

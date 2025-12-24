@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.postgres.fields import ArrayField
+
 from django.contrib.auth.hashers import make_password, check_password
 from django.utils import timezone
 from datetime import timedelta
@@ -123,10 +123,10 @@ class Guide(models.Model):
     """Guide profile linked to User"""
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True)
     biography = models.TextField(blank=True, null=True)
-    offering_spoken_languages = ArrayField(
-        models.CharField(max_length=50),
-        default=list
-    )
+    
+    # FIXED: Changed from ArrayField to JSONField for SQLite compatibility
+    offering_spoken_languages = models.JSONField(default=list)
+    
     phone = models.CharField(max_length=13)
     average_rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.00)
     number_of_reviews = models.IntegerField(default=0)
@@ -155,11 +155,10 @@ class Guide(models.Model):
     full_day_price = models.DecimalField(max_digits=10, decimal_places=2)
     half_day_price = models.DecimalField(max_digits=10, decimal_places=2)
     additional_hour_price = models.DecimalField(max_digits=10, decimal_places=2)
-    certifications_files = ArrayField(
-        models.CharField(max_length=500),
-        blank=True,
-        default=list
-    )
+    
+    # FIXED: Changed from ArrayField to JSONField for SQLite compatibility
+    certifications_files = models.JSONField(default=list, blank=True)
+    
     custom_request_markup = models.DecimalField(max_digits=5, decimal_places=2)
 
     class Meta:
@@ -205,6 +204,7 @@ class Guide(models.Model):
         self.reviewed_by = admin_user
         self.reviewed_at = timezone.now()
         self.save()
+    
     def update_rating(self):
         """
         Update guide rating from the average of all individual review ratings across all tours.
@@ -280,10 +280,13 @@ class Tour(models.Model):
     itinerary = models.TextField(
         help_text="Suggested itinerary and route"
     )
+    
+    # FIXED: Changed from ArrayField to TextField for SQLite compatibility
+    # Store as newline-separated text instead of array
     highlights = models.TextField(
-        help_text="Key attractions"
+        help_text="Key attractions (one per line)"
     )
-    whats_included = models.TextField()
+    whats_included = models.TextField(help_text="What's included (one per line)")
     whats_excluded = models.TextField()
     
     # Duration (in hours)
@@ -312,15 +315,15 @@ class Tour(models.Model):
     latitude = models.DecimalField(max_digits=9, decimal_places=6)
     longitude = models.DecimalField(max_digits=9, decimal_places=6)
     
-    # AVAILABLE PLACES - This is what you asked for!
+    # AVAILABLE PLACES
     max_places = models.IntegerField(
         validators=[MinValueValidator(1)],
-        default=10,  # Default value for existing tours
+        default=10,
         help_text="Maximum number of places for this tour (set by guide)"
     )
     available_places = models.IntegerField(
         validators=[MinValueValidator(0)],
-        default=10,  # Default value for existing tours
+        default=10,
         help_text="Number of available places remaining for this tour"
     )
     
@@ -343,6 +346,7 @@ class Tour(models.Model):
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
     class Meta:
         db_table = 'tour'
         ordering = ['-created_at']
@@ -360,8 +364,7 @@ class Tour(models.Model):
         
         # If this is a new tour, set available_places to max_places
         if self.pk is None:
-            # For new tours, available_places should equal max_places
-            if self.available_places is None or self.available_places == 10:  # If using default
+            if self.available_places is None or self.available_places == 10:
                 self.available_places = self.max_places
         
         super().save(*args, **kwargs)
@@ -378,7 +381,6 @@ class Tour(models.Model):
             additional_hours = duration - 8
             return (
                 self.guide.full_day_price + 
-                                self.guide.full_day_price + 
                 (Decimal(str(additional_hours)) * self.guide.additional_hour_price)
             )
     
@@ -424,7 +426,7 @@ class Reservation(models.Model):
         'Tourist',
         on_delete=models.CASCADE,
         related_name='reservations',
-        null=True,  # Temporarily nullable for migration
+        null=True,
         blank=True
     )
     number_of_people = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)])
@@ -433,6 +435,7 @@ class Reservation(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(null=True, blank=True)
     scheduled_time = models.TimeField(null=True, blank=True, help_text="Scheduled time of the tour")
+    
     class Meta:
         db_table = 'reservation'
         ordering = ['-created_at']
@@ -441,22 +444,13 @@ class Reservation(models.Model):
         return f"{self.tour.title} - {self.tourist.user.email} ({self.number_of_people} people)"
     
     def save(self, *args, **kwargs):
-        # Check if this is a new reservation
         is_new = self.pk is None
         
         if is_new:
-            # Check available places
             if not self.tour.has_available_places(self.number_of_people):
                 raise ValueError("Not enough available places for this tour")
             
-            # Calculate price (per person)
             self.final_price = self.tour.calculated_price * Decimal(str(self.number_of_people))
-            
-            # Automatically accept reservation if places are available
-            # Reservation is automatically accepted when available_places < max_places
-            # This means there are still spots available
-            
-            # Decrease available places
             self.tour.available_places -= self.number_of_people
             self.tour.save(update_fields=['available_places'])
             
@@ -464,11 +458,9 @@ class Reservation(models.Model):
 
     @property
     def tour_date(self):
-        """
-        Convenience accessor so that reservation and weather both rely
-        on the tour's scheduled date instead of storing a duplicate.
-        """
         return self.tour.date
+
+
 class Review(models.Model):
     """
     Review - Users can only rate tours, not guides directly.
@@ -503,9 +495,7 @@ class Review(models.Model):
     
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
-        # Update tour rating first
         self.tour.update_rating()
-        # Then update guide rating from all tour ratings
         self.tour.guide.update_rating()
 
 
@@ -514,7 +504,7 @@ class WeatherInfo(models.Model):
     Stores weather information for a specific date and location
     """
     id = models.AutoField(primary_key=True)
-    date = models.DateField()  # The date of the weather forecast
+    date = models.DateField()
     max_temperature = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     min_temperature = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     conditions = models.CharField(max_length=100, blank=True, null=True)
@@ -543,60 +533,50 @@ class WeatherInfo(models.Model):
         from django.utils import timezone
         import os
         
-        # Only get weather if tour is within 5 days
         days_until = (tour_date - timezone.now().date()).days
         if not (0 <= days_until <= 5):
             return None
             
         try:
-            # Check if we have a recent forecast in the database
             weather = cls.objects.filter(
                 date=tour_date,
                 latitude=tour.latitude,
                 longitude=tour.longitude,
-                last_updated__gt=timezone.now() - timedelta(hours=3)  # Cache for 3 hours
+                last_updated__gt=timezone.now() - timedelta(hours=3)
             ).first()
             
             if weather:
                 return weather
                 
-            # If not in cache, fetch from OpenWeatherMap API
-            # Check for both OPENWEATHERMAP_API_KEY and OPENWEATHER_API_KEY for compatibility
             api_key = os.getenv('OPENWEATHERMAP_API_KEY') or os.getenv('OPENWEATHER_API_KEY')
             if not api_key:
                 print("Warning: OPENWEATHERMAP_API_KEY or OPENWEATHER_API_KEY not set")
                 return None
                 
-            # Get 5-day forecast (3-hour intervals)
             response = requests.get(
                 "https://api.openweathermap.org/data/2.5/forecast",
                 params={
                     'lat': float(tour.latitude),
                     'lon': float(tour.longitude),
                     'appid': api_key,
-                    'units': 'metric',  # Get temperature in Celsius
-                    'cnt': 40  # 5 days * 8 forecasts per day = 40
+                    'units': 'metric',
+                    'cnt': 40
                 }
             )
             response.raise_for_status()
             data = response.json()
             
-            # Validate response structure
             if 'list' not in data or not data['list']:
                 print(f"No forecast list in API response for tour {tour.id}")
                 return None
             
-            # Find the forecast closest to noon on the target date
-            # Convert tour_date to datetime at noon (UTC)
             target_datetime = datetime.combine(tour_date, datetime.min.time().replace(hour=12))
-            # Make it timezone-aware (UTC)
             target_datetime = timezone.make_aware(target_datetime)
             target_timestamp = int(target_datetime.timestamp())
             
             closest_forecast = None
             min_diff = float('inf')
             
-            # Find forecast closest to target time
             for forecast in data['list']:
                 forecast_timestamp = forecast.get('dt', 0)
                 time_diff = abs(forecast_timestamp - target_timestamp)
@@ -608,22 +588,17 @@ class WeatherInfo(models.Model):
                 print(f"No forecast found for {tour_date} in API response")
                 return None
             
-            # Extract weather data - handle both forecast formats
             try:
                 main_data = closest_forecast.get('main', {})
                 weather_data = closest_forecast.get('weather', [{}])[0]
                 
-                # Temperature: forecast API uses 'temp', 'temp_max', 'temp_min'
-                # For a single forecast point, temp_max and temp_min might not exist
-                # Use 'temp' as the main temperature, and try to get max/min
                 temp = main_data.get('temp')
-                temp_max = main_data.get('temp_max', temp)  # Fallback to temp if max not available
-                temp_min = main_data.get('temp_min', temp)  # Fallback to temp if min not available
+                temp_max = main_data.get('temp_max', temp)
+                temp_min = main_data.get('temp_min', temp)
                 
                 conditions = weather_data.get('description', 'N/A')
                 icon = weather_data.get('icon', '')
                 
-                # Create or update weather info
                 weather, created = cls.objects.update_or_create(
                     date=tour_date,
                     latitude=tour.latitude,
@@ -639,14 +614,10 @@ class WeatherInfo(models.Model):
                 return weather
             except (KeyError, IndexError, ValueError, TypeError) as e:
                 print(f"Error parsing weather data for tour {tour.id}: {type(e).__name__}: {str(e)}")
-                print(f"Forecast data structure: {closest_forecast}")
                 return None
                 
         except requests.exceptions.RequestException as e:
             print(f"Network error getting weather for tour {tour.id}: {str(e)}")
-            return None
-        except KeyError as e:
-            print(f"Data parsing error getting weather for tour {tour.id}: {str(e)}")
             return None
         except Exception as e:
             print(f"Error getting weather for tour {tour.id}: {type(e).__name__}: {str(e)}")
