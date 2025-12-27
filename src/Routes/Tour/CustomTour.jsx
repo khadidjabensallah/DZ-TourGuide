@@ -134,28 +134,6 @@ export default function CustomRequestForm() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-        <button
-          onClick={handleCancel}
-          className="flex items-center text-gray-700 hover:text-gray-900 font-medium"
-        >
-          <ArrowLeft className="w-5 h-5 mr-2" />
-          Back
-        </button>
-        <div className="flex gap-3">
-          <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-            <div className="w-5 h-5 rounded-full border-2 border-gray-400 flex items-center justify-center">
-              <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
-            </div>
-            <span className="font-medium">My Profile</span>
-          </button>
-          <button className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium">
-            Log out
-          </button>
-        </div>
-      </div>
-
       {/* Main Content */}
       <div className="max-w-5xl mx-auto px-6 py-8">
         <h1 className="text-4xl font-bold text-gray-900 mb-2">

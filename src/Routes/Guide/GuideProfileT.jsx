@@ -1,13 +1,5 @@
 import React, { useState } from "react";
-import {
-  Star,
-  Clock,
-  MapPin,
-  Trash2,
-  Edit,
-  FileText,
-  ChevronLeft,
-} from "lucide-react";
+import { Star, Clock, MapPin, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 // Sidebar Component
@@ -137,7 +129,7 @@ const AvisCard = ({ avis }) => {
 };
 
 // Tour Card Component
-const TourCard = ({ tour, onDelete, onEdit, onView }) => {
+const TourCard = ({ tour, onView }) => {
   return (
     <div
       onClick={() => onView && onView(tour.id)}
@@ -150,16 +142,6 @@ const TourCard = ({ tour, onDelete, onEdit, onView }) => {
             alt={tour.title}
             className="w-40 h-40 object-cover rounded-lg"
           />
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit(tour.id);
-            }}
-            className="absolute -top-2 -right-2 bg-white rounded-full p-2 hover:bg-gray-100 transition-colors shadow-lg"
-            title="Edit Tour"
-          >
-            <Edit className="w-4 h-4 text-orange-500" />
-          </button>
         </div>
         <div className="flex-1">
           <div className="flex justify-between items-start mb-2">
@@ -198,28 +180,6 @@ const TourCard = ({ tour, onDelete, onEdit, onView }) => {
                 <span className="text-gray-600">{tour.location}</span>
               </div>
             </div>
-            <div className="flex gap-2">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete(tour.id);
-                }}
-                className="px-4 py-2 border border-gray-300 rounded-lg flex items-center gap-2 hover:bg-gray-50"
-              >
-                <Trash2 size={16} />
-                Delete
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onEdit(tour.id);
-                }}
-                className="px-4 py-2 bg-orange-100 text-orange-600 rounded-lg flex items-center gap-2 hover:bg-orange-200"
-              >
-                <Edit size={16} />
-                Edit
-              </button>
-            </div>
           </div>
         </div>
       </div>
@@ -228,33 +188,25 @@ const TourCard = ({ tour, onDelete, onEdit, onView }) => {
 };
 
 // Profile Header Component
-const ProfileHeader = ({ guideData, onEditProfile }) => {
+const ProfileHeader = ({ guideData }) => {
   return (
     <div className="bg-orange-500 rounded-lg p-6 mb-6 text-white">
-      <div className="flex items-start gap-6">
+      <div className="flex items-center gap-5">
         <div className="relative">
           <img
             src={guideData.profileImage}
             alt={guideData.name}
-            className="w-32 h-32 rounded-full object-cover border-4 border-white"
+            className="w-24 h-24 rounded-full object-cover border-4 border-white"
           />
-          <button
-            onClick={onEditProfile}
-            className="absolute -top-2 -right-2 bg-white rounded-full p-2 hover:bg-gray-100 transition-colors shadow-lg"
-            title="Edit Profile"
-          >
-            <Edit className="w-5 h-5 text-orange-500" />
-          </button>
         </div>
-        <div className="flex-1"></div>
         <div className="flex-1">
-          <h2 className="text-3xl font-bold mb-2">{guideData.name}</h2>
-          <div className="flex items-center gap-2 mb-4">
-            <span className="text-2xl font-bold">{guideData.rating}</span>
-            <Star className="fill-white" size={20} />
+          <h2 className="text-2xl font-bold mb-2">{guideData.name}</h2>
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-xl font-bold">{guideData.rating}</span>
+            <Star className="fill-white" size={18} />
             <span className="text-sm">({guideData.totalReviews} avis)</span>
           </div>
-          <p className="mb-4 text-orange-100">{guideData.bio}</p>
+          <p className="mb-3 text-orange-100 text-sm">{guideData.bio}</p>
           <div className="flex items-center gap-4 text-sm">
             <div className="flex items-center gap-2">
               🗣️ {guideData.languages.join(", ")}
@@ -270,7 +222,7 @@ const ProfileHeader = ({ guideData, onEditProfile }) => {
 };
 
 // Main Component
-const GuideProfileG = () => {
+const TouristProfile = () => {
   const navigate = useNavigate();
 
   // Mock data - easy to replace with API calls later
@@ -302,7 +254,7 @@ const GuideProfileG = () => {
 
   const [activeTab, setActiveTab] = useState("tours"); // 'tours' or 'avis'
 
-  const [tours, setTours] = useState([
+  const [tours] = useState([
     {
       id: 1,
       title: "Visit of the Casbah of Algiers – UNESCO Heritage",
@@ -368,76 +320,25 @@ const GuideProfileG = () => {
     },
   ]);
 
-  const handleDelete = (tourId) => {
-    setTours(tours.filter((tour) => tour.id !== tourId));
-  };
-
-  const handleEdit = (tourId) => {
-    // Navigate to edit tour page (same pattern as profile edit button)
-    navigate(`/editTour/${tourId}`);
-  };
-
-  const handleAddTour = () => {
-    console.log("Add new tour");
-    // Will be linked to add tour functionality
-    navigate("/CreateTour");
-  };
-
-  const handleEditProfile = () => {
-    navigate("/editProfile");
+  const handleCustomRequest = () => {
+    navigate("/customTour");
   };
 
   return (
     <div className="min-h-screen bg-blue-50">
-      {/* Header */}
-      <header className="bg-gray-200 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-8">
-          <button className="flex items-center gap-2 text-gray-700 hover:text-gray-900">
-            <ChevronLeft size={20} />
-            <span className="font-medium">BOTTON</span>
-          </button>
-          <nav className="flex gap-6">
-            <a href="#" className="text-gray-700 hover:text-gray-900">
-              Reservations
-            </a>
-            <a href="#" className="text-gray-700 hover:text-gray-900">
-              My Profile
-            </a>
-            <a
-              href="#"
-              className="text-gray-700 hover:text-gray-900 font-medium"
-            >
-              My Tours
-            </a>
-          </nav>
-        </div>
-        <div className="flex items-center gap-4">
-          <button className="px-4 py-2 border border-gray-400 rounded-lg flex items-center gap-2 hover:bg-gray-100">
-            <span>⚙️</span>
-            <span>My Profile</span>
-          </button>
-          <button className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600">
-            Log out
-          </button>
-        </div>
-      </header>
-
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 py-8">
         <div className="flex justify-end mb-4">
           <button
-            onClick={handleAddTour}
+            onClick={handleCustomRequest}
             className="px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 font-medium"
           >
-            Add new Tour
+            Custom Request
           </button>
         </div>
 
         {/* Profile Header */}
-        <ProfileHeader
-          guideData={guideData}
-          onEditProfile={handleEditProfile}
-        />
+        <ProfileHeader guideData={guideData} />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Sidebar */}
@@ -482,8 +383,6 @@ const GuideProfileG = () => {
                       <TourCard
                         key={tour.id}
                         tour={tour}
-                        onDelete={handleDelete}
-                        onEdit={handleEdit}
                         onView={(id) => navigate(`/tour/${id}`)}
                       />
                     ))}
@@ -504,4 +403,4 @@ const GuideProfileG = () => {
   );
 };
 
-export default GuideProfileG;
+export default TouristProfile;
