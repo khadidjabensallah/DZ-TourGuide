@@ -1,7 +1,9 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { MapPin, Calendar, Star, Clock } from "lucide-react";
 
 export default function PopularTours() {
+  const navigate = useNavigate();
   const tours = [
     {
       id: 1,
@@ -113,7 +115,7 @@ export default function PopularTours() {
   ];
 
   return (
-    <div className="py-16 px-8 bg-gradient-to-b from-stone-50 to-white">
+    <div id="tours" className="py-16 px-8 bg-blue-50">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12 mt-0">
@@ -135,14 +137,16 @@ export default function PopularTours() {
         </div>
 
         {/* Tours Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-15 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20 mb-8">
           {tours.map((tour) => (
             <div
               key={tour.id}
-              className="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200"
+              onClick={() => navigate(`/tour/${tour.id}`)}
+              role="button"
+              className="cursor-pointer bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200"
             >
               {/* Image */}
-              <div className="relative h-64 overflow-hidden">
+              <div className="relative h-48 overflow-hidden">
                 <img
                   src={tour.image}
                   alt={tour.title}

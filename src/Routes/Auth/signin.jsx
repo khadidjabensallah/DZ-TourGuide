@@ -1,10 +1,13 @@
 import React, { useState } from "react";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
-// Backend API base URL - adjust this to match your Django server
+// Backend API base URL
 const API_BASE_URL = "http://localhost:8000";
 
 export default function SignInPage() {
+  const navigate = useNavigate();
+
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -22,11 +25,7 @@ export default function SignInPage() {
     const value = e.target.value;
     setEmail(value);
     setErrorMessage("");
-    if (value.length > 0) {
-      setEmailError(!validateEmail(value));
-    } else {
-      setEmailError(false);
-    }
+    setEmailError(value.length > 0 && !validateEmail(value));
   };
 
   const handlePasswordChange = (e) => {
@@ -42,18 +41,15 @@ export default function SignInPage() {
   };
 
   const handleSubmit = async () => {
-    // Reset errors
     setErrorMessage("");
     setPasswordError("");
 
-    // Validate email
     if (!validateEmail(email)) {
       setEmailError(true);
       return;
     }
 
-    // Validate password
-    if (!password || password.trim() === "") {
+    if (!password.trim()) {
       setPasswordError("Password is required");
       return;
     }
@@ -61,12 +57,10 @@ export default function SignInPage() {
     setIsLoading(true);
 
     try {
-      // Create FormData to send to backend
       const formData = new FormData();
       formData.append("email", email.trim());
       formData.append("password", password);
 
-      // Make API call to backend
       const response = await fetch(`${API_BASE_URL}/signin/`, {
         method: "POST",
         body: formData,
@@ -76,31 +70,22 @@ export default function SignInPage() {
       const data = await response.json();
 
       if (data.success) {
-        // Store user data in localStorage
         localStorage.setItem("user", JSON.stringify(data.data));
         localStorage.setItem("isAuthenticated", "true");
 
-        // Navigate based on user type
-        console.log("Login successful:", data.data.user_type);
+        // Example redirect
+        navigate("/dashboard");
       } else {
-        setErrorMessage(data.message || "Sign in failed. Please try again.");
-        if (data.message?.includes("password")) {
+        setErrorMessage(data.message || "Sign in failed");
+        if (data.message?.toLowerCase().includes("password")) {
           setPasswordError(data.message);
         }
       }
     } catch (error) {
-      console.error("Sign in error:", error);
-      setErrorMessage(
-        "Network error. Please check your connection and try again."
-      );
+      setErrorMessage("Network error. Please try again.");
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleForgotPassword = () => {
-    console.log("Forgot password clicked");
-    // Add your forgot password logic here
   };
 
   return (
@@ -108,26 +93,22 @@ export default function SignInPage() {
       <div className="w-full max-w-md">
         {/* Back Button */}
         <button
-          className="flex items-center text-gray-700 mb-6 hover:text-gray-900 transition-colors"
-          onClick={() => console.log("Back clicked")}
+          className="flex items-center text-gray-700 mb-6 hover:text-gray-900"
+          onClick={() => navigate(-1)}
         >
           <ArrowLeft className="w-5 h-5 mr-2" />
           <span className="text-sm">Back</span>
         </button>
 
         <div className="bg-white rounded-2xl shadow-xl p-8">
-          {/* Logo and Title */}
+          {/* Logo */}
           <div className="text-center mb-8">
-            {/* Tguida Logo */}
-            <div className="flex items-center justify-center mb-4">
-              <img
-                src="https://i.postimg.cc/gkjD1gq7/logo.png"
-                alt="Tguida Logo"
-                className="w-32 object-contain -my-12 -mt-13"
-              />
-            </div>
-
-            <h1 className="text-3xl font-extrabold text-gray-900 mb-2">
+            <img
+              src="https://i.postimg.cc/gkjD1gq7/logo.png"
+              alt="Tguida Logo"
+              className="w-32 mx-auto -my-12"
+            />
+            <h1 className="text-3xl font-extrabold text-gray-900 mt-6">
               Bienvenue sur Tguida
             </h1>
             <p className="text-sm text-gray-600 font-bold">
@@ -136,23 +117,19 @@ export default function SignInPage() {
           </div>
 
           {/* Form */}
-          <div className="space-y-4 max-w-md mx-auto">
-            {/* Email Field */}
+          <div className="space-y-4">
+            {/* Email */}
             <div>
-              <label
-                htmlFor="email"
-                className="block text-xs font-semibold text-black-700 mb-1.5"
-              >
+              <label className="block text-xs font-semibold mb-1.5">
                 Email
               </label>
               <input
                 type="email"
-                id="email"
                 value={email}
                 onChange={handleEmailChange}
                 onKeyPress={handleKeyPress}
                 placeholder="Enter your email"
-                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm ${
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 outline-none text-sm ${
                   emailError
                     ? "border-red-500 focus:ring-red-500"
                     : "border-gray-300 focus:ring-orange-500"
@@ -160,28 +137,24 @@ export default function SignInPage() {
               />
               {emailError && (
                 <p className="text-red-500 text-xs mt-1">
-                  Please enter a valid email address
+                  Please enter a valid email
                 </p>
               )}
             </div>
 
-            {/* Password Field */}
+            {/* Password */}
             <div>
-              <label
-                htmlFor="password"
-                className="block text-xs font-semibold text-black-700 mb-1.5"
-              >
+              <label className="block text-xs font-semibold mb-1.5">
                 Password
               </label>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
-                  id="password"
                   value={password}
                   onChange={handlePasswordChange}
                   onKeyPress={handleKeyPress}
-                  placeholder="••••••••••"
-                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm pr-10 ${
+                  placeholder="••••••••"
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 outline-none text-sm pr-10 ${
                     passwordError
                       ? "border-red-500 focus:ring-red-500"
                       : "border-gray-300 focus:ring-orange-500"
@@ -190,7 +163,7 @@ export default function SignInPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400"
                 >
                   {showPassword ? (
                     <EyeOff className="w-4 h-4" />
@@ -199,48 +172,45 @@ export default function SignInPage() {
                   )}
                 </button>
               </div>
+
               {passwordError && (
                 <p className="text-red-500 text-xs mt-1">{passwordError}</p>
               )}
-
-              {/* General Error Message */}
               {errorMessage && (
                 <p className="text-red-500 text-xs mt-1">{errorMessage}</p>
               )}
 
-              {/* Forgot Password Link */}
+              {/* Forgot password */}
               <div className="text-right mt-2">
                 <button
                   type="button"
-                  onClick={handleForgotPassword}
-                  className="text-xs text-orange-500 hover:text-orange-600 font-semibold transition-colors"
+                  onClick={() => navigate("/forgotpassword")}
+                  className="text-xs text-orange-500 font-semibold"
                 >
                   Forgot Password?
                 </button>
               </div>
             </div>
 
-            {/* Submit Button */}
+            {/* Submit */}
             <button
               onClick={handleSubmit}
               disabled={isLoading}
-              className={`w-full bg-orange-500 py-2 hover:bg-orange-600 text-white font-semibold rounded-xl transition-colors shadow-lg hover:shadow-xl ${
-                isLoading ? "opacity-70 cursor-not-allowed" : ""
+              className={`w-full bg-orange-500 py-2 text-white font-semibold rounded-xl hover:bg-orange-600 ${
+                isLoading && "opacity-70 cursor-not-allowed"
               }`}
             >
-              <span className="drop-shadow-sm">
-                {isLoading ? "Signing in..." : "Sign In"}
-              </span>
+              {isLoading ? "Signing in..." : "Sign In"}
             </button>
           </div>
 
-          {/* Register Link */}
+          {/* Register */}
           <div className="text-center mt-4">
             <p className="text-sm text-gray-600">
-              Don't have an Account?{" "}
+              Don&apos;t have an account?{" "}
               <button
-                onClick={() => console.log("Register clicked")}
-                className="text-orange-500 font-semibold hover:text-orange-600 transition-colors"
+                onClick={() => navigate("/selecttype")}
+                className="text-orange-500 font-semibold"
               >
                 Register
               </button>

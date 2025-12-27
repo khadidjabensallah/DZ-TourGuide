@@ -4,7 +4,7 @@ import { Facebook, Twitter, Instagram, Github } from "lucide-react";
 
 export default function Footer() {
   return (
-    <footer className="bg-slate-900 text-white">
+    <footer id="footer" className="bg-slate-900 text-white">
       <div className="max-w-7xl mx-auto px-8 py-16">
         {/* Main Footer Content */}
         <div className="flex justify-between items-center mb-12">

@@ -11,12 +11,6 @@ import Rootlayout from "./Layout/Rootlayout";
 import ToursSection from "./Routes/HomePage/ToursSection";
 import TravelDestinations from "./Routes/HomePage/TravelDestinations";
 import CreateNewTour from "./Routes/Tour/createTour";
-import GuideProfileG from "./Routes/Guide/GuideProfile";
-import EditProfile from "./Routes/Guide/editProfile";
-import EditTour from "./Routes/Guide/editTour";
-import TourDetail from "./Routes/Tour/TourDetails";
-import SearchPage from "./Routes/HomePage/Serch";
-import CustomTour from "./Routes/Tour/CustomTour";
 export const router = createBrowserRouter([
   {
     path: "",
@@ -41,11 +35,5 @@ export const router = createBrowserRouter([
   { path: "/selectType", element: <SelectType /> },
   { path: "/verifyEmail", element: <VerifyEmail /> },
   { path: "/signin", element: <SignIn /> },
-  { path: "/createtour", element: <CreateNewTour /> },
-  { path: "/GuideProfileG", element: <GuideProfileG /> },
-  { path: "/editProfile", element: <EditProfile /> },
-  { path: "/editTour/:id", element: <EditTour /> },
-  { path: "/tour/:id", element: <TourDetail /> },
-  { path: "/searchPage", element: <SearchPage /> },
-  {path:"/CustomTour", element:<CustomTour/>}
+  { path: "/create", element: <CreateNewTour /> },
 ]);
