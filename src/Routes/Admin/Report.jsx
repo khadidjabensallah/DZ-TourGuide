@@ -13,8 +13,8 @@ export default function Reports() {
           <div className="flex items-center gap-8">
             
             <nav className="flex gap-6 items-center">
-              <a href="#" className="text-gray-600 hover:text-gray-900 font-medium text-sm">Dashboard</a>
               <img src="/assets/logo.png" alt="DZ-TourGuide Logo" className="h-8" />
+              <a href="#" className="text-gray-600 hover:text-gray-900 font-medium text-sm">Dashboard</a>
               <a href="#" className="text-gray-600 hover:text-gray-900 font-medium text-sm">Guide Validation</a>
               <a href="#" className="text-orange-500 font-medium text-sm border-b-2 border-orange-500">Reports</a>
               <a href="#" className="text-gray-600 hover:text-gray-900 font-medium text-sm">User Management</a>

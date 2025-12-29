@@ -6,6 +6,7 @@ import SuccessResetPass from "./Routes/Auth/SuccessResetPass";
 import ResetingPass from "./Routes/Auth/ResetingPass";
 import VerifyEmailPass from "./Routes/Auth/Verifyemailpass";
 import Report from "./Routes/Admin/Report";
+import Stats from "./Routes/Admin/Stats";
 export const router = createBrowserRouter([
   {
     path: "/signin",
@@ -34,5 +35,9 @@ export const router = createBrowserRouter([
   {
     path: "/Report",
     element: <Report />,
+  },
+  {
+    path: "/Stats",
+    element: <Stats />,
   },
 ]);
