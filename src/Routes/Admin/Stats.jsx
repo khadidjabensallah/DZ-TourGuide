@@ -90,7 +90,7 @@ export default function AdminDashboard() {
 
           <div className="flex items-center gap-4">
             <div className="text-right">
-              <p className="text-sm font-medium text-gray-900">Admin Name</p>
+              <p className="text-sm font-medium text-gray-900">Admin</p>
               <p className="text-xs text-gray-600">admin@dz-tourguide.com</p>
             </div>
             <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
