@@ -60,7 +60,8 @@ export default function Header() {
               About
             </button>
             <button
-              onClick={() => scrollToSection("footer")}
+              // onClick={() => scrollToSection("contact")}
+              onClick={() => navigate("/Contact")}
               className="text-[#004DC7] hover:text-[#E74B02] font-medium text-base duration-255"
             >
               Contact

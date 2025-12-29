@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import { Star, Clock, MapPin, FileText } from "lucide-react";
+import { Star, Clock, MapPin, Flag } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 // Sidebar Component
-const Sidebar = ({ pricingGrid, coverageZone, certifications }) => {
+const Sidebar = ({ pricingGrid, coverageZone, onReport }) => {
   return (
     <div className="space-y-6">
       {/* Pricing Grid */}
@@ -71,22 +71,22 @@ const Sidebar = ({ pricingGrid, coverageZone, certifications }) => {
         </div>
       </div>
 
-      {/* Certifications */}
+      {/* Report Guide Button */}
       <div className="bg-white rounded-lg p-6 shadow">
         <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-          🎓 Certifications
+          ⚠️ Report Issues
         </h3>
-        <div className="space-y-3">
-          {certifications.map((cert, index) => (
-            <div
-              key={index}
-              className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer"
-            >
-              <FileText className="text-gray-500" size={20} />
-              <span className="text-sm text-gray-700">{cert}</span>
-            </div>
-          ))}
-        </div>
+        <p className="text-gray-600 text-sm mb-4">
+          Found an issue with this guide? Help us maintain quality by reporting
+          any concerns.
+        </p>
+        <button
+          onClick={onReport}
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-red-50 text-red-600 border border-red-200 rounded-lg hover:bg-red-100 hover:border-red-300 transition-colors font-medium text-sm"
+        >
+          <Flag size={16} />
+          Report Guide
+        </button>
       </div>
     </div>
   );
@@ -247,11 +247,6 @@ const TouristProfile = () => {
 
   const [coverageZone] = useState(["Alger", "Tipaza", "Blida"]);
 
-  const [certifications] = useState([
-    "Certificate_Hamid1.pdf",
-    "Certificate_Hamid2.pdf",
-  ]);
-
   const [activeTab, setActiveTab] = useState("tours"); // 'tours' or 'avis'
 
   const [tours] = useState([
@@ -324,6 +319,13 @@ const TouristProfile = () => {
     navigate("/customTour");
   };
 
+  const handleReportGuide = () => {
+    // Navigate to report page or show modal
+    navigate("/report", { state: { guideName: guideData.name } });
+    // Alternatively, you could open a modal:
+    // setShowReportModal(true);
+  };
+
   return (
     <div className="min-h-screen bg-blue-50">
       {/* Main Content */}
@@ -345,7 +347,7 @@ const TouristProfile = () => {
           <Sidebar
             pricingGrid={pricingGrid}
             coverageZone={coverageZone}
-            certifications={certifications}
+            onReport={handleReportGuide}
           />
 
           {/* Tours Section */}

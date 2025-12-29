@@ -7,6 +7,7 @@ import {
   User,
   Star,
   MessageCircle,
+  X,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -15,6 +16,8 @@ const MyGuideTours = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("custom");
   const [activeHistoryTab, setActiveHistoryTab] = useState("custom");
+  const [showDeclineModal, setShowDeclineModal] = useState(false);
+  const [declineReason, setDeclineReason] = useState("");
 
   const stats = [
     { label: "Upcoming visits", value: "1" },
@@ -174,10 +177,33 @@ const MyGuideTours = () => {
     },
   ];
 
+  const handleDeclineClick = () => {
+    setShowDeclineModal(true);
+  };
+
+  const handleCancelDecline = () => {
+    setShowDeclineModal(false);
+    setDeclineReason("");
+  };
+
+  const handleConfirmDecline = () => {
+    // Here you would typically send the decline reason to your backend
+    console.log("Declining request with reason:", declineReason);
+    // You can add your API call here
+    // For now, just close the modal
+    setShowDeclineModal(false);
+    setDeclineReason("");
+    // You might want to show a success message or update the UI
+  };
+
+  const handleAccept = () => {
+    // Handle accept logic here
+    console.log("Accepting request");
+    // Add your API call here
+  };
+
   return (
     <div className="min-h-screen bg-orange-50/30">
-      {" "}
-      {/* Softer orange: 30% opacity */}
       {/* REMOVED: <Header /> - This is now provided by ProfileLayout */}
       <div className="max-w-7xl mx-auto px-6 py-8">
         <h1 className="text-4xl font-bold mb-8">My Guide Profile</h1>
@@ -301,10 +327,16 @@ const MyGuideTours = () => {
 
                   {/* SMALLER ACCEPT/DECLINE BUTTONS */}
                   <div className="flex gap-3">
-                    <button className="flex-1 bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600 font-medium text-sm">
+                    <button
+                      onClick={handleAccept}
+                      className="flex-1 bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600 font-medium text-sm"
+                    >
                       Accept
                     </button>
-                    <button className="flex-1 bg-white border border-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-50 font-medium text-sm">
+                    <button
+                      onClick={handleDeclineClick}
+                      className="flex-1 bg-white border border-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-50 font-medium text-sm"
+                    >
                       Decline
                     </button>
                   </div>
@@ -322,7 +354,7 @@ const MyGuideTours = () => {
                   {tourHistory.map((tour, index) => (
                     <div
                       key={index}
-                      className="border border-gray-200 rounded-lg p-6 relative bg-orange-50/30" // SOFT ORANGE BACKGROUND
+                      className="border border-gray-200 rounded-lg p-6 relative bg-orange-50/30"
                     >
                       <span
                         className={`absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-medium ${
@@ -409,7 +441,7 @@ const MyGuideTours = () => {
                 {publicTours.map((tour, index) => (
                   <div
                     key={index}
-                    className="border border-gray-200 rounded-lg p-6 bg-orange-50/30" // SOFT ORANGE BACKGROUND
+                    className="border border-gray-200 rounded-lg p-6 bg-orange-50/30"
                   >
                     <div className="flex justify-between items-start mb-4">
                       <h3 className="text-lg font-bold">{tour.title}</h3>
@@ -459,6 +491,48 @@ const MyGuideTours = () => {
           )}
         </div>
       </div>
+
+      {/* Decline Modal */}
+      {showDeclineModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-orange-50 rounded-lg max-w-2xl w-full p-8">
+            <h2 className="text-3xl font-bold mb-2 text-center">
+              Rejection Reason
+            </h2>
+            <p className="text-gray-600 text-center mb-6">
+              optional: You can state your reason for refusing in order to find
+              another arrangement.
+            </p>
+
+            <div className="bg-white rounded-lg p-6">
+              <label className="block text-lg font-bold mb-3">
+                Rejection reasons
+              </label>
+              <textarea
+                value={declineReason}
+                onChange={(e) => setDeclineReason(e.target.value)}
+                placeholder="Ex: hour Availability...."
+                className="w-full border border-gray-300 rounded-lg p-4 h-32 resize-none focus:outline-none focus:ring-2 focus:ring-orange-400"
+              />
+
+              <div className="flex gap-4 mt-6">
+                <button
+                  onClick={handleCancelDecline}
+                  className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-lg hover:bg-gray-200 font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmDecline}
+                  className="flex-1 bg-orange-500 text-white py-3 rounded-lg hover:bg-orange-600 font-medium"
+                >
+                  Submit
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
