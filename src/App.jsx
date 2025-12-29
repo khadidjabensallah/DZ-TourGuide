@@ -8,6 +8,7 @@ import VerifyEmailPass from "./Routes/Auth/Verifyemailpass";
 import Report from "./Routes/Admin/Report";
 import Stats from "./Routes/Admin/Stats";
 import UserMgmt from "./Routes/Admin/UserMgmt";
+import PendGuide from "./Routes/Admin/PendGuide";
 export const router = createBrowserRouter([
   {
     path: "/signin",
@@ -45,4 +46,8 @@ export const router = createBrowserRouter([
     path: "/UserMgmt",
     element: <UserMgmt />,
   },
+  {
+      path: "/PendGuide",
+      element: <PendGuide />,
+    },
 ]);
