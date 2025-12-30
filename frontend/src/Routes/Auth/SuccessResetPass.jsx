@@ -14,7 +14,7 @@ export default function SuccessResetPassword() {
     if (autoSignedIn && userData) {
       const timer = setTimeout(() => {
         if (userData.user_type === 'guide') {
-          navigate(`/guide/${userData.user_id}/dashboard`);
+          navigate('/GuideProfileG');
         } else {
           navigate('/');
         }

@@ -34,7 +34,10 @@ export default function TravelDestinations() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#FAF5F1] py-20 px-4 -mt-4">
+    <div
+      id="destinations"
+      className="min-h-screen bg-[#FAF5F1] py-20 px-4 -mt-4"
+    >
       <div className="max-w-6xl mx-auto">
         {/* Header Section */}
         <div className="text-center mb-16 -mt-[60px]">

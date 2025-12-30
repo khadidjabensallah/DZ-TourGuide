@@ -3,6 +3,7 @@ from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
+from django.utils import timezone
 from django.core.files.storage import FileSystemStorage
 from django.conf import settings
 import json
@@ -10,7 +11,7 @@ import os
 import uuid
 from decimal import Decimal
 from .models import Guide, Tour, Wilaya
-# ========================================
+#========================================
 # GUIDE - CREATE TOUR
 # ========================================
 @csrf_exempt
@@ -20,6 +21,12 @@ def guide_create_tour(request, guide_id):
     Guide creates a new tour
     """
     guide = get_object_or_404(Guide, user_id=guide_id)
+    # Only approved and verified guides can create tours
+    if not (guide.approval_status == 'approved' and guide.is_verified and guide.user.isActive):
+        return JsonResponse({
+            'success': False,
+            'message': 'Your guide account is not approved by admin. You cannot create tours yet.'
+        }, status=403)
     
     # Get data from request
     title = request.POST.get('title')
@@ -32,13 +39,14 @@ def guide_create_tour(request, guide_id):
     estimated_duration = request.POST.get('estimated_duration')
     wilaya_code = request.POST.get('wilaya_code')
     starting_point = request.POST.get('starting_point')
-    latitude = request.POST.get('latitude')
-    longitude = request.POST.get('longitude')
+    latitude = request.POST.get('latitude')  # Optional
+    longitude = request.POST.get('longitude')  # Optional
+    scheduled_time = request.POST.get('scheduled_time')  # Optional departure time
     available_places = request.POST.get('available_places')
     
-    # Validation
+    # Validation - latitude and longitude are now optional
     if not all([title, description, date, itinerary, estimated_duration, wilaya_code, 
-                starting_point, latitude, longitude, available_places]):
+                starting_point, available_places]):
         return JsonResponse({
             'success': False,
             'message': 'All required fields must be provided'
@@ -76,6 +84,22 @@ def guide_create_tour(request, guide_id):
         
         max_places = int(available_places)
         
+        # Use Wilaya coordinates as fallback if not provided
+        tour_latitude = Decimal(latitude) if latitude else wilaya.latitude
+        tour_longitude = Decimal(longitude) if longitude else wilaya.longitude
+        
+        # Parse scheduled_time if provided
+        tour_scheduled_time = None
+        if scheduled_time:
+            try:
+                from datetime import datetime
+                tour_scheduled_time = datetime.strptime(scheduled_time, '%H:%M').time()
+            except ValueError:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Invalid time format for scheduled_time. Use HH:MM'
+                }, status=400)
+        
         # Create tour
         tour = Tour.objects.create(
             guide=guide,
@@ -89,8 +113,9 @@ def guide_create_tour(request, guide_id):
             estimated_duration=Decimal(estimated_duration),
             wilaya=wilaya,
             starting_point=starting_point,
-            latitude=Decimal(latitude),
-            longitude=Decimal(longitude),
+            latitude=tour_latitude,
+            longitude=tour_longitude,
+            scheduled_time=tour_scheduled_time,
             max_places=max_places,
             available_places=max_places,  # Initially, all places are available
             is_active=True
@@ -140,7 +165,6 @@ def guide_create_tour(request, guide_id):
             'success': False,
             'message': f'Error creating tour: {str(e)}'
         }, status=500)
-
 
 # ========================================
 # GUIDE - UPDATE TOUR
@@ -194,6 +218,37 @@ def guide_update_tour(request, guide_id, tour_id):
     if 'is_active' in data:
         tour.is_active = bool(data['is_active'])
     
+    # NEW: Handle missing fields
+    if 'wilaya_code' in data:
+        from .models import Wilaya
+        wilaya = get_object_or_404(Wilaya, code=data['wilaya_code'])
+        tour.wilaya = wilaya
+    
+    from datetime import datetime
+    if 'date' in data and data['date']:
+        if isinstance(data['date'], str):
+            tour.date = datetime.strptime(data['date'], '%Y-%m-%d').date()
+        else:
+            tour.date = data['date']
+            
+    if 'scheduled_time' in data:
+        if data['scheduled_time']:
+            if isinstance(data['scheduled_time'], str):
+                # Robust parsing: take only the first 5 characters (HH:MM) to avoid issues with HH:MM:SS
+                time_str = data['scheduled_time'][:5]
+                tour.scheduled_time = datetime.strptime(time_str, '%H:%M').time()
+            else:
+                tour.scheduled_time = data['scheduled_time']
+        else:
+            tour.scheduled_time = None
+
+    if 'starting_point' in data:
+        tour.starting_point = data['starting_point']
+    if 'latitude' in data:
+        tour.latitude = Decimal(str(data['latitude'])) if data['latitude'] else None
+    if 'longitude' in data:
+        tour.longitude = Decimal(str(data['longitude'])) if data['longitude'] else None
+    
     tour.save()
     
     return JsonResponse({
@@ -221,13 +276,17 @@ def guide_delete_tour(request, guide_id, tour_id):
     tour = get_object_or_404(Tour, id=tour_id, guide=guide)
     
     # Check if tour has any reservations
-    active_reservations = tour.reservations.filter(completed_at__isnull=True).count()
-    
-    if active_reservations > 0:
-        return JsonResponse({
-            'success': False,
-            'message': f'Cannot delete tour with {active_reservations} active reservations'
-        }, status=400)
+    # ONLY block if the tour is in the future.
+    # If it's a past tour, we allow deletion even if there are "active" (incomplete) reservations
+    # so the guide can clean up their history.
+    if tour.date >= timezone.now().date():
+        active_reservations = tour.reservations.filter(completed_at__isnull=True).count()
+        
+        if active_reservations > 0:
+            return JsonResponse({
+                'success': False,
+                'message': f'Cannot delete this tour because it has {active_reservations} active reservation(s). Please complete or cancel them first.'
+            }, status=400)
     
     tour_title = tour.title
     tour.delete()
@@ -236,3 +295,68 @@ def guide_delete_tour(request, guide_id, tour_id):
         'success': True,
         'message': f'Tour "{tour_title}" deleted successfully'
     }, status=200)
+# ========================================
+# PUBLIC - GET TOUR DETAILS
+# ========================================
+@csrf_exempt
+@require_http_methods(["GET"])
+def get_tour_details(request, tour_id):
+    """
+    Public endpoint to get tour details
+    """
+    try:
+        tour = get_object_or_404(Tour, id=tour_id)
+        
+        # Serialize data explicitly to ensure format mismatch is avoided
+        current_data = {
+            'id': tour.id,
+            'title': tour.title,
+            'description': tour.description,
+            'guide': {
+                'id': tour.guide.user.id,
+                'firstname': tour.guide.user.firstname,
+                'lastname': tour.guide.user.lastname,
+                'photo_url': tour.guide.user.photo_url if tour.guide.user.photo_url else None,
+                'average_rating': str(tour.guide.average_rating),
+                'number_of_reviews': tour.guide.number_of_reviews,
+            },
+            'average_rating': str(tour.average_rating),
+            'number_of_reviews': tour.number_of_reviews,
+            'reviews': [
+                {
+                    'id': r.id,
+                    'tourist_name': f"{r.tourist.user.firstname} {r.tourist.user.lastname}",
+                    'rating': r.rating,
+                    'comment': r.comment,
+                    'date': r.publication_date.isoformat() if r.publication_date else None
+                } for r in tour.reviews.all().select_related('tourist__user')
+            ],
+            'date': tour.date.isoformat(),
+            'scheduled_time': tour.scheduled_time.strftime('%H:%M') if tour.scheduled_time else None,
+            'calculated_price': str(tour.calculated_price),
+            'estimated_duration': str(tour.estimated_duration),
+            'latitude': str(tour.latitude) if tour.latitude else None,
+            'longitude': str(tour.longitude) if tour.longitude else None,
+            'wilaya': {'code': tour.wilaya.code, 'name': tour.wilaya.name},
+            'cover_photo': tour.cover_photo,
+            'gallery': tour.photo_urls if tour.photo_urls else [],
+            'highlights': tour.highlights,
+            'itinerary': tour.itinerary,
+            'whats_included': tour.whats_included,
+            'whats_excluded': tour.whats_excluded,
+            'max_places': tour.max_places,
+            'available_places': tour.available_places,
+            'start_location': tour.starting_point,
+            'is_active': tour.is_active
+        }
+        
+        return JsonResponse({
+            'success': True,
+            'tour': current_data
+        }, status=200)
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': str(e)
+        }, status=500)

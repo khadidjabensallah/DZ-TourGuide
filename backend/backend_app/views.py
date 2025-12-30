@@ -14,7 +14,7 @@ from decimal import Decimal
 from django.utils import timezone
 from django.contrib.auth import authenticate
 from .forms import TouristSignupForm, GuideSignupForm, VerificationForm, ForgotPasswordForm, VerifyPasswordResetCodeForm, ResetPasswordForm
-from .models import Tourist, Guide, CoverageZone, User, Admin, Tour, Reservation, Review, Wilaya
+from .models import Tourist, Guide, CoverageZone, User, Admin, Tour, Reservation, Review, Wilaya, WeatherInfo, Report
 
 
 @csrf_exempt
@@ -291,6 +291,66 @@ def guide_signup(request):
             'errors': form.errors
         }, status=400)
 
+
+@csrf_exempt
+@require_http_methods(["GET", "POST"])
+def signup_success(request):
+    """
+    API endpoint for signup success confirmation
+    Returns JSON response indicating successful signup
+    """
+    return JsonResponse({
+        'success': True,
+        'message': 'Signup successful! Please check your email for verification code.',
+        'data': {
+            'next_step': 'verify_email',
+            'message': 'Please verify your email address to activate your account.'
+        }
+    }, status=200)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def resend_verification_code(request):
+    """
+    API endpoint to resend verification code to user's email
+    """
+    # Try to get user_id from POST data first, then session
+    user_id = request.POST.get('user_id') or request.session.get('pending_verification_user_id')
+    
+    if not user_id:
+        return JsonResponse({
+            'success': False,
+            'message': 'No pending verification found. Please sign up first.'
+        }, status=400)
+    
+    try:
+        user = User.objects.get(id=user_id, email_verified=False)
+    except User.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'message': 'Invalid verification request or email already verified.'
+        }, status=400)
+    
+    # Resend verification email
+    email_sent = send_verification_email(user)
+    
+    if email_sent:
+        return JsonResponse({
+            'success': True,
+            'message': 'Verification code has been resent to your email.',
+            'data': {
+                'user_id': user.id,
+                'email': user.email
+            }
+        }, status=200)
+    else:
+        return JsonResponse({
+            'success': False,
+            'message': 'Failed to send verification email. Please try again later.'
+        }, status=500)
+
+
 @csrf_exempt
 @require_http_methods(["POST"])
 def verify_email(request):
@@ -320,7 +380,20 @@ def verify_email(request):
             # Clear session
             if 'pending_verification_user_id' in request.session:
                 del request.session['pending_verification_user_id']
-            
+
+            # For guides, email verification does NOT activate the account.
+            if user.user_type == 'guide':
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Email verified successfully. Your account is pending admin approval.',
+                    'data': {
+                        'user_id': user.id,
+                        'email': user.email,
+                        'email_verified': user.email_verified,
+                        'is_active': user.isActive
+                    }
+                }, status=200)
+
             return JsonResponse({
                 'success': True,
                 'message': 'Email verified successfully! Your account is now active.',
@@ -343,47 +416,6 @@ def verify_email(request):
             'errors': form.errors
         }, status=400)
 
-
-
-@csrf_exempt
-@require_http_methods(["POST"])
-def resend_verification_code(request):
-    """
-    API endpoint to resend verification code
-    Returns JSON response
-    """
-    user_id = request.session.get('pending_verification_user_id')
-    
-    if not user_id:
-        return JsonResponse({
-            'success': False,
-            'message': 'No pending verification found.'
-        }, status=400)
-    
-    user = get_object_or_404(User, id=user_id)
-    
-    if send_verification_email(user):
-        return JsonResponse({
-            'success': True,
-            'message': 'Verification code sent successfully! Check your email.'
-        }, status=200)
-    else:
-        return JsonResponse({
-            'success': False,
-            'message': 'Failed to send verification code. Please try again.'
-        }, status=500)
-
-
-@csrf_exempt
-@require_http_methods(["GET"])
-def signup_success(request):
-    """
-    Success endpoint (optional)
-    """
-    return JsonResponse({
-        'success': True,
-        'message': 'Signup process completed successfully!'
-    }, status=200)
 
 
 @csrf_exempt
@@ -410,15 +442,11 @@ def choose_role(request):
     }, status=200)
 
 
-
-
-
-
-
-
-
-
-
+import json
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+from django.http import JsonResponse
+from .models import User
 
 # ========================================
 # AUTHENTICATION - Sign In (Login)
@@ -477,11 +505,16 @@ def signin(request):
         
         print(f"✅ Password correct")
         
-        # Allow sign in regardless of email verification status for already-signed-up emails.
-        # Previously blocked unverified users from signing in; this restriction was removed
-        # to allow users to sign in even if they haven't completed email verification.
-        
-        if not user.isActive:
+        # Require email verification before sign in
+        if not user.email_verified:
+            return JsonResponse({
+                'success': False,
+                'message': 'Please verify your email before signing in.'
+            }, status=403)
+
+        # Non-guide accounts must be active to sign in. Guides may sign in after
+        # verifying their email but remain limited until admin approval.
+        if user.user_type != 'guide' and not user.isActive:
             return JsonResponse({
                 'success': False,
                 'message': 'Your account is not active.'
@@ -521,9 +554,13 @@ def signin(request):
             'message': 'An error occurred during sign in'
         }, status=500)
 
+
+
 # ========================================
 # AUTHENTICATION - Logout
 # ========================================
+
+
 
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -754,222 +791,132 @@ def reset_password(request):
 # ========================================
 # WEATHER VIEW
 # ========================================
+@csrf_exempt
 @require_http_methods(["GET"])
 def get_weather(request, tour_id):
     """
-    Return current weather for the tour's coordinates.
-    If `OPENWEATHER_API_KEY` is set in Django settings we'll call OpenWeatherMap,
-    otherwise return a small mocked payload so frontend can work during local dev.
-    """
-    # Ensure tour exists
-    tour = get_object_or_404(Tour, id=tour_id)
-
-    try:
-        lat = float(tour.latitude)
-        lon = float(tour.longitude)
-    except Exception:
-        return JsonResponse({
-            'success': False,
-            'message': 'Invalid coordinates for tour'
-        }, status=400)
-
-    api_key = getattr(settings, 'OPENWEATHER_API_KEY', None)
-    if api_key:
-        try:
-            url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&units=metric&appid={api_key}"
-            resp = requests.get(url, timeout=5)
-            resp.raise_for_status()
-            payload = resp.json()
-            data = {
-                'temperature': payload.get('main', {}).get('temp'),
-                'description': (payload.get('weather') or [{}])[0].get('description'),
-                'wind_speed': payload.get('wind', {}).get('speed'),
-                'raw': payload,
-            }
-            return JsonResponse({'success': True, 'data': data}, status=200)
-        except Exception as e:
-            return JsonResponse({'success': False, 'message': 'Weather provider error', 'error': str(e)}, status=502)
-
-    # No API key configured — return a mocked response for local dev
-    mock = {
-        'temperature': 25.0,
-        'description': 'clear sky',
-        'wind_speed': 3.5
-    }
-    return JsonResponse({'success': True, 'message': 'Mock data (no API key configured)', 'data': mock}, status=200)
-    # if not request.user.is_authenticated or request.user.user_type != 'admin':
-    #     return JsonResponse({'success': False, 'message': 'Unauthorized'}, status=403)
-    
-    guide = get_object_or_404(Guide, user_id=guide_id)
-    # admin = get_object_or_404(Admin, user=request.user)
-    
-    # For now, create a dummy admin or skip admin requirement
-    guide.approval_status = 'approved'
-    guide.is_verified = True
-    guide.save()
-    
-    return JsonResponse({
-        'success': True,
-        'message': f'Guide {guide.user.firstname} {guide.user.lastname} has been approved.',
-        'data': {
-            'guide_id': guide.user_id,
-            'approval_status': guide.approval_status,
-            'is_verified': guide.is_verified
-        }
-    }, status=200)
-
-
-
-@csrf_exempt
-@require_http_methods(["GET"])
-def tour_weather_forecast(request, tour_id):
-    """
-    Get weather forecast for a specific tour.
-    Returns ONLY weather info if available (tour within 5 days).
-    Returns weather: null if not available (no error).
+    Get weather forecast for a specific tour using real data.
     """
     try:
-        import os
         # Get the tour
         tour = get_object_or_404(Tour, id=tour_id)
         
-        # Calculate days until tour using tour.date
-        days_until = (tour.date - timezone.now().date()).days
+        # Use model method to get or fetch weather
+        weather = WeatherInfo.get_weather_for_tour(tour, tour.date)
         
-        # Check if API key is configured
-        # Check for both OPENWEATHERMAP_API_KEY and OPENWEATHER_API_KEY for compatibility
-        api_key = os.getenv('OPENWEATHERMAP_API_KEY') or os.getenv('OPENWEATHER_API_KEY')
-        if not api_key:
+        if weather:
             return JsonResponse({
+                'success': True,
+                'weather': {
+                    'date': weather.date.isoformat(),
+                    'max_temperature': float(weather.max_temperature) if weather.max_temperature else None,
+                    'min_temperature': float(weather.min_temperature) if weather.min_temperature else None,
+                    'conditions': weather.conditions,
+                    'icon': weather.icon,
+                    'icon_url': f"https://openweathermap.org/img/wn/{weather.icon}@2x.png" if weather.icon else None
+                }
+            })
+        else:
+            return JsonResponse({
+                'success': False,
                 'weather': None,
-                'message': 'Weather API key not configured. Please set OPENWEATHERMAP_API_KEY or OPENWEATHER_API_KEY environment variable.',
-                'tour_date': tour.date.isoformat(),
-                'days_until': days_until
+                'message': 'Weather data not available for this date (must be within forecast window)'
             })
         
-        # Only try to get weather if tour is within 0-5 days
-        if 0 <= days_until <= 5:
-            try:
-                weather = WeatherInfo.get_weather_for_tour(tour, tour.date)
-                
-                if weather:
-                    # Weather available - return ONLY weather info
-                    return JsonResponse({
-                        'weather': {
-                            'date': weather.date.isoformat(),
-                            'max_temperature': float(weather.max_temperature) if weather.max_temperature else None,
-                            'min_temperature': float(weather.min_temperature) if weather.min_temperature else None,
-                            'conditions': weather.conditions,
-                            'icon': weather.icon,
-                            'icon_url': f"https://openweathermap.org/img/wn/{weather.icon}@2x.png" if weather.icon else None
-                        }
-                    })
-                else:
-                    # Weather fetch failed (API error or no data)
-                    # Try to get more specific error info
-                    try:
-                        # Test the API call directly to get error details
-                        test_response = requests.get(
-                            "https://api.openweathermap.org/data/2.5/forecast",
-                            params={
-                                'lat': float(tour.latitude),
-                                'lon': float(tour.longitude),
-                                'appid': api_key,
-                                'units': 'metric',
-                                'cnt': 40
-                            },
-                            timeout=10
-                        )
-                        if test_response.status_code == 401:
-                            error_msg = 'Invalid API key. Please check your OPENWEATHERMAP_API_KEY.'
-                        elif test_response.status_code == 429:
-                            error_msg = 'API rate limit exceeded. Please try again later.'
-                        elif test_response.status_code != 200:
-                            error_msg = f'API returned error: {test_response.status_code} - {test_response.text[:200]}'
-                        else:
-                            # API returned 200, try to process data directly as fallback
-                            try:
-                                from decimal import Decimal
-                                
-                                data = test_response.json()
-                                if 'list' in data and data['list']:
-                                    # Find forecast closest to noon on tour date
-                                    target_datetime = datetime.combine(tour.date, datetime.min.time().replace(hour=12))
-                                    target_datetime = timezone.make_aware(target_datetime)
-                                    target_timestamp = int(target_datetime.timestamp())
-                                    
-                                    closest_forecast = None
-                                    min_diff = float('inf')
-                                    
-                                    for forecast in data['list']:
-                                        forecast_timestamp = forecast.get('dt', 0)
-                                        time_diff = abs(forecast_timestamp - target_timestamp)
-                                        if time_diff < min_diff:
-                                            min_diff = time_diff
-                                            closest_forecast = forecast
-                                    
-                                    if closest_forecast:
-                                        main_data = closest_forecast.get('main', {})
-                                        weather_data = closest_forecast.get('weather', [{}])[0]
-                                        
-                                        temp = main_data.get('temp')
-                                        temp_max = main_data.get('temp_max', temp)
-                                        temp_min = main_data.get('temp_min', temp)
-                                        conditions = weather_data.get('description', 'N/A')
-                                        icon = weather_data.get('icon', '')
-                                        
-                                        # Return weather data directly (fallback if DB save failed)
-                                        return JsonResponse({
-                                            'weather': {
-                                                'date': tour.date.isoformat(),
-                                                'max_temperature': float(temp_max) if temp_max else None,
-                                                'min_temperature': float(temp_min) if temp_min else None,
-                                                'conditions': conditions,
-                                                'icon': icon,
-                                                'icon_url': f"https://openweathermap.org/img/wn/{icon}@2x.png" if icon else None
-                                            }
-                                        })
-                                
-                                error_msg = 'Weather data fetched but could not be processed. Check server logs for details.'
-                            except Exception as process_error:
-                                error_msg = f'Weather data fetched but processing failed: {str(process_error)}'
-                    except requests.exceptions.Timeout:
-                        error_msg = 'API request timed out. Check your network connection.'
-                    except requests.exceptions.ConnectionError:
-                        error_msg = 'Could not connect to weather API. Check your network connection.'
-                    except Exception as e:
-                        error_msg = f'Error testing API: {str(e)}'
-                    
-                    return JsonResponse({
-                        'weather': None,
-                        'message': error_msg,
-                        'tour_date': tour.date.isoformat(),
-                        'days_until': days_until,
-                        'tour_location': {
-                            'latitude': float(tour.latitude),
-                            'longitude': float(tour.longitude)
-                        }
-                    })
-            except Exception as e:
-                return JsonResponse({
-                    'weather': None,
-                    'message': f'Error fetching weather: {str(e)}',
-                    'tour_date': tour.date.isoformat(),
-                    'days_until': days_until
-                })
-        
-        # If we reach here: tour date is outside 0-5 day window
-        return JsonResponse({
-            'weather': None,
-            'message': f'Weather forecast only available for tours within 0-5 days. This tour is {days_until} days away.',
-            'tour_date': tour.date.isoformat(),
-            'days_until': days_until
-        })
-        
     except Tour.DoesNotExist:
-        return JsonResponse({'error': 'Tour not found'}, status=404)
+        return JsonResponse({'success': False, 'error': 'Tour not found'}, status=404)
     except Exception as e:
         return JsonResponse({
+            'success': False,
             'error': 'Unable to fetch weather information',
             'details': str(e)
         }, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def create_review(request):
+    try:
+        tour_id = request.POST.get('tour_id')
+        tourist_id = request.POST.get('tourist_id')
+        rating = request.POST.get('rating')
+        comment = request.POST.get('comment')
+
+        if not all([tour_id, tourist_id, rating, comment]):
+            return JsonResponse({'success': False, 'error': 'Missing required fields'}, status=400)
+
+        tour = get_object_or_404(Tour, id=tour_id)
+        tourist = get_object_or_404(Tourist, user_id=tourist_id)
+
+        review = Review.objects.create(
+            tour=tour,
+            tourist=tourist,
+            rating=int(rating),
+            comment=comment
+        )
+
+        # Update ratings
+        tour.update_rating()
+        tour.guide.update_rating()
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Review submitted successfully',
+            'review_id': review.id
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def create_report(request):
+    try:
+        def get_clean_id(key):
+            val = request.POST.get(key)
+            if val in [None, '', 'null', 'undefined']:
+                return None
+            return val
+
+        guide_id = get_clean_id('guide_id')
+        tourist_id = get_clean_id('tourist_id')
+        tour_id = get_clean_id('tour_id')
+        title = request.POST.get('title')
+        description = request.POST.get('description')
+
+        if not all([guide_id, tourist_id, title, description]):
+            missing = [k for k, v in {'guide_id': guide_id, 'tourist_id': tourist_id, 'title': title, 'description': description}.items() if not v]
+            return JsonResponse({'success': False, 'message': f'Missing required fields: {", ".join(missing)}'}, status=400)
+
+        # Use try-except for get_object_or_404 behavior control
+        try:
+            guide = Guide.objects.get(user_id=guide_id)
+        except (Guide.DoesNotExist, ValueError):
+            return JsonResponse({'success': False, 'message': f'Invalid Guide ID: {guide_id}'}, status=404)
+            
+        try:
+            tourist = Tourist.objects.get(user_id=tourist_id)
+        except (Tourist.DoesNotExist, ValueError):
+            return JsonResponse({'success': False, 'message': f'Invalid Tourist ID: {tourist_id}'}, status=404)
+
+        tour = None
+        if tour_id:
+            try:
+                tour = Tour.objects.get(id=tour_id)
+            except (Tour.DoesNotExist, ValueError):
+                pass # Optional field, ignore if invalid tour id
+
+        report = Report.objects.create(
+            guide=guide,
+            tourist=tourist,
+            tour=tour,
+            title=title,
+            description=description
+        )
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Report submitted successfully',
+            'report_id': report.id
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=500)

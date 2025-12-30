@@ -264,6 +264,97 @@ def guide_upload_photo(request, guide_id):
 # GUIDE - VIEW MY TOURS
 # ========================================
 @csrf_exempt
+@require_http_methods(["POST"])
+def guide_upload_certification(request, guide_id):
+    """
+    Guide uploads a certification document/image
+    """
+    guide = get_object_or_404(Guide, user_id=guide_id)
+    
+    if 'certification' not in request.FILES:
+        return JsonResponse({
+            'success': False,
+            'message': 'No certification file provided'
+        }, status=400)
+    
+    cert_file = request.FILES['certification']
+    
+    # Save file
+    cert_dir = os.path.join(settings.MEDIA_ROOT, 'certifications')
+    os.makedirs(cert_dir, exist_ok=True)
+    
+    fs = FileSystemStorage(location=cert_dir)
+    filename = f"cert_{guide.user_id}_{uuid.uuid4().hex[:6]}_{cert_file.name}"
+    saved_name = fs.save(filename, cert_file)
+    file_path = f"/media/certifications/{saved_name}"
+    
+    # Update guide certifications list
+    # Ensure it's a list
+    if not isinstance(guide.certifications_files, list):
+        guide.certifications_files = []
+        
+    guide.certifications_files.append(file_path)
+    guide.save()
+    
+    return JsonResponse({
+        'success': True,
+        'message': 'Certification uploaded successfully',
+        'data': {
+            'certification_url': file_path,
+            'file_name': cert_file.name
+        }
+    }, status=200)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def guide_delete_certification(request, guide_id):
+    """
+    Guide deletes a certification document/image
+    """
+    guide = get_object_or_404(Guide, user_id=guide_id)
+    
+    try:
+        data = json.loads(request.body)
+        file_path = data.get('file_path')
+    except:
+        file_path = request.POST.get('file_path')
+
+    if not file_path:
+        return JsonResponse({
+            'success': False,
+            'message': 'File path is required'
+        }, status=400)
+    
+    # 1. Update the database list
+    if isinstance(guide.certifications_files, list) and file_path in guide.certifications_files:
+        guide.certifications_files.remove(file_path)
+        guide.save()
+        
+        # 2. Delete the actual file from disk
+        if file_path.startswith('/media/'):
+            # Path for os.path.join expects relative to base (remove leading slash)
+            relative_path = file_path[1:] if file_path.startswith('/') else file_path
+            full_path = os.path.join(settings.BASE_DIR, relative_path)
+            
+            if os.path.exists(full_path):
+                try:
+                    os.remove(full_path)
+                except Exception as e:
+                    print(f"Error deleting certification file: {e}")
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Certification deleted successfully'
+        }, status=200)
+    else:
+        return JsonResponse({
+            'success': False,
+            'message': 'Certification not found in profile'
+        }, status=404)
+
+
+@csrf_exempt
 @require_http_methods(["GET"])
 def guide_my_tours(request, guide_id):
     """

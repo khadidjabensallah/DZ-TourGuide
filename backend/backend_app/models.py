@@ -234,6 +234,10 @@ class Wilaya(models.Model):
     code = models.CharField(max_length=10, primary_key=True)
     name = models.CharField(max_length=100)
     region = models.CharField(max_length=50, blank=True, null=True)
+    
+    # Coordinates for weather and location mapping
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
 
     class Meta:
         db_table = 'wilayas'
@@ -311,9 +315,9 @@ class Tour(models.Model):
     )
     starting_point = models.CharField(max_length=200)
     
-    # GPS for weather API
-    latitude = models.DecimalField(max_digits=9, decimal_places=6)
-    longitude = models.DecimalField(max_digits=9, decimal_places=6)
+    # GPS for weather API - Optional, defaults to Wilaya coordinates
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     
     # AVAILABLE PLACES
     max_places = models.IntegerField(
@@ -504,7 +508,7 @@ class WeatherInfo(models.Model):
     Stores weather information for a specific date and location
     """
     id = models.AutoField(primary_key=True)
-    date = models.DateField()
+    date = models.DateField()  # The date of the weather forecast
     max_temperature = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     min_temperature = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     conditions = models.CharField(max_length=100, blank=True, null=True)
@@ -525,100 +529,231 @@ class WeatherInfo(models.Model):
     @classmethod
     def get_weather_for_tour(cls, tour, tour_date):
         """
-        Get or fetch weather for a tour's location and date
-        Returns WeatherInfo object or None if not available
+        Get or fetch weather for a tour's location and date.
+        Uses OpenWeatherMap as primary and Open-Meteo as fallback.
+        Returns WeatherInfo object or None if not available.
         """
         import requests
+        import os
         from datetime import datetime, timedelta
         from django.utils import timezone
-        import os
+        from decimal import Decimal
         
+        # Only get weather if tour is within forecast window
         days_until = (tour_date - timezone.now().date()).days
-        if not (0 <= days_until <= 5):
+        if not (0 <= days_until <= 7):
+            return None
+        
+        # Use tour coordinates or Wilaya coordinates
+        latitude = tour.latitude if tour.latitude else tour.wilaya.latitude
+        longitude = tour.longitude if tour.longitude else tour.wilaya.longitude
+        
+        if not latitude or not longitude:
             return None
             
         try:
+            # Check cache (3 hours)
             weather = cls.objects.filter(
                 date=tour_date,
-                latitude=tour.latitude,
-                longitude=tour.longitude,
+                latitude=latitude,
+                longitude=longitude,
                 last_updated__gt=timezone.now() - timedelta(hours=3)
             ).first()
             
             if weather:
                 return weather
-                
+            
+            # --- PRIMARY: OpenWeatherMap (requires API key) ---
             api_key = os.getenv('OPENWEATHERMAP_API_KEY') or os.getenv('OPENWEATHER_API_KEY')
-            if not api_key:
-                print("Warning: OPENWEATHERMAP_API_KEY or OPENWEATHER_API_KEY not set")
-                return None
-                
+            if api_key:
+                try:
+                    # OpenWeatherMap (5-day forecast - note current logic uses tour_date)
+                    # For dates beyond 5 days, OWM Free might fail, but Open-Meteo works up to 7+
+                    if days_until <= 5:
+                        owm_response = requests.get(
+                            "https://api.openweathermap.org/data/2.5/forecast",
+                            params={
+                                'lat': float(latitude),
+                                'lon': float(longitude),
+                                'appid': api_key,
+                                'units': 'metric'
+                            }
+                        )
+                        if owm_response.status_code == 200:
+                            owm_data = owm_response.json()
+                            # Find the closest forecast for noon on tour_date
+                            target_dt = f"{tour_date.isoformat()} 12:00:00"
+                            closest = min(owm_data['list'], key=lambda x: abs(
+                                datetime.fromisoformat(x['dt_txt'].replace(' ', 'T')) - 
+                                datetime.fromisoformat(target_dt.replace(' ', 'T'))
+                            ))
+                            
+                            # Filter daily max/min for that day from all 3-hour slots
+                            day_forecasts = [f for f in owm_data['list'] if f['dt_txt'].startswith(tour_date.isoformat())]
+                            if day_forecasts:
+                                max_temp = max(f['main']['temp_max'] for f in day_forecasts)
+                                min_temp = min(f['main']['temp_min'] for f in day_forecasts)
+                            else:
+                                max_temp = closest['main']['temp_max']
+                                min_temp = closest['main']['temp_min']
+
+                            weather, _ = cls.objects.update_or_create(
+                                date=tour_date,
+                                latitude=latitude,
+                                longitude=longitude,
+                                defaults={
+                                    'max_temperature': Decimal(str(max_temp)),
+                                    'min_temperature': Decimal(str(min_temp)),
+                                    'conditions': closest['weather'][0]['description'].capitalize(),
+                                    'icon': closest['weather'][0]['icon']
+                                }
+                            )
+                            return weather
+                except Exception as owm_err:
+                    print(f"OpenWeatherMap error, falling back: {owm_err}")
+
+            # --- FALLBACK / SECONDARY: Open-Meteo (keyless) ---
             response = requests.get(
-                "https://api.openweathermap.org/data/2.5/forecast",
+                "https://api.open-meteo.com/v1/forecast",
                 params={
-                    'lat': float(tour.latitude),
-                    'lon': float(tour.longitude),
-                    'appid': api_key,
-                    'units': 'metric',
-                    'cnt': 40
+                    'latitude': float(latitude),
+                    'longitude': float(longitude),
+                    'daily': 'temperature_2m_max,temperature_2m_min,weathercode',
+                    'timezone': 'auto'
                 }
             )
             response.raise_for_status()
             data = response.json()
             
-            if 'list' not in data or not data['list']:
-                print(f"No forecast list in API response for tour {tour.id}")
+            if 'daily' not in data:
                 return None
-            
-            target_datetime = datetime.combine(tour_date, datetime.min.time().replace(hour=12))
-            target_datetime = timezone.make_aware(target_datetime)
-            target_timestamp = int(target_datetime.timestamp())
-            
-            closest_forecast = None
-            min_diff = float('inf')
-            
-            for forecast in data['list']:
-                forecast_timestamp = forecast.get('dt', 0)
-                time_diff = abs(forecast_timestamp - target_timestamp)
-                if time_diff < min_diff:
-                    min_diff = time_diff
-                    closest_forecast = forecast
-            
-            if not closest_forecast:
-                print(f"No forecast found for {tour_date} in API response")
-                return None
-            
+                
+            date_str = tour_date.isoformat()
             try:
-                main_data = closest_forecast.get('main', {})
-                weather_data = closest_forecast.get('weather', [{}])[0]
+                idx = data['daily']['time'].index(date_str)
                 
-                temp = main_data.get('temp')
-                temp_max = main_data.get('temp_max', temp)
-                temp_min = main_data.get('temp_min', temp)
+                # Weather code mapping (WMO codes)
+                wmo_code = data['daily']['weathercode'][idx]
+                conditions_map = {
+                    0: ('Clear sky', '01d'),
+                    1: ('Mainly clear', '02d'),
+                    2: ('Partly cloudy', '02d'),
+                    3: ('Overcast', '03d'),
+                    45: ('Fog', '50d'),
+                    48: ('Fog', '50d'),
+                    51: ('Light drizzle', '09d'),
+                    53: ('Moderate drizzle', '09d'),
+                    55: ('Dense drizzle', '09d'),
+                    61: ('Slight rain', '10d'),
+                    63: ('Moderate rain', '10d'),
+                    65: ('Heavy rain', '10d'),
+                    71: ('Slight snow', '13d'),
+                    73: ('Moderate snow', '13d'),
+                    75: ('Heavy snow', '13d'),
+                    80: ('Slight rain showers', '09d'),
+                    81: ('Moderate rain showers', '09d'),
+                    82: ('Violent rain showers', '09d'),
+                    95: ('Thunderstorm', '11d'),
+                }
                 
-                conditions = weather_data.get('description', 'N/A')
-                icon = weather_data.get('icon', '')
+                cond_text, cond_icon = conditions_map.get(wmo_code, ('Cloudy', '03d'))
                 
                 weather, created = cls.objects.update_or_create(
                     date=tour_date,
-                    latitude=tour.latitude,
-                    longitude=tour.longitude,
+                    latitude=latitude,
+                    longitude=longitude,
                     defaults={
-                        'max_temperature': Decimal(str(temp_max)) if temp_max else None,
-                        'min_temperature': Decimal(str(temp_min)) if temp_min else None,
-                        'conditions': conditions,
-                        'icon': icon
+                        'max_temperature': Decimal(str(data['daily']['temperature_2m_max'][idx])),
+                        'min_temperature': Decimal(str(data['daily']['temperature_2m_min'][idx])),
+                        'conditions': cond_text,
+                        'icon': cond_icon
                     }
                 )
-                
                 return weather
-            except (KeyError, IndexError, ValueError, TypeError) as e:
-                print(f"Error parsing weather data for tour {tour.id}: {type(e).__name__}: {str(e)}")
+            except (ValueError, IndexError):
                 return None
                 
-        except requests.exceptions.RequestException as e:
-            print(f"Network error getting weather for tour {tour.id}: {str(e)}")
-            return None
         except Exception as e:
-            print(f"Error getting weather for tour {tour.id}: {type(e).__name__}: {str(e)}")
+            print(f"Weather fetch error: {str(e)}")
             return None
+
+
+class Report(models.Model):
+    """
+    Report made by a Tourist about a Guide (for admin review)
+    """
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('under_review', 'Under Review'),
+        ('resolved', 'Resolved'),
+        ('rejected', 'Rejected'),
+    ]
+
+    id = models.AutoField(primary_key=True)
+    guide = models.ForeignKey('Guide', on_delete=models.CASCADE, related_name='reports')
+    tourist = models.ForeignKey('Tourist', on_delete=models.SET_NULL, null=True, blank=True, related_name='reports')
+    tour = models.ForeignKey('Tour', on_delete=models.SET_NULL, null=True, blank=True, related_name='reports')
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'report'
+
+    def __str__(self):
+        return f"Report #{self.id} - {self.title} ({self.status})"
+
+
+class PersonalizedRequest(models.Model):
+    """
+    Custom/Personalized tour request from a Tourist to a Guide
+    """
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('accepted', 'Accepted'),
+        ('rejected', 'Rejected'),
+    ]
+
+    id = models.AutoField(primary_key=True)
+    guide = models.ForeignKey('Guide', on_delete=models.CASCADE, related_name='personalized_requests')
+    tourist = models.ForeignKey('Tourist', on_delete=models.CASCADE, related_name='personalized_requests')
+    
+    preferred_date = models.DateField()
+    departure_time = models.TimeField()
+    duration_hours = models.DecimalField(max_digits=4, decimal_places=1)
+    number_of_people = models.PositiveIntegerField(default=1)
+    
+    wilaya = models.ForeignKey('Wilaya', on_delete=models.SET_NULL, null=True, blank=True)
+    departure_location = models.CharField(max_length=255, blank=True)
+    tourist_phone = models.CharField(max_length=20, blank=True, null=True)
+    
+    description = models.TextField()
+    special_requests = models.TextField(blank=True)
+    
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    rejection_reason = models.TextField(blank=True, null=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'personalized_request'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Request for {self.preferred_date} - {self.tourist.user.email}"
+
+    @staticmethod
+    def _normalize_phone(phone):
+        if not phone: return None
+        clean = phone.replace(' ', '').replace('-', '').replace('(', '').replace(')', '')
+        if clean.startswith('+'): return clean
+        if clean.startswith('0'): return '+213' + clean[1:]
+        return '+213' + clean
+
+    def get_tourist_phone_display(self):
+        if not self.tourist_phone: return "N/A"
+        p = self.tourist_phone
+        if p.startswith('+213') and len(p) == 13:
+            return f"+213 {p[4:7]} {p[7:9]} {p[9:11]} {p[11:13]}"
+        return p

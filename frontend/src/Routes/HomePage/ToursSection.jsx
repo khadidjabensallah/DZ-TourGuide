@@ -1,119 +1,59 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { MapPin, Calendar, Star, Clock } from "lucide-react";
+import { SearchAPI } from "../../utils/api";
 
 export default function PopularTours() {
-  const tours = [
-    {
-      id: 1,
-      image:
-        "https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=800",
-      price: "3500 DZD",
-      title: "Visit of the Casbah of Algiers – UNESCO Heritage",
-      description:
-        "Explore the winding alleys of Algiers' Casbah, a UNESCO World Heritage site steeped in centuries of history, culture, and architectural charm.",
-      location: "Alger",
-      date: "XX/XX/XXXX",
-      guide: {
-        name: "Hamid Benali",
-        avatar: "https://i.pravatar.cc/150?img=12",
-        rating: 4.5,
-        reviews: 60,
-      },
-      duration: "3h",
-    },
-    {
-      id: 2,
-      image:
-        "https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=800",
-      price: "3500 DZD",
-      title: "Visit of the Casbah of Algiers – UNESCO Heritage",
-      description:
-        "Explore the winding alleys of Algiers' Casbah, a UNESCO World Heritage site steeped in centuries of history, culture, and architectural charm.",
-      location: "Alger",
-      date: "XX/XX/XXXX",
-      guide: {
-        name: "Hamid Benali",
-        avatar: "https://i.pravatar.cc/150?img=12",
-        rating: 4.5,
-        reviews: 60,
-      },
-      duration: "3h",
-    },
-    {
-      id: 3,
-      image:
-        "https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=800",
-      price: "3500 DZD",
-      title: "Visit of the Casbah of Algiers – UNESCO Heritage",
-      description:
-        "Explore the winding alleys of Algiers' Casbah, a UNESCO World Heritage site steeped in centuries of history, culture, and architectural charm.",
-      location: "Alger",
-      date: "XX/XX/XXXX",
-      guide: {
-        name: "Hamid Benali",
-        avatar: "https://i.pravatar.cc/150?img=12",
-        rating: 4.5,
-        reviews: 60,
-      },
-      duration: "3h",
-    },
-    {
-      id: 4,
-      image:
-        "https://images.unsplash.com/photo-1580837119756-563d608dd119?w=800",
-      price: "3500 DZD",
-      title: "Visit of the Casbah of Algiers – UNESCO Heritage",
-      description:
-        "Explore the winding alleys of Algiers' Casbah, a UNESCO World Heritage site steeped in centuries of history, culture, and architectural charm.",
-      location: "Alger",
-      date: "XX/XX/XXXX",
-      guide: {
-        name: "Hamid Benali",
-        avatar: "https://i.pravatar.cc/150?img=12",
-        rating: 4.5,
-        reviews: 60,
-      },
-      duration: "3h",
-    },
-    {
-      id: 5,
-      image:
-        "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800",
-      price: "3500 DZD",
-      title: "Visit of the Casbah of Algiers – UNESCO Heritage",
-      description:
-        "Explore the winding alleys of Algiers' Casbah, a UNESCO World Heritage site steeped in centuries of history, culture, and architectural charm.",
-      location: "Alger",
-      date: "XX/XX/XXXX",
-      guide: {
-        name: "Hamid Benali",
-        avatar: "https://i.pravatar.cc/150?img=12",
-        rating: 4.5,
-        reviews: 60,
-      },
-      duration: "3h",
-    },
-    {
-      id: 6,
-      image: "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800",
-      price: "3500 DZD",
-      title: "Visit of the Casbah of Algiers – UNESCO Heritage",
-      description:
-        "Explore the winding alleys of Algiers' Casbah, a UNESCO World Heritage site steeped in centuries of history, culture, and architectural charm.",
-      location: "Alger",
-      date: "XX/XX/XXXX",
-      guide: {
-        name: "Hamid Benali",
-        avatar: "https://i.pravatar.cc/150?img=12",
-        rating: 4.5,
-        reviews: 60,
-      },
-      duration: "3h",
-    },
-  ];
+  const navigate = useNavigate();
+  const [tours, setTours] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchTours = async () => {
+      try {
+        setLoading(true);
+        // Using SearchAPI to get all tours (empty params)
+        const response = await SearchAPI.searchTours({});
+        if (response.success && response.tours) {
+          // Verify we have an array
+          setTours(response.tours.slice(0, 6)); // Show first 6 tours
+        } else {
+          setTours([]);
+        }
+      } catch (err) {
+        console.error("Error fetching popular tours:", err);
+        setError("Failed to load tours");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTours();
+  }, []);
+
+  if (loading) {
+    return (
+      <div id="tours" className="py-16 px-8 bg-blue-50 text-center">
+        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+        <p className="mt-2 text-slate-600">Loading popular tours...</p>
+      </div>
+    );
+  }
+
+  // Fallback if error or no tours
+  if (error || tours.length === 0) {
+    // You might want to show nothing, or the static mock data as fallback.
+    // For now, let's show a message so the user knows it tried to fetch.
+    return (
+      <div id="tours" className="py-16 px-8 bg-blue-50 text-center">
+        <p className="text-slate-600">No tours available at the moment.</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="py-16 px-8 bg-gradient-to-b from-stone-50 to-white">
+    <div id="tours" className="py-16 px-8 bg-blue-50">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12 mt-0">
@@ -135,22 +75,25 @@ export default function PopularTours() {
         </div>
 
         {/* Tours Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-15 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20 mb-8">
           {tours.map((tour) => (
             <div
               key={tour.id}
-              className="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200"
+              onClick={() => navigate(`/tour/${tour.id}`)}
+              role="button"
+              className="cursor-pointer bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200"
             >
               {/* Image */}
-              <div className="relative h-64 overflow-hidden">
+              <div className="relative h-48 overflow-hidden">
                 <img
-                  src={tour.image}
+                  src={tour.cover_photo || "https://via.placeholder.com/800x600?text=Tour+Image"}
                   alt={tour.title}
                   className="w-full h-full object-cover"
+                  onError={(e) => { e.target.src = "https://via.placeholder.com/800x600?text=Tour+Image"; }}
                 />
                 {/* Price Badge */}
                 <div className="absolute top-4 right-4 bg-orange-500 text-white px-4 py-2 rounded-full font-bold text-sm shadow-lg">
-                  {tour.price}
+                  {parseFloat(tour.calculated_price).toLocaleString()} DZD
                 </div>
               </div>
 
@@ -167,7 +110,7 @@ export default function PopularTours() {
                 <div className="flex items-center justify-between mb-4 pb-4 border-b border-slate-200">
                   <div className="flex items-center gap-2 text-slate-500 text-sm">
                     <MapPin className="w-4 h-4 text-orange-500" />
-                    <span>{tour.location}</span>
+                    <span>{tour.wilaya?.name || tour.location || "Algeria"}</span>
                   </div>
                   <div className="flex items-center gap-2 text-slate-500 text-sm">
                     <Calendar className="w-4 h-4 text-orange-500" />
@@ -177,29 +120,45 @@ export default function PopularTours() {
 
                 {/* Guide Info */}
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={tour.guide.avatar}
-                      alt={tour.guide.name}
-                      className="w-10 h-10 rounded-full border-2 border-orange-500"
-                    />
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900">
-                        {tour.guide.name}
-                      </p>
-                      <div className="flex items-center gap-1">
-                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                        <span className="text-sm text-slate-600">
-                          {tour.guide.rating} ({tour.guide.reviews})
-                        </span>
+                  {tour.guide && (
+                    <div
+                      className="flex items-center gap-3 cursor-pointer hover:bg-orange-50 p-1 rounded-lg transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/guide/${tour.guide.id}/profile`);
+                      }}
+                    >
+                      <img
+                        src={tour.guide.photo_url || "https://via.placeholder.com/150?text=Guide"}
+                        alt={tour.guide.firstname}
+                        className="w-10 h-10 rounded-full border-2 border-orange-500"
+                        onError={(e) => { e.target.src = "https://via.placeholder.com/150?text=Guide"; }}
+                      />
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900">
+                          {tour.guide.firstname} {tour.guide.lastname}
+                        </p>
+                        <div className="flex items-center gap-1">
+                          <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                          <span className="text-sm text-slate-600">
+                            {parseFloat(tour.average_rating || 0).toFixed(1)} ({tour.number_of_reviews || 0})
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-1 text-orange-500">
-                    <Clock className="w-4 h-4" />
-                    <span className="text-sm font-semibold">
-                      {tour.duration}
-                    </span>
+                  )}
+                  <div className="flex flex-col items-end gap-1 text-orange-500">
+                    <div className="flex items-center gap-1">
+                      <Clock className="w-4 h-4" />
+                      <span className="text-sm font-semibold">
+                        {parseFloat(tour.estimated_duration).toFixed(0)}h
+                      </span>
+                    </div>
+                    {tour.scheduled_time && (
+                      <span className="text-xs font-medium text-slate-500">
+                        Starts at {tour.scheduled_time.substring(0, 5)}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -209,7 +168,10 @@ export default function PopularTours() {
 
         {/* More Tours Button */}
         <div className="text-center">
-          <button className="bg-orange-500 hover:bg-orange-600 text-white font-bold px-10 py-4 rounded-xl transition-all transform hover:scale-105 shadow-lg">
+          <button
+            onClick={() => navigate('/searchPage')}
+            className="bg-orange-500 hover:bg-orange-600 text-white font-bold px-10 py-4 rounded-xl transition-all transform hover:scale-105 shadow-lg"
+          >
             More Tours
           </button>
         </div>

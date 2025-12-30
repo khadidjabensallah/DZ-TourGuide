@@ -83,11 +83,30 @@ export default function SignInPage() {
           sessionStorage.setItem("user", JSON.stringify(response.data));
           sessionStorage.setItem("is_authenticated", "true");
         }
-        if (response.data?.user_type === "guide") {
-          navigate(`/guide/${response.data.user_id}/dashboard`);
-        } else {
-          navigate("/");
-        }
+
+        console.log("LOGIN SUCCESS - Full Response:", JSON.stringify(response, null, 2));
+        console.log("LOGIN SUCCESS - Response Data:", response.data);
+
+        // Try multiple possible property names for user type
+        const userType = (
+          response.data?.user_type ||
+          response.data?.userType ||
+          response.data?.role ||
+          response.data?.type ||
+          response.data?.account_type ||
+          ""
+        ).toLowerCase().trim();
+
+        console.log("DETECTED USER TYPE:", userType);
+
+        // Show a brief success message before redirecting
+        setSuccessMessage(`Sign in successful! Redirecting...`);
+
+        // Navigation to home regardless of user type
+        setTimeout(() => {
+          console.log("✅ Navigating to Homepage: /");
+          navigate("/", { replace: true });
+        }, 500); // 500ms delay to ensure user sees the message and logs are visible
       }
     } catch (error) {
       console.error("Sign in error:", error);
@@ -172,9 +191,8 @@ export default function SignInPage() {
                 value={email}
                 onChange={handleEmailChange}
                 placeholder="Enter your email"
-                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm autofill:shadow-[inset_0_0_0px_1000px_rgb(255,255,255)] ${
-                  emailError ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-orange-500"
-                }`}
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm autofill:shadow-[inset_0_0_0px_1000px_rgb(255,255,255)] ${emailError ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-orange-500"
+                  }`}
               />
               {emailError && <p className="text-red-500 text-xs mt-1">Please enter a valid email address</p>}
             </div>
@@ -192,9 +210,9 @@ export default function SignInPage() {
                   placeholder="••••••••••"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all text-sm pr-10 autofill:shadow-[inset_0_0_0px_1000px_rgb(255,255,255)]"
                 />
-                <button 
-                  type="button" 
-                  onClick={() => setShowPassword(!showPassword)} 
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -226,9 +244,9 @@ export default function SignInPage() {
               </div>
             )}
 
-            <button 
-              type="submit" 
-              disabled={submitting} 
+            <button
+              type="submit"
+              disabled={submitting}
               className="w-full bg-orange-500 py-2 hover:bg-orange-600 text-white font-semibold rounded-xl transition-colors shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <span className="drop-shadow-sm">{submitting ? "Signing in..." : "Sign In"}</span>
@@ -238,8 +256,8 @@ export default function SignInPage() {
           <div className="text-center mt-4">
             <p className="text-sm text-gray-600">
               Don't have an Account?{' '}
-              <button 
-                onClick={() => navigate('/selectType')} 
+              <button
+                onClick={() => navigate('/selectType')}
                 className="text-orange-500 font-semibold hover:text-orange-600 transition-colors"
               >
                 Register
@@ -247,7 +265,6 @@ export default function SignInPage() {
             </p>
           </div>
 
-          {/* Forgot Password Link - Added from nouna's version */}
           <div className="text-center mt-2">
             <button
               onClick={handleForgotPassword}
