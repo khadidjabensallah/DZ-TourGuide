@@ -1,13 +1,24 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import GuideHeader from "../../Layout/GuideHeader";
+import { ReportAPI } from "../../utils/api";
 
 export default function GuideReportForm() {
+    const location = useLocation();
+    const navigate = useNavigate();
+    const { tour_id, tour_title, guide_id, guide_name } = location.state || {};
+
     const [reportTitle, setReportTitle] = useState("");
     const [reason, setReason] = useState("");
-    const [visitDate, setVisitDate] = useState("");
-    const [tourName, setTourName] = useState("");
+    const [visitDate, setVisitDate] = useState(new Date().toISOString().split('T')[0]); // Default to today
+    const [tourName, setTourName] = useState(tour_title || "");
     const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
+
+    useEffect(() => {
+        if (tour_title) setTourName(tour_title);
+    }, [tour_title]);
 
     const validateForm = () => {
         const newErrors = {};
@@ -35,9 +46,40 @@ export default function GuideReportForm() {
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleSubmit = () => {
-        if (validateForm()) {
-            setShowSuccessModal(true);
+    const handleSubmit = async () => {
+        if (!validateForm()) return;
+
+        const userStr = sessionStorage.getItem("user");
+        if (!userStr) {
+            alert("You must be logged in to report a guide.");
+            navigate("/signin");
+            return;
+        }
+
+        const user = JSON.parse(userStr);
+        const touristId = user.user_id || user.userId;
+
+        setLoading(true);
+        try {
+            const reportData = {
+                guide_id: guide_id,
+                tourist_id: touristId,
+                tour_id: tour_id || null,
+                title: reportTitle,
+                description: reason
+            };
+
+            const response = await ReportAPI.create(reportData);
+            if (response.success) {
+                setShowSuccessModal(true);
+            } else {
+                setErrors({ submit: response.message || "Failed to submit report" });
+            }
+        } catch (err) {
+            console.error("Report submission error:", err);
+            setErrors({ submit: err.message || "An error occurred during submission" });
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -170,6 +212,12 @@ export default function GuideReportForm() {
                                 )}
                             </div>
 
+                            {errors.submit && (
+                                <p className="text-sm text-red-500 mt-2 text-center font-medium bg-red-50 p-2 rounded">
+                                    {errors.submit}
+                                </p>
+                            )}
+
                             <div className="flex gap-3 pt-2">
                                 <button
                                     onClick={handleCancel}
@@ -179,9 +227,17 @@ export default function GuideReportForm() {
                                 </button>
                                 <button
                                     onClick={handleSubmit}
-                                    className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 px-4 text-sm rounded-lg transition duration-200 shadow-lg"
+                                    disabled={loading}
+                                    className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 px-4 text-sm rounded-lg transition duration-200 shadow-lg disabled:bg-orange-300 flex items-center justify-center gap-2"
                                 >
-                                    Submit Report
+                                    {loading ? (
+                                        <>
+                                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                            <span>Submitting...</span>
+                                        </>
+                                    ) : (
+                                        "Submit Report"
+                                    )}
                                 </button>
                             </div>
                         </div>

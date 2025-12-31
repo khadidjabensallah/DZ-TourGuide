@@ -33,9 +33,16 @@ def admin_delete_user(request, user_id):
     """
     from django.views.decorators.http import require_http_methods
     
-    # Get admin_id from POST data
+    # Get admin_id from POST or JSON data
     admin_id = request.POST.get('admin_id')
     
+    if not admin_id and request.content_type == 'application/json':
+        try:
+            data = json.loads(request.body)
+            admin_id = data.get('admin_id')
+        except json.JSONDecodeError:
+            pass
+
     if not admin_id:
         return JsonResponse({
             'success': False,
@@ -395,6 +402,7 @@ def admin_reports_api(request):
                 'email': report.tourist.user.email if report.tourist and report.tourist.user else ""
             },
             'reportedUser': {
+                'id': report.guide.user.id,
                 'name': f"{report.guide.user.firstname} {report.guide.user.lastname}",
                 'email': report.guide.user.email
             },

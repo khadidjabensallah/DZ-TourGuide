@@ -129,7 +129,14 @@ const TourDetail = () => {
   };
 
   const handleReport = () => {
-    navigate("/guide/report-issue", { state: { tour_id: id, guide_name: `${tour.guide?.firstname} ${tour.guide?.lastname}` } });
+    navigate("/guide/report-issue", {
+      state: {
+        tour_id: id,
+        tour_title: tour.title,
+        guide_id: tour.guide?.id,
+        guide_name: `${tour.guide?.firstname} ${tour.guide?.lastname}`
+      }
+    });
   };
 
   const submitReview = async () => {

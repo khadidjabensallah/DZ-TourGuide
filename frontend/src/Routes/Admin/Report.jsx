@@ -9,6 +9,37 @@ export default function Reports() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    const handleDeleteUser = async (userId, userName) => {
+        if (!window.confirm(`Are you sure you want to PERMANENTLY delete guide ${userName}? This action cannot be undone.`)) {
+            return;
+        }
+
+        try {
+            const user = JSON.parse(sessionStorage.getItem('user'));
+            const adminId = user?.user_id;
+
+            if (!adminId) {
+                alert("Admin ID missing. Please log in again.");
+                return;
+            }
+
+            const response = await AdminAPI.deleteUser(userId, adminId);
+            if (response.success) {
+                alert(response.message || "User deleted successfully");
+                // Refresh reports after deletion
+                const refreshResponse = await AdminAPI.getReports(adminId);
+                if (refreshResponse.success) {
+                    setReports(refreshResponse.reports);
+                }
+            } else {
+                alert(response.message || "Failed to delete user");
+            }
+        } catch (err) {
+            console.error("Error deleting user:", err);
+            alert(err.message || "An error occurred");
+        }
+    };
+
     useEffect(() => {
         const fetchReports = async () => {
             try {
@@ -120,7 +151,10 @@ export default function Reports() {
                                 <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                                     <p className="text-xs text-gray-500">Reported on   {report.date}</p>
 
-                                    <button className="flex items-center gap-2 text-gray-600 hover:text-red-600 text-sm font-medium">
+                                    <button
+                                        onClick={() => handleDeleteUser(report.reportedUser.id || report.reportedUser.user_id, report.reportedUser.name)}
+                                        className="flex items-center gap-2 text-gray-600 hover:text-red-600 text-sm font-medium transition-colors"
+                                    >
                                         <Trash2 className="w-4 h-4" />
                                         Delete Guide
                                     </button>
