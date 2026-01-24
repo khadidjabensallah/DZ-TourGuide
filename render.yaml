@@ -1,7 +1,9 @@
 services:
   # Backend
   - type: web
+    plan: free
     name: dz-tourguide-backend
+
     env: python
     buildCommand: ./build.sh
     startCommand: gunicorn core.wsgi:application
