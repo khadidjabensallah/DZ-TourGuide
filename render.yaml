@@ -17,15 +17,14 @@ services:
         value: "False"
       - key: ALLOWED_HOSTS
         value: dz-tourguide-backend.onrender.com
+      - key: PYTHONPATH
+        value: .
 
-  # Frontend Web Service (Static Site)
-  - type: web
+  # Frontend Static Site (React)
+  - type: static_site
     name: dz-tourguide-frontend
-    runtime: static
-    plan: free
-    rootDirectory: frontend
     buildCommand: npm install && npm run build
-    staticPublishPath: dist
+    publishPath: dist
     envVars:
       - key: VITE_API_URL
         value: https://dz-tourguide-backend.onrender.com
