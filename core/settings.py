@@ -169,6 +169,12 @@ FORCE_REAL_EMAIL = True
 if DEBUG and not FORCE_REAL_EMAIL:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', 'http://localhost:5173,http://127.0.0.1:5173').split(',')
-CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
+CORS_ALLOWED_ORIGINS = os.environ.get(
+    'CORS_ALLOWED_ORIGINS', 
+    'http://localhost:5173,http://127.0.0.1:5173,https://dz-tourguide-frontend.onrender.com'
+).split(',')
+CSRF_TRUSTED_ORIGINS = [
+    'https://dz-tourguide-frontend.onrender.com',
+    'https://dz-tourguide-backend.onrender.com'
+]
 
