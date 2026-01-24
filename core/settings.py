@@ -173,6 +173,9 @@ CORS_ALLOWED_ORIGINS = os.environ.get(
     'CORS_ALLOWED_ORIGINS', 
     'http://localhost:5173,http://127.0.0.1:5173,https://dz-tourguide-frontend.onrender.com'
 ).split(',')
+
+CORS_ALLOW_CREDENTIALS = True
+
 CSRF_TRUSTED_ORIGINS = [
     'https://dz-tourguide-frontend.onrender.com',
     'https://dz-tourguide-backend.onrender.com'
