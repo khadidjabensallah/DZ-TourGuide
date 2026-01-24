@@ -21,7 +21,7 @@ services:
   # Frontend Web Service (Static Site)
   - type: web
     name: dz-tourguide-frontend
-    env: static
+    runtime: static
     plan: free
     rootDirectory: frontend
     buildCommand: npm install && npm run build
