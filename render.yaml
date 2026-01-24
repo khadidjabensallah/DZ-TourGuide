@@ -21,8 +21,9 @@ services:
         value: .
 
   # Frontend Static Site
-  - type: static
+  - type: static_site
     name: dz-tourguide-frontend
+
     plan: free
     rootDirectory: frontend
     buildCommand: npm install && npm run build
