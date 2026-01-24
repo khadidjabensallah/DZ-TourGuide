@@ -1,9 +1,8 @@
 services:
-  # Backend
+  # Backend Web Service
   - type: web
     plan: free
     name: dz-tourguide-backend
-
     env: python
     buildCommand: ./build.sh
     startCommand: gunicorn core.wsgi:application
@@ -21,5 +20,6 @@ services:
         value: dz-tourguide-backend.onrender.com
 
 databases:
+  # Managed PostgreSQL Database
   - name: dz-tourguide-db
     plan: free
