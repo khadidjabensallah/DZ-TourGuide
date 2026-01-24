@@ -2,13 +2,14 @@
 # exit on error
 set -o errexit
 
-# If this is run from the root, but requirements is in backend/
-if [ -f "backend/requirements.txt" ]; then
+# Identify if we are in the root or in the backend folder
+if [ -d "backend" ]; then
+    echo "Running from project root..."
     pip install -r backend/requirements.txt
     python backend/manage.py collectstatic --no-input
     python backend/manage.py migrate
-# If this is run from within the backend/ folder
-elif [ -f "requirements.txt" ]; then
+else
+    echo "Running from backend folder..."
     pip install -r requirements.txt
     python manage.py collectstatic --no-input
     python manage.py migrate
