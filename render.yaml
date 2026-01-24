@@ -18,7 +18,7 @@ services:
       - key: ALLOWED_HOSTS
         value: dz-tourguide-backend.onrender.com
 
-  # Frontend Web Service (Static Site)
+  # Frontend Static Site (React)
   - type: web
     name: dz-tourguide-frontend
     runtime: static
