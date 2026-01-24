@@ -1,5 +1,5 @@
 services:
-  # Backend Web Service
+  # Backend Web Service (Django)
   - type: web
     plan: free
     name: dz-tourguide-backend
@@ -20,11 +20,11 @@ services:
       - key: PYTHONPATH
         value: .
 
-  # Frontend Static Site
-  - type: static_site
+  # Frontend Static Site (React)
+  - type: web
     name: dz-tourguide-frontend
-
     plan: free
+    runtime: static
     rootDirectory: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: dist
@@ -37,5 +37,6 @@ services:
         destination: /index.html
 
 databases:
+  # PostgreSQL Database
   - name: dz-tourguide-db
     plan: free
