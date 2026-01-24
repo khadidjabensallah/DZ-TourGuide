@@ -17,6 +17,8 @@ services:
         value: "False"
       - key: ALLOWED_HOSTS
         value: dz-tourguide-backend.onrender.com
+      - key: PYTHONPATH
+        value: .
 
   # Frontend Static Site
   - type: static

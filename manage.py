@@ -1,16 +1,9 @@
 #!/usr/bin/env python
-"""Django's command-line utility for administrative tasks."""
 import os
 import sys
-import dotenv
-
-# Add backend directory to Python path
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(BASE_DIR, 'backend'))
 
 def main():
     """Run administrative tasks."""
-    dotenv.load_dotenv()
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
     try:
         from django.core.management import execute_from_command_line
