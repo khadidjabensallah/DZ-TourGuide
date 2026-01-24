@@ -56,7 +56,9 @@ settings_local.py
 # Virtual Environment - CRITICAL: Never commit venv
 # ============================================
 .venv*
+.venv2*
 env/
+
 venv/
 ENV/
 env.bak/

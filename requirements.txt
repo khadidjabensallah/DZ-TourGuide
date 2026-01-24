@@ -6,3 +6,7 @@ typing_extensions==4.15.0
 requests==2.32.3
 python-dotenv==1.2.1
 django-cors-headers==4.7.0
+gunicorn==23.0.0
+whitenoise==6.9.0
+dj-database-url==2.3.0
+
