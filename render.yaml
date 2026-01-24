@@ -18,7 +18,21 @@ services:
       - key: ALLOWED_HOSTS
         value: dz-tourguide-backend.onrender.com
 
+  # Frontend Static Site
+  - type: static
+    name: dz-tourguide-frontend
+    plan: free
+    rootDirectory: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://dz-tourguide-backend.onrender.com
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
 databases:
-  # Managed PostgreSQL Database
   - name: dz-tourguide-db
     plan: free
