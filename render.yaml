@@ -1,9 +1,7 @@
 services:
-  # Backend Web Service (Django)
   - type: web
     name: dz-tourguide-backend
-    env: python
-    plan: free
+    runtime: python
     buildCommand: ./build.sh
     startCommand: gunicorn core.wsgi:application
     envVars:
@@ -14,17 +12,15 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: DEBUG
-        value: "False"
+        value: "false"
       - key: ALLOWED_HOSTS
         value: dz-tourguide-backend.onrender.com
-      - key: PYTHONPATH
-        value: .
 
-  # Frontend Static Site (React)
   - type: static_site
     name: dz-tourguide-frontend
     buildCommand: npm install && npm run build
     publishPath: dist
+    rootDirectory: frontend
     envVars:
       - key: VITE_API_URL
         value: https://dz-tourguide-backend.onrender.com
