@@ -178,7 +178,8 @@ class GuideSignupForm(PasswordValidationMixin, forms.Form):
         widget=forms.TextInput(attrs={
             'class': 'form-control',
             'placeholder': '555123456',
-            'pattern': '[5-7]\d{8}',
+            'pattern': r'[5-7]\d{8}',
+
             'maxlength': '9',
             'style': 'display: inline-block; width: calc(100% - 60px); margin-left: 5px;'
         }),
