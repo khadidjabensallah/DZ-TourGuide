@@ -2,9 +2,13 @@
 import React, { useEffect } from 'react';
 import { ShieldCheck } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+
 
 export default function SuccessResetPassword() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
+
   const location = useLocation();
   const autoSignedIn = location.state?.autoSignedIn || false;
   const userData = location.state?.userData || null;
@@ -35,32 +39,36 @@ export default function SuccessResetPassword() {
           </div>
 
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Password Changed
+            {t('auth.passwordChanged')}
           </h1>
           <h2 className="text-3xl font-bold text-orange-500 mb-6">
-            Successfully!
+            {t('auth.successfully')}
           </h2>
 
+
           <p className="text-gray-600 mb-8">
-            {autoSignedIn 
-              ? 'You have been automatically signed in! Redirecting...'
-              : 'Your password has been reset. You can now sign in with your new password.'}
+            {autoSignedIn
+              ? t('auth.autoSignedInRedirect')
+              : t('auth.resetSuccessSignInfo')}
           </p>
+
 
           {autoSignedIn && userData && (
             <div className="p-4 bg-gray-50 rounded-lg mb-4">
-              <p className="text-sm text-gray-600">Welcome back!</p>
+              <p className="text-sm text-gray-600">{t('auth.welcomeBack')}</p>
               <p className="text-sm font-medium text-gray-900">{userData.email}</p>
             </div>
           )}
+
 
           {!autoSignedIn && (
             <button
               onClick={() => navigate('/signin')}
               className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-lg transition-colors"
             >
-              Go to Sign In
+              {t('auth.goToSignIn')}
             </button>
+
           )}
         </div>
       </div>

@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { ArrowLeft, ChevronDown, Check } from "lucide-react";
+
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useTranslation } from "react-i18next";
+
 
 export default function SignUpGuideP2() {
+  const { t } = useTranslation();
   const [languagesOpen, setLanguagesOpen] = useState(false);
+
   const [wilayasOpen, setWilayasOpen] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -61,12 +66,12 @@ export default function SignUpGuideP2() {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     let val = value;
-    
+
     if (["halfDayPrice", "fullDayPrice", "additionalHourPrice"].includes(name)) {
       val = value.replace(/\D/g, "");
       val = val.replace(/^0+(?=\d)/, "");
     }
-    
+
     if (name === "customRequestMarkup") {
       val = value.replace(/[^\d.]/g, "");
       const parts = val.split(".");
@@ -77,12 +82,12 @@ export default function SignUpGuideP2() {
         val = parts[0] + "." + parts[1].slice(0, 2);
       }
     }
-    
+
     setFormData((prev) => ({
       ...prev,
       [name]: val,
     }));
-    
+
     setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
@@ -108,40 +113,48 @@ export default function SignUpGuideP2() {
 
   const validate = () => {
     const newErrors = {};
-    
+
     if (!formData.languages || formData.languages.length === 0)
-      newErrors.languages = "Select at least one language";
-    
+      newErrors.languages = t('guide.selectOneLanguage');
+
+
     if (!formData.wilayas || formData.wilayas.length === 0)
-      newErrors.wilayas = "Select at least one wilaya";
-    
+      newErrors.wilayas = t('guide.selectOneWilaya');
+
+
     ["halfDayPrice", "fullDayPrice", "additionalHourPrice"].forEach((k) => {
       const v = (formData[k] || "").trim();
-      if (!v) newErrors[k] = "Enter a price";
-      else if (!/^\d+$/.test(v)) newErrors[k] = "Price must be a number";
-      else if (Number(v) <= 0) newErrors[k] = "Price must be greater than 0";
+      if (!v) newErrors[k] = t('guide.enterPrice');
+      else if (!/^\d+$/.test(v)) newErrors[k] = t('guide.priceMustBeNumber');
+      else if (Number(v) <= 0) newErrors[k] = t('guide.priceGreaterThanZero');
     });
-    
+
+
     const markup = (formData.customRequestMarkup || "").trim();
     if (!markup) {
-      newErrors.customRequestMarkup = "Enter a markup percentage";
+      newErrors.customRequestMarkup = t('guide.enterMarkup');
     } else if (!/^\d+(\.\d{1,2})?$/.test(markup)) {
-      newErrors.customRequestMarkup = "Enter a valid percentage (e.g., 15 or 15.50)";
+      newErrors.customRequestMarkup = t('guide.invalidMarkup');
     } else if (Number(markup) < 0 || Number(markup) > 100) {
-      newErrors.customRequestMarkup = "Markup must be between 0 and 100";
+      newErrors.customRequestMarkup = t('guide.markupRange');
     }
-    
+
+
+
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSignUp = async () => {
     if (!validate()) return;
-    
+
     if (!page1Data) {
-      setApiError("Missing information from previous step. Please go back and fill the form again.");
+      setApiError(t('guide.missingInfo') || "Missing information from previous step. Please go back and fill the form again.");
       return;
     }
+
+
 
     setSubmitting(true);
     setApiError("");
@@ -149,7 +162,7 @@ export default function SignUpGuideP2() {
     try {
       const mergedData = { ...page1Data, ...formData };
       const formDataToSend = new FormData();
-      
+
       formDataToSend.append('firstname', mergedData.firstName);
       formDataToSend.append('lastname', mergedData.familyName);
       formDataToSend.append('email', mergedData.email);
@@ -161,15 +174,15 @@ export default function SignUpGuideP2() {
       formDataToSend.append('full_day_price', mergedData.fullDayPrice);
       formDataToSend.append('additional_hour_price', mergedData.additionalHourPrice);
       formDataToSend.append('custom_request_markup', mergedData.customRequestMarkup);
-      
+
       mergedData.languages.forEach(lang => {
         formDataToSend.append('languages', lang);
       });
-      
+
       mergedData.wilayas.forEach(wilaya => {
         formDataToSend.append('coverage_wilayas', wilaya);
       });
-      
+
       if (mergedData.certificates && mergedData.certificates.length > 0) {
         mergedData.certificates.forEach(file => {
           formDataToSend.append('certification_files', file);
@@ -199,8 +212,8 @@ export default function SignUpGuideP2() {
         // Navigate to verification page with email + message
         navigate('/verifyEmail', { state: { email: data.data?.email, message: data.message } });
       } else {
-        const errorMsg = data.errors 
-          ? Object.entries(data.errors).map(([k,v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`).join('\n')
+        const errorMsg = data.errors
+          ? Object.entries(data.errors).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`).join('\n')
           : data.message || 'Signup failed';
         setApiError(errorMsg);
       }
@@ -221,8 +234,10 @@ export default function SignUpGuideP2() {
             className="flex items-center text-gray-700 hover:text-gray-900 transition"
           >
             <ArrowLeft size={20} className="mr-2" />
-            <span className="font-medium">Back</span>
+            <span className="font-medium">{t('auth.back')}</span>
           </button>
+
+
         </div>
 
         <div className="w-full bg-white rounded-2xl shadow-xl p-8">
@@ -233,50 +248,58 @@ export default function SignUpGuideP2() {
               </div>
             </div>
             <h1 className="text-3xl font-extrabold text-gray-900 mb-2">
-              Complete Your Profile
+              {t('guide.completeProfile')}
             </h1>
             <p className="text-sm text-gray-600 font-bold">
-              Tell us about your services
+              {t('guide.tellServices')}
             </p>
           </div>
+
+
 
           <div className="space-y-4 max-w-md mx-auto">
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                Biography (Optional)
+                {t('guide.biography')}
               </label>
+
+
               <textarea
                 name="biography"
                 value={formData.biography}
                 onChange={handleInputChange}
-                placeholder="Tell tourists about yourself, your experience, and what makes you a great guide..."
+                placeholder={t('guide.bioPlaceholder')}
                 rows={3}
+
+
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all text-sm resize-none"
               />
             </div>
 
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                Languages Spoken *
+                {t('guide.languagesSpoken')} *
               </label>
+
+
               <div className="relative">
                 <button
                   type="button"
                   onClick={() => setLanguagesOpen(!languagesOpen)}
-                  className={`w-full px-4 py-2 border rounded-lg flex items-center justify-between hover:border-orange-500 transition focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm ${
-                    errors.languages ? "border-red-500" : "border-gray-300"
-                  }`}
+                  className={`w-full px-4 py-2 border rounded-lg flex items-center justify-between hover:border-orange-500 transition focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm ${errors.languages ? "border-red-500" : "border-gray-300"
+                    }`}
                 >
                   <span className="text-gray-700">
                     {formData.languages.length > 0
-                      ? `${formData.languages.length} language(s) selected`
-                      : "Select languages"}
+                      ? t('guide.languagesSelected', { count: formData.languages.length })
+                      : t('guide.selectLanguages')}
                   </span>
+
+
                   <ChevronDown
                     size={20}
-                    className={`text-gray-400 transition-transform ${
-                      languagesOpen ? "rotate-180" : ""
-                    }`}
+                    className={`text-gray-400 transition-transform ${languagesOpen ? "rotate-180" : ""
+                      }`}
                   />
                 </button>
 
@@ -318,26 +341,28 @@ export default function SignUpGuideP2() {
 
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                Coverage Zone (Wilayas) *
+                {t('guide.coverageZone')} *
               </label>
+
+
               <div className="relative">
                 <button
                   type="button"
                   onClick={() => setWilayasOpen(!wilayasOpen)}
-                  className={`w-full px-4 py-2 border rounded-lg flex items-center justify-between hover:border-orange-500 transition focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm ${
-                    errors.wilayas ? "border-red-500" : "border-gray-300"
-                  }`}
+                  className={`w-full px-4 py-2 border rounded-lg flex items-center justify-between hover:border-orange-500 transition focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm ${errors.wilayas ? "border-red-500" : "border-gray-300"
+                    }`}
                 >
                   <span className="text-gray-700">
                     {formData.wilayas.length > 0
-                      ? `${formData.wilayas.length} wilaya(s) selected`
-                      : "Select wilayas"}
+                      ? t('guide.wilayasSelected', { count: formData.wilayas.length })
+                      : t('guide.selectWilayas')}
                   </span>
+
+
                   <ChevronDown
                     size={20}
-                    className={`text-gray-400 transition-transform ${
-                      wilayasOpen ? "rotate-180" : ""
-                    }`}
+                    className={`text-gray-400 transition-transform ${wilayasOpen ? "rotate-180" : ""
+                      }`}
                   />
                 </button>
 
@@ -379,13 +404,17 @@ export default function SignUpGuideP2() {
 
             <div>
               <h3 className="text-lg font-bold text-gray-800 mb-4">
-                Pricing Grid
+                {t('guide.pricingGrid')}
               </h3>
+
+
 
               <div className="mb-4">
                 <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                  Half-day (≤ 4h) *
+                  {t('guide.halfDay')} *
                 </label>
+
+
                 <div className="relative">
                   <input
                     type="text"
@@ -394,11 +423,10 @@ export default function SignUpGuideP2() {
                     onChange={handleInputChange}
                     inputMode="numeric"
                     placeholder="e.g., 5000"
-                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm pr-16 ${
-                      errors.halfDayPrice
-                        ? "border-red-500 focus:ring-red-500"
-                        : "border-gray-300 focus:ring-orange-500"
-                    }`}
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm pr-16 ${errors.halfDayPrice
+                      ? "border-red-500 focus:ring-red-500"
+                      : "border-gray-300 focus:ring-orange-500"
+                      }`}
                   />
                   <span className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-semibold">
                     DZD
@@ -410,14 +438,17 @@ export default function SignUpGuideP2() {
                   </p>
                 )}
                 <p className="text-xs text-gray-500 mt-1">
-                  For tours up to 4 hours
+                  {t('guide.halfDayDesc')}
                 </p>
               </div>
 
+
               <div className="mb-4">
                 <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                  Full-day (4-8h) *
+                  {t('guide.fullDay')} *
                 </label>
+
+
                 <div className="relative">
                   <input
                     type="text"
@@ -426,11 +457,10 @@ export default function SignUpGuideP2() {
                     onChange={handleInputChange}
                     inputMode="numeric"
                     placeholder="e.g., 8000"
-                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm pr-16 ${
-                      errors.fullDayPrice
-                        ? "border-red-500 focus:ring-red-500"
-                        : "border-gray-300 focus:ring-orange-500"
-                    }`}
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm pr-16 ${errors.fullDayPrice
+                      ? "border-red-500 focus:ring-red-500"
+                      : "border-gray-300 focus:ring-orange-500"
+                      }`}
                   />
                   <span className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-semibold">
                     DZD
@@ -442,14 +472,17 @@ export default function SignUpGuideP2() {
                   </p>
                 )}
                 <p className="text-xs text-gray-500 mt-1">
-                  For tours lasting 4 to 8 hours
+                  {t('guide.fullDayDesc')}
                 </p>
               </div>
 
+
               <div className="mb-4">
                 <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                  Additional hour *
+                  {t('guide.additionalHour')} *
                 </label>
+
+
                 <div className="relative">
                   <input
                     type="text"
@@ -458,28 +491,32 @@ export default function SignUpGuideP2() {
                     onChange={handleInputChange}
                     inputMode="numeric"
                     placeholder="e.g., 1500"
-                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm pr-16 ${
-                      errors.additionalHourPrice
-                        ? "border-red-500 focus:ring-red-500"
-                        : "border-gray-300 focus:ring-orange-500"
-                    }`}
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm pr-16 ${errors.additionalHourPrice
+                      ? "border-red-500 focus:ring-red-500"
+                      : "border-gray-300 focus:ring-orange-500"
+                      }`}
                   />
                   <span className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-semibold">
-                    DZD
+                    {t('common.dzd')}
                   </span>
                 </div>
+
+
                 {errors.additionalHourPrice && (
                   <p className="text-xs text-red-500 mt-1">
                     {errors.additionalHourPrice}
                   </p>
                 )}
-                <p className="text-xs text-gray-500 mt-1">Beyond 8 hours</p>
+                <p className="text-xs text-gray-500 mt-1">{t('guide.additionalHourDesc')}</p>
               </div>
+
 
               <div className="mb-4">
                 <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                  Custom Request Markup *
+                  {t('guide.customMarkup')} *
                 </label>
+
+
                 <div className="relative">
                   <input
                     type="text"
@@ -488,11 +525,10 @@ export default function SignUpGuideP2() {
                     onChange={handleInputChange}
                     inputMode="decimal"
                     placeholder="e.g., 15.00"
-                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm pr-12 ${
-                      errors.customRequestMarkup
-                        ? "border-red-500 focus:ring-red-500"
-                        : "border-gray-300 focus:ring-orange-500"
-                    }`}
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm pr-12 ${errors.customRequestMarkup
+                      ? "border-red-500 focus:ring-red-500"
+                      : "border-gray-300 focus:ring-orange-500"
+                      }`}
                   />
                   <span className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-semibold">
                     %
@@ -504,9 +540,11 @@ export default function SignUpGuideP2() {
                   </p>
                 )}
                 <p className="text-xs text-gray-500 mt-1">
-                  Percentage added for custom tour requests (0-100%)
+                  {t('guide.customMarkupDesc')}
                 </p>
               </div>
+
+
             </div>
 
             {apiError && (
@@ -521,19 +559,23 @@ export default function SignUpGuideP2() {
               disabled={submitting}
             >
               <span className="drop-shadow-sm">
-                {submitting ? "Creating Account..." : "Sign up"}
+                {submitting ? t('auth.creatingAccount') : t('auth.signUp')}
               </span>
             </button>
-            
+
+
+
             <div className="text-center text-sm text-gray-600">
-              Already have an account?
-              <a
-                href="/signin"
-                className="ml-1 text-orange-500 font-medium hover:underline"
+              {t('auth.alreadyHaveAccount')}
+              <button
+                onClick={() => navigate("/signin")}
+                className="ml-1 text-orange-500 font-medium hover:underline bg-none border-none cursor-pointer"
               >
-                Sign in
-              </a>
+                {t('auth.signIn')}
+              </button>
             </div>
+
+
           </div>
         </div>
       </div>

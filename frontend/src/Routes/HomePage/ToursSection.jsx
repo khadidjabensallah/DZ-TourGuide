@@ -2,9 +2,13 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { MapPin, Calendar, Star, Clock } from "lucide-react";
 import { SearchAPI } from "../../utils/api";
+import { useTranslation } from "react-i18next";
+
 
 export default function PopularTours() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
+
   const [tours, setTours] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -36,8 +40,9 @@ export default function PopularTours() {
     return (
       <div id="tours" className="py-16 px-8 bg-blue-50 text-center">
         <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
-        <p className="mt-2 text-slate-600">Loading popular tours...</p>
+        <p className="mt-2 text-slate-600">{t('tours.loadingTours')}</p>
       </div>
+
     );
   }
 
@@ -47,8 +52,9 @@ export default function PopularTours() {
     // For now, let's show a message so the user knows it tried to fetch.
     return (
       <div id="tours" className="py-16 px-8 bg-blue-50 text-center">
-        <p className="text-slate-600">No tours available at the moment.</p>
+        <p className="text-slate-600">{t('tours.noTours')}</p>
       </div>
+
     );
   }
 
@@ -58,21 +64,17 @@ export default function PopularTours() {
         {/* Header */}
         <div className="text-center mb-12 mt-0">
           <span className="inline-block bg-orange-100 text-orange-600 px-6 py-2 rounded-full text-sm font-semibold mb-4">
-            Popular Tours
+            {t('tours.popularTours')}
           </span>
           <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
-            Discover The{" "}
-            <span className="text-orange-500">Best Destinations</span>
-            <br />
-            In The World
+            {t('tours.discoverBest')}{" "}
+            <span className="text-orange-500">{t('tours.inTheWorld')}</span>
           </h2>
           <p className="text-slate-600 text-[14px] max-w-2xl mx-auto font-semibold">
-            Let's find your dream destinations! Here we will recommend you a
-            beautiful
-            <br />
-            places and we will change the view with your happiness!
+            {t('tours.tagline')}
           </p>
         </div>
+
 
         {/* Tours Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20 mb-8">
@@ -156,9 +158,10 @@ export default function PopularTours() {
                     </div>
                     {tour.scheduled_time && (
                       <span className="text-xs font-medium text-slate-500">
-                        Starts at {tour.scheduled_time.substring(0, 5)}
+                        {t('tours.startsAt')} {tour.scheduled_time.substring(0, 5)}
                       </span>
                     )}
+
                   </div>
                 </div>
               </div>
@@ -172,8 +175,9 @@ export default function PopularTours() {
             onClick={() => navigate('/searchPage')}
             className="bg-orange-500 hover:bg-orange-600 text-white font-bold px-10 py-4 rounded-xl transition-all transform hover:scale-105 shadow-lg"
           >
-            More Tours
+            {t('tours.moreTours')}
           </button>
+
         </div>
       </div>
     </div>

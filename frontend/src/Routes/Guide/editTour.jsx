@@ -171,7 +171,9 @@ const CreateEditTourPage = () => {
         whats_included: whatsIncluded.join('\n'),
         whats_excluded: whatsNotIncluded.join('\n'),
         estimated_duration: formData.duration,
+        max_places: formData.availablePlaces,
         available_places: formData.availablePlaces,
+
         date: formData.date,
         scheduled_time: formData.scheduledTime,
         wilaya_code: formData.wilayaCode,

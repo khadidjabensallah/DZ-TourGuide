@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
+
 import {
   Star,
   Clock,
@@ -13,13 +15,16 @@ import { GuideAPI, TourAPI } from "../../utils/api";
 
 // Sidebar Component
 const Sidebar = ({ pricingGrid, coverageZone, certifications, onDeleteCertification }) => {
+  const { t } = useTranslation();
   return (
+
     <div className="space-y-6">
       {/* ... Pricing Grid ... */}
       <div className="bg-white rounded-lg p-6 shadow">
         <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-          💰 Pricing Grid
+          💰 {t('guide.pricingGrid')}
         </h3>
+
         <div className="space-y-4">
           <div className="flex justify-between items-center p-3 rounded-lg hover:bg-gray-50 transition-colors">
             <div className="flex items-center gap-3">
@@ -27,15 +32,17 @@ const Sidebar = ({ pricingGrid, coverageZone, certifications, onDeleteCertificat
                 <Clock size={18} />
               </div>
               <div>
-                <div className="font-semibold text-gray-900">Half-day</div>
+                <div className="font-semibold text-gray-900">{t('guide.halfDay')}</div>
                 <div className="text-sm text-gray-500">
-                  {pricingGrid.halfDay.hours}
+                  {t('guide.halfDayDesc')}
                 </div>
               </div>
             </div>
             <div className="text-orange-500 font-bold text-lg">
-              {pricingGrid.halfDay.price} DZD
+              {pricingGrid.halfDay.price} {t('common.dzd')}
             </div>
+
+
           </div>
 
           <div className="flex justify-between items-center p-3 rounded-lg hover:bg-gray-50 transition-colors">
@@ -44,16 +51,18 @@ const Sidebar = ({ pricingGrid, coverageZone, certifications, onDeleteCertificat
                 <Clock size={18} />
               </div>
               <div>
-                <div className="font-semibold text-gray-900">Full-day</div>
+                <div className="font-semibold text-gray-900">{t('guide.fullDay')}</div>
                 <div className="text-sm text-gray-500">
-                  {pricingGrid.fullDay.hours}
+                  {t('guide.fullDayDesc')}
                 </div>
               </div>
             </div>
             <div className="text-orange-500 font-bold text-lg">
-              {pricingGrid.fullDay.price} DZD
+              {pricingGrid.fullDay.price} {t('common.dzd')}
             </div>
+
           </div>
+
 
           <div className="flex justify-between items-center p-3 rounded-lg hover:bg-gray-50 transition-colors">
             <div className="flex items-center gap-3">
@@ -61,16 +70,18 @@ const Sidebar = ({ pricingGrid, coverageZone, certifications, onDeleteCertificat
                 <Clock size={18} />
               </div>
               <div>
-                <div className="font-semibold text-gray-900">Additional hour</div>
+                <div className="font-semibold text-gray-900">{t('guide.additionalHour')}</div>
                 <div className="text-sm text-gray-500">
-                  {pricingGrid.additionalHour.hours}
+                  {t('guide.additionalHourDesc')}
                 </div>
               </div>
             </div>
             <div className="text-orange-500 font-bold text-lg">
-              {pricingGrid.additionalHour.price} DZD
+              {pricingGrid.additionalHour.price} {t('common.dzd')}
             </div>
+
           </div>
+
 
           <div className="flex justify-between items-center p-3 rounded-lg hover:bg-gray-50 transition-colors bg-orange-50/50 border border-orange-100">
             <div className="flex items-center gap-3">
@@ -78,24 +89,28 @@ const Sidebar = ({ pricingGrid, coverageZone, certifications, onDeleteCertificat
                 <Star size={18} />
               </div>
               <div>
-                <div className="font-semibold text-gray-900">Custom Request</div>
+                <div className="font-semibold text-gray-900">{t('profile.customTour')}</div>
                 <div className="text-sm text-gray-500">
-                  Tailored experience
+                  {t('profile.tailoredExperience') || "Tailored experience"}
                 </div>
               </div>
             </div>
             <div className="text-orange-600 font-bold text-sm">
-              +{pricingGrid.customizedDiscount}% markup
+              +{pricingGrid.customizedDiscount}% {t('profile.markup')}
             </div>
+
           </div>
+
         </div>
       </div>
 
       {/* Coverage Zone */}
       <div className="bg-white rounded-lg p-6 shadow">
         <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-          🗺️ Coverage Zone
+          🗺️ {t('guide.coverageZone')}
         </h3>
+
+
         <div className="flex flex-wrap gap-2">
           {coverageZone.map((zone, index) => (
             <span
@@ -111,8 +126,10 @@ const Sidebar = ({ pricingGrid, coverageZone, certifications, onDeleteCertificat
       {/* Certifications */}
       <div className="bg-white rounded-lg p-6 shadow">
         <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-          🎓 Certifications
+          🎓 {t('auth.certificates')}
         </h3>
+
+
         <div className="grid grid-cols-2 gap-2">
           {certifications && certifications.length > 0 ? (
             certifications.map((cert, index) => {
@@ -146,9 +163,11 @@ const Sidebar = ({ pricingGrid, coverageZone, certifications, onDeleteCertificat
               );
             })
           ) : (
-            <p className="text-gray-500 text-xs col-span-2 text-center py-4 bg-gray-50 rounded-lg border border-dashed">No certifications listed</p>
+            <p className="text-gray-500 text-xs col-span-2 text-center py-4 bg-gray-50 rounded-lg border border-dashed">{t('profile.noCertificates')}</p>
           )}
+
         </div>
+
       </div>
     </div>
   );
@@ -156,8 +175,10 @@ const Sidebar = ({ pricingGrid, coverageZone, certifications, onDeleteCertificat
 
 // Avis Card Component
 const AvisCard = ({ avis }) => {
+  const { t } = useTranslation();
   return (
     <div className="rounded-lg p-6 hover:shadow-lg transition-shadow bg-stone-50">
+
       <div className="flex justify-between items-start mb-4">
         <div>
           <h4 className="text-xl font-bold mb-1">{avis.name}</h4>
@@ -184,19 +205,23 @@ const AvisCard = ({ avis }) => {
           <span>{avis.date}</span>
         </div>
         <span>•</span>
-        <span>Published: {avis.publishedDate}</span>
+        <span>{t('profile.published')}: {avis.publishedDate}</span>
+
       </div>
     </div>
   );
 };
 
+
 // Tour Card Component
 const TourCard = ({ tour, onDelete, onEdit, onView }) => {
+  const { t } = useTranslation();
   return (
     <div
       onClick={() => onView && onView(tour.id)}
       className="cursor-pointer rounded-lg overflow-hidden hover:shadow-lg transition-shadow bg-blue-50"
     >
+
       <div className="flex gap-4 p-4">
         <div className="relative w-40 h-40">
           <img
@@ -222,16 +247,19 @@ const TourCard = ({ tour, onDelete, onEdit, onView }) => {
                 <span className="text-lg font-bold">{tour.rating}</span>
                 <Star className="fill-yellow-400 text-yellow-400" size={16} />
                 <span className="text-sm text-gray-500">
-                  ({tour.reviews} avis)
+                  ({tour.reviews} {t('tourDetails.reviews')})
                 </span>
+
+
                 <div className="ml-auto text-right">
                   <div className="text-sm text-gray-500">{tour.date}</div>
                   {tour.scheduled_time && (
                     <div className="text-xs font-medium text-orange-600">
-                      at {tour.scheduled_time}
+                      {t('profile.at')} {tour.scheduled_time}
                     </div>
                   )}
                 </div>
+
               </div>
               <h4 className="text-xl font-bold mb-2">{tour.title}</h4>
             </div>
@@ -249,9 +277,11 @@ const TourCard = ({ tour, onDelete, onEdit, onView }) => {
               <div className="flex items-center gap-1">
                 💰{" "}
                 <span className="text-orange-500 font-bold">
-                  {tour.price} DZD
+                  {tour.price} {t('common.dzd')}
                 </span>
               </div>
+
+
               <div className="flex items-center gap-1">
                 <MapPin size={16} className="text-gray-500" />
                 <span className="text-gray-600">{tour.location}</span>
@@ -266,7 +296,7 @@ const TourCard = ({ tour, onDelete, onEdit, onView }) => {
                 className="px-4 py-2 border border-gray-300 rounded-lg flex items-center gap-2 hover:bg-gray-50"
               >
                 <Trash2 size={16} />
-                Delete
+                {t('common.delete')}
               </button>
               <button
                 onClick={(e) => {
@@ -276,21 +306,25 @@ const TourCard = ({ tour, onDelete, onEdit, onView }) => {
                 className="px-4 py-2 bg-orange-100 text-orange-600 rounded-lg flex items-center gap-2 hover:bg-orange-200"
               >
                 <Edit size={16} />
-                Edit
+                {t('common.edit')}
               </button>
             </div>
+
           </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 };
 
 // Profile Header Component
 const ProfileHeader = ({ guideData, onEditProfile }) => {
+  const { t } = useTranslation();
   return (
     <div className="bg-orange-500 rounded-lg p-6 mb-6 text-white">
+
       <div className="flex items-start gap-6">
+
         <div className="relative">
           <img
             src={guideData.profileImage}
@@ -311,26 +345,33 @@ const ProfileHeader = ({ guideData, onEditProfile }) => {
           <div className="flex items-center gap-2 mb-4">
             <span className="text-2xl font-bold">{guideData.rating}</span>
             <Star className="fill-white" size={20} />
-            <span className="text-sm">({guideData.totalReviews} avis)</span>
+            <span className="text-sm">({guideData.totalReviews} {t('tourDetails.reviews')})</span>
           </div>
+
+
           <p className="mb-4 text-orange-100">{guideData.bio}</p>
           <div className="flex items-center gap-4 text-sm">
             <div className="flex items-center gap-2">
               🗣️ {guideData.languages.join(", ")}
             </div>
             <div className="flex items-center gap-2">
-              🏆 {guideData.experience} années
+              🏆 {guideData.experience} {t('profile.years')}
             </div>
           </div>
+
+
         </div>
       </div>
-    </div>
+    </div >
   );
 };
 
 // Main Component
 const GuideProfileG = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
+
+
   const { guideId } = useParams();
 
   // Get guideId from URL params, or from sessionStorage (current logged-in guide)
@@ -386,10 +427,12 @@ const GuideProfileG = () => {
   // Fetch guide profile data
   useEffect(() => {
     if (!currentGuideId) {
-      setError("Guide ID not found. Please sign in again.");
+      setError(t('profile.guideNotFound') || "Guide ID not found. Please sign in again.");
       setLoading(false);
       return;
     }
+
+
 
     const fetchGuideData = async () => {
       setLoading(true);
@@ -474,27 +517,31 @@ const GuideProfileG = () => {
         }
       } catch (err) {
         console.error('Error fetching guide data:', err);
-        setError(err.message || 'Failed to load guide profile');
+        setError(err.message || t('profile.loadProfileError'));
       } finally {
+
         setLoading(false);
       }
+
     };
 
     fetchGuideData();
   }, [currentGuideId]);
 
   const handleDelete = async (tourId) => {
-    if (!window.confirm('Are you sure you want to delete this tour?')) {
+    if (!window.confirm(t('profile.confirmDeleteTour') || 'Are you sure you want to delete this tour?')) {
       return;
     }
+
 
     try {
       const response = await TourAPI.deleteTour(currentGuideId, tourId);
       if (response.success) {
         setTours(tours.filter((tour) => tour.id !== tourId));
       } else {
-        alert(response.message || 'Failed to delete tour');
+        alert(response.message || t('profile.deleteTourError') || 'Failed to delete tour');
       }
+
     } catch (err) {
       console.error('Error deleting tour:', err);
       alert(err.message || 'Failed to delete tour. Please try again.');
@@ -518,9 +565,10 @@ const GuideProfileG = () => {
 
   /* New handler for deleting certification */
   const handleDeleteCertification = async (filePath) => {
-    if (!window.confirm("Are you sure you want to delete this certification?")) {
+    if (!window.confirm(t('profile.confirmDeleteCert') || "Are you sure you want to delete this certification?")) {
       return;
     }
+
 
     try {
       const response = await GuideAPI.deleteCertification(currentGuideId, filePath);
@@ -540,9 +588,11 @@ const GuideProfileG = () => {
       <div className="min-h-screen bg-blue-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-orange-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading guide profile...</p>
+          <p className="text-gray-600">{t('profile.loadingProfile')}</p>
         </div>
       </div>
+
+
     );
   }
 
@@ -552,9 +602,10 @@ const GuideProfileG = () => {
         <div className="text-center">
           <p className="text-red-600 mb-4">{error}</p>
           <button onClick={() => window.location.reload()} className="px-6 py-2 bg-orange-500 text-white rounded-lg">
-            Retry
+            {t('common.retry')}
           </button>
         </div>
+
       </div>
     );
   }
@@ -570,9 +621,11 @@ const GuideProfileG = () => {
             onClick={handleAddTour}
             className="px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 font-medium"
           >
-            Add new Tour
+            {t('profile.addNewTour')}
           </button>
+
         </div>
+
 
         {/* Profile Header */}
         <ProfileHeader
@@ -604,8 +657,10 @@ const GuideProfileG = () => {
                     : "text-gray-500 hover:text-gray-700"
                     }`}
                 >
-                  Tours ({tours.length})
+                  {t('profile.tours')} ({tours.length})
                 </button>
+
+
                 <button
                   onClick={() => setActiveTab("avis")}
                   className={`px-6 py-4 font-semibold transition-colors ${activeTab === "avis"
@@ -613,8 +668,10 @@ const GuideProfileG = () => {
                     : "text-gray-500 hover:text-gray-700"
                     }`}
                 >
-                  Avis ({avis.length})
+                  {t('tourDetails.reviews')} ({avis.length})
                 </button>
+
+
               </div>
 
               {/* Tab Content */}

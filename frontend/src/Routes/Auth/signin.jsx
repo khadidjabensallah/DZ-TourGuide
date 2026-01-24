@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { ArrowLeft, Eye, EyeOff, Mail } from "lucide-react";
+import { ArrowLeft, Mail, Eye, EyeOff } from "lucide-react";
+
 import { useNavigate, useLocation } from "react-router-dom";
 import { AuthAPI } from "../../utils/api";
+import { useTranslation } from "react-i18next";
+
 
 export default function SignInPage() {
+  const { t } = useTranslation();
   const [showPassword, setShowPassword] = useState(false);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [emailError, setEmailError] = useState(false);
@@ -56,22 +61,25 @@ export default function SignInPage() {
     }
 
     if (!password) {
-      setApiError("Password is required");
+      setApiError(t('auth.passwordRequired') || "Password is required");
       return;
     }
+
 
     setSubmitting(true);
     try {
       const response = await AuthAPI.signin(email, password);
 
       if (!response) {
-        setApiError("Unexpected response from server. Please try again.");
+        setApiError(t('auth.unexpectedError') || "Unexpected response from server. Please try again.");
         return;
       }
 
+
       if (!response.success) {
-        const message = response.message || "Invalid email or password. Please try again.";
+        const message = response.message || t('auth.invalidEmailPassword') || "Invalid email or password. Please try again.";
         setApiError(message);
+
         if (message.toLowerCase().includes("verify")) {
           setShowVerificationPrompt(true);
         }
@@ -100,7 +108,8 @@ export default function SignInPage() {
         console.log("DETECTED USER TYPE:", userType);
 
         // Show a brief success message before redirecting
-        setSuccessMessage(`Sign in successful! Redirecting...`);
+        setSuccessMessage(t('auth.signInSuccess'));
+
 
         // Navigation to home regardless of user type
         setTimeout(() => {
@@ -129,8 +138,9 @@ export default function SignInPage() {
     navigate("/verifyEmail", {
       state: {
         email: email || sessionStorage.getItem("user_email") || "",
-        message: "Please verify your email to continue.",
+        message: t('auth.verifyEmailNotice'),
       },
+
     });
   };
 
@@ -139,10 +149,11 @@ export default function SignInPage() {
     setResendStatus("");
     try {
       const response = await AuthAPI.resendVerificationCode(email);
-      setResendStatus(response?.message || "Verification code resent!");
+      setResendStatus(response?.message || t('auth.codeResent') || "Verification code resent!");
     } catch (error) {
-      setResendStatus(error.message || "Unable to resend verification code right now.");
+      setResendStatus(error.message || t('auth.unableToResend') || "Unable to resend verification code right now.");
     } finally {
+
       setResendLoading(false);
     }
   };
@@ -159,8 +170,9 @@ export default function SignInPage() {
           onClick={() => navigate(-1)}
         >
           <ArrowLeft className="w-5 h-5 mr-2" />
-          <span className="text-sm">Back</span>
+          <span className="text-sm">{t('auth.back')}</span>
         </button>
+
 
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <div className="text-center mb-8">
@@ -173,34 +185,39 @@ export default function SignInPage() {
             </div>
 
             <h1 className="text-3xl font-extrabold text-gray-900 mb-2">
-              Bienvenue sur Tguida
+              {t('auth.welcome')}
             </h1>
             <p className="text-sm text-gray-600 font-bold">
-              Discover Algeria with our certificated guides
+              {t('auth.discoverAlgeria')}
             </p>
           </div>
+
 
           <form className="space-y-4 max-w-md mx-auto" onSubmit={handleSubmit}>
             <div>
               <label htmlFor="email" className="block text-xs font-semibold text-black-700 mb-1.5">
-                Email
+                {t('auth.email')}
               </label>
+
               <input
                 type="email"
                 id="email"
                 value={email}
                 onChange={handleEmailChange}
-                placeholder="Enter your email"
+                placeholder={t('auth.emailPlaceholder')}
                 className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-sm autofill:shadow-[inset_0_0_0px_1000px_rgb(255,255,255)] ${emailError ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-orange-500"
+
                   }`}
               />
-              {emailError && <p className="text-red-500 text-xs mt-1">Please enter a valid email address</p>}
+              {emailError && <p className="text-red-500 text-xs mt-1">{t('auth.validEmailRequired')}</p>}
+
             </div>
 
             <div>
               <label htmlFor="password" className="block text-xs font-semibold text-black-700 mb-1.5">
-                Password
+                {t('auth.password')}
               </label>
+
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
@@ -233,14 +250,15 @@ export default function SignInPage() {
                 {showVerificationPrompt && (
                   <div className="mt-3 flex flex-col gap-2">
                     <button type="button" onClick={handleGoToVerification} className="text-orange-600 font-semibold hover:underline text-sm text-left">
-                      Verify email now
+                      {t('auth.verifyNow')}
                     </button>
                     <button type="button" disabled={resendLoading} onClick={handleResendVerification} className="text-sm text-gray-700 underline disabled:opacity-50 text-left">
-                      {resendLoading ? "Resending code..." : "Resend verification code"}
+                      {resendLoading ? t('auth.resending') : t('auth.resendCode')}
                     </button>
                     {resendStatus && <p className="text-xs text-gray-600">{resendStatus}</p>}
                   </div>
                 )}
+
               </div>
             )}
 
@@ -249,20 +267,22 @@ export default function SignInPage() {
               disabled={submitting}
               className="w-full bg-orange-500 py-2 hover:bg-orange-600 text-white font-semibold rounded-xl transition-colors shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <span className="drop-shadow-sm">{submitting ? "Signing in..." : "Sign In"}</span>
+              <span className="drop-shadow-sm">{submitting ? t('auth.signingIn') : t('auth.signIn')}</span>
             </button>
+
           </form>
 
           <div className="text-center mt-4">
             <p className="text-sm text-gray-600">
-              Don't have an Account?{' '}
+              {t('auth.dontHaveAccount')}{' '}
               <button
                 onClick={() => navigate('/selectType')}
                 className="text-orange-500 font-semibold hover:text-orange-600 transition-colors"
               >
-                Register
+                {t('auth.register')}
               </button>
             </p>
+
           </div>
 
           <div className="text-center mt-2">
@@ -270,8 +290,9 @@ export default function SignInPage() {
               onClick={handleForgotPassword}
               className="text-sm text-orange-500 font-medium hover:text-orange-600 transition-colors"
             >
-              Forgot Password?
+              {t('auth.forgotPassword')}
             </button>
+
           </div>
         </div>
       </div>

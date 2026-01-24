@@ -2,10 +2,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { LockOpen, ArrowLeft } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { AuthAPI } from '../../utils/api';
 
+
 export default function VerifyResetCode() {
+  const { t } = useTranslation();
   const [code, setCode] = useState(['', '', '', '', '', '']);
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [email, setEmail] = useState('');
@@ -23,17 +27,18 @@ export default function VerifyResetCode() {
     setDevCode(stateDev || null);
 
     if (!stateEmail) {
-      setError('Session expired. Please start over.');
+      setError(t('auth.sessionExpired'));
       setTimeout(() => navigate('/forgot-password'), 2000);
       return;
     }
+
 
     // Auto-focus first input
     inputRefs.current[0]?.focus();
   }, [location, navigate]);
   const handleCodeChange = (index, value) => {
     if (value.length > 1) return;
-    
+
     const newCode = [...code];
     newCode[index] = value;
     setCode(newCode);
@@ -67,9 +72,10 @@ export default function VerifyResetCode() {
     const verificationCode = code.join('');
 
     if (verificationCode.length !== 6) {
-      setError('Please enter the complete 6-digit code');
+      setError(t('auth.completeCodeRequired'));
       return;
     }
+
 
     setIsLoading(true);
     setError('');
@@ -78,8 +84,9 @@ export default function VerifyResetCode() {
       const userId = sessionStorage.getItem('reset_user_id');
 
       if (!userId) {
-        throw new Error('Session expired. Please start over.');
+        throw new Error(t('auth.sessionExpired'));
       }
+
 
       // AuthAPI.verifyPasswordResetCode expects (code, userId)
       const response = await AuthAPI.verifyPasswordResetCode(verificationCode, userId);
@@ -89,9 +96,10 @@ export default function VerifyResetCode() {
         navigate('/reset-password');
       }
     } catch (err) {
-      const message = err?.data?.message || err.message || 'Invalid code. Please try again.';
+      const message = err?.data?.message || err.message || t('auth.invalidCode');
       setError(message);
       setCode(['', '', '', '', '', '']);
+
       inputRefs.current[0]?.focus();
     } finally {
       setIsLoading(false);
@@ -100,25 +108,28 @@ export default function VerifyResetCode() {
 
   const handleResend = async () => {
     if (!email) {
-      setError('Email not found. Please start over.');
+      setError(t('auth.emailNotFound') || "Email not found. Please start over.");
       return;
     }
+
 
     setError('');
     setIsLoading(true);
 
     try {
       const response = await AuthAPI.requestPasswordReset(email);
-      alert(response.message || 'New code sent! Please check your email.');
-      
+      alert(response.message || t('auth.codeSentNotice'));
+
+
       // Update dev code if available
       if (response.data?.dev_reset_code) {
         setDevCode(response.data.dev_reset_code);
       }
     } catch (err) {
-      const message = err?.data?.message || err.message || 'Failed to resend code';
+      const message = err?.data?.message || err.message || t('auth.unableToResend');
       setError(message);
     } finally {
+
       setIsLoading(false);
     }
   };
@@ -131,8 +142,9 @@ export default function VerifyResetCode() {
           className="absolute top-4 left-4 flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
         >
           <ArrowLeft className="w-5 h-5" />
-          Back
+          {t('auth.back')}
         </button>
+
 
         <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md">
           <div className="flex justify-center mb-6">
@@ -143,10 +155,11 @@ export default function VerifyResetCode() {
 
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Verify Your Code
+              {t('auth.verifyEmail')}
             </h1>
             <p className="text-sm text-gray-600">
-              Enter the 6-digit code sent to<br />
+              {t('auth.enterCodeSent')}<br />
+
               <span className="font-medium">{email}</span>
             </p>
           </div>
@@ -186,20 +199,22 @@ export default function VerifyResetCode() {
             disabled={isLoading}
             className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition-colors duration-200 mb-4"
           >
-            {isLoading ? 'Verifying...' : 'Verify Code'}
+            {isLoading ? t('auth.verifying') : t('auth.verifyEmail')}
           </button>
+
 
           <div className="text-center">
             <p className="text-sm text-gray-600">
-              Didn't receive the code?{' '}
+              {t('auth.didntReceive')}{' '}
               <button
                 onClick={handleResend}
                 disabled={isLoading}
                 className="text-orange-500 hover:text-orange-600 font-medium disabled:opacity-50"
               >
-                Resend
+                {t('auth.resend')}
               </button>
             </p>
+
           </div>
         </div>
       </div>

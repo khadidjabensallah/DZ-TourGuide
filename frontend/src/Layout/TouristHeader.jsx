@@ -1,10 +1,14 @@
 import React from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { LogOut, User, History, Search } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import logo from "../assets/logo.png";
 
+
 const TouristHeader = ({ activeTab, onTabChange }) => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
+
     const location = useLocation();
 
     const handleLogout = () => {
@@ -28,32 +32,38 @@ const TouristHeader = ({ activeTab, onTabChange }) => {
                             className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
                         >
                             <Search size={18} />
-                            <span>Explore tours</span>
+                            <span>{t('nav.explore')}</span>
                         </Link>
+
+
 
                         <Link
                             to="/tourist/profile"
                             onClick={() => onTabChange && onTabChange("profile")}
                             className={`flex items-center gap-2 text-sm font-medium transition-colors ${isProfilePage && activeTab === "profile"
-                                    ? "text-orange-500 border-b-2 border-orange-500 pb-1"
-                                    : "text-gray-600 hover:text-gray-900"
+                                ? "text-orange-500 border-b-2 border-orange-500 pb-1"
+                                : "text-gray-600 hover:text-gray-900"
                                 }`}
                         >
                             <User size={18} />
-                            <span>My Profile</span>
+                            <span>{t('nav.profile')}</span>
                         </Link>
+
+
 
                         <Link
                             to="/tourist/profile"
                             onClick={() => onTabChange && onTabChange("history")}
                             className={`flex items-center gap-2 text-sm font-medium transition-colors ${isProfilePage && activeTab === "history"
-                                    ? "text-orange-500 border-b-2 border-orange-500 pb-1"
-                                    : "text-gray-600 hover:text-gray-900"
+                                ? "text-orange-500 border-b-2 border-orange-500 pb-1"
+                                : "text-gray-600 hover:text-gray-900"
                                 }`}
                         >
                             <History size={18} />
-                            <span>Tour History</span>
+                            <span>{t('profile.myTourHistory')}</span>
                         </Link>
+
+
                     </nav>
                 </div>
 
@@ -63,8 +73,10 @@ const TouristHeader = ({ activeTab, onTabChange }) => {
                         className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 text-sm font-medium transition-colors shadow-sm flex items-center gap-2"
                     >
                         <LogOut size={18} />
-                        <span className="hidden sm:inline">Log out</span>
+                        <span className="hidden sm:inline">{t('common.logout')}</span>
                     </button>
+
+
                 </div>
             </div>
         </header>

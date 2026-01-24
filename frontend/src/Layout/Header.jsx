@@ -2,10 +2,18 @@ import logo from "../assets/logo.png";
 import { useNavigate } from "react-router-dom";
 import { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
+import { useTranslation } from "react-i18next";
+
 
 export default function Header() {
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
+  const { t, i18n } = useTranslation();
+
+  const changeLanguage = (lng) => {
+    i18n.changeLanguage(lng);
+  };
+
 
   const scrollToSection = (id) => {
     // if not on home, navigate there first
@@ -45,27 +53,27 @@ export default function Header() {
               onClick={() => navigate("/")}
               className="text-[#004DC7] hover:text-[#E74B02] font-medium text-base duration-255"
             >
-              Home
+              {t('nav.home')}
             </button>
             <button
               onClick={() => scrollToSection("tours")}
               className="text-[#004DC7] hover:text-[#E74B02] font-medium text-base duration-255"
             >
-              Explore
+              {t('nav.explore')}
             </button>
             <button
               onClick={() => scrollToSection("destinations")}
               className="text-[#004DC7] hover:text-[#E74B02] font-medium text-base duration-255"
             >
-              About
+              {t('nav.about')}
             </button>
             <button
-              // onClick={() => scrollToSection("contact")}
-              onClick={() => navigate("/Contact")}
+              onClick={() => scrollToSection("contact")}
               className="text-[#004DC7] hover:text-[#E74B02] font-medium text-base duration-255"
             >
-              Contact
+              {t('nav.contact')}
             </button>
+
           </div>
 
           {/* Right Buttons - vary by auth state */}
@@ -89,6 +97,18 @@ export default function Header() {
               </svg>
             </button>
 
+            {/* Language Switcher */}
+            <select
+              onChange={(e) => changeLanguage(e.target.value)}
+              value={i18n.language}
+              className="bg-transparent text-sm font-medium text-[#004DC7] cursor-pointer outline-none border-none hover:text-orange-500"
+            >
+              <option value="en">EN</option>
+              <option value="fr">FR</option>
+              <option value="ar">AR</option>
+            </select>
+
+
             {/* Guest: show Sign In / Sign Up */}
             {!user && (
               <>
@@ -96,15 +116,16 @@ export default function Header() {
                   className="px-7 py-2 border-2 border-orange-500 text-orange-500 rounded-lg font-medium hover:bg-orange-50 text-sm"
                   onClick={() => navigate("/signin")}
                 >
-                  Sign In
+                  {t('nav.signIn')}
                 </button>
 
                 <button
                   className="px-7 py-2 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 text-sm"
                   onClick={() => navigate("/selectType")}
                 >
-                  Sign Up
+                  {t('nav.signUp')}
                 </button>
+
               </>
             )}
 
@@ -115,8 +136,10 @@ export default function Header() {
                   className="px-6 py-2 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 text-sm"
                   onClick={() => navigate("/createtour")}
                 >
-                  Add a Tour
+                  {t('nav.addTour')}
                 </button>
+
+
                 <button
                   onClick={() => navigate("/GuideProfileG")}
                   className="relative w-10 h-10 rounded-full overflow-hidden ml-2 flex items-center justify-center bg-gray-100 border border-gray-200"

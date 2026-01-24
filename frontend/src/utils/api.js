@@ -3,7 +3,8 @@
  * Handles all API calls to Django backend
  */
 
-const API_BASE_URL = '/api'; // Vite proxy will forward to Django
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+
 
 /**
  * Make API request with error handling
@@ -252,22 +253,23 @@ export const TourAPI = {
         // Backend accepts both PUT with JSON and POST with form data
         const formData = new FormData();
 
-        if (tourData.title) formData.append('title', tourData.title);
-        if (tourData.description) formData.append('description', tourData.description);
-        if (tourData.itinerary) formData.append('itinerary', tourData.itinerary);
-        if (tourData.highlights) formData.append('highlights', tourData.highlights);
-        if (tourData.whats_included) formData.append('whats_included', tourData.whats_included);
-        if (tourData.whats_excluded) formData.append('whats_excluded', tourData.whats_excluded);
-        if (tourData.estimated_duration) formData.append('estimated_duration', tourData.estimated_duration);
-        if (tourData.max_places) formData.append('max_places', tourData.max_places);
-        if (tourData.available_places) formData.append('available_places', tourData.available_places);
+        if (tourData.title !== undefined) formData.append('title', tourData.title);
+        if (tourData.description !== undefined) formData.append('description', tourData.description);
+        if (tourData.itinerary !== undefined) formData.append('itinerary', tourData.itinerary);
+        if (tourData.highlights !== undefined) formData.append('highlights', tourData.highlights);
+        if (tourData.whats_included !== undefined) formData.append('whats_included', tourData.whats_included);
+        if (tourData.whats_excluded !== undefined) formData.append('whats_excluded', tourData.whats_excluded);
+        if (tourData.estimated_duration !== undefined) formData.append('estimated_duration', tourData.estimated_duration);
+        if (tourData.max_places !== undefined) formData.append('max_places', tourData.max_places);
+        if (tourData.available_places !== undefined) formData.append('available_places', tourData.available_places);
         if (tourData.is_active !== undefined) formData.append('is_active', tourData.is_active);
-        if (tourData.date) formData.append('date', tourData.date);
-        if (tourData.scheduled_time) formData.append('scheduled_time', tourData.scheduled_time);
-        if (tourData.wilaya_code) formData.append('wilaya_code', tourData.wilaya_code);
-        if (tourData.starting_point) formData.append('starting_point', tourData.starting_point);
-        if (tourData.latitude) formData.append('latitude', tourData.latitude);
-        if (tourData.longitude) formData.append('longitude', tourData.longitude);
+        if (tourData.date !== undefined) formData.append('date', tourData.date);
+        if (tourData.scheduled_time !== undefined) formData.append('scheduled_time', tourData.scheduled_time);
+        if (tourData.wilaya_code !== undefined) formData.append('wilaya_code', tourData.wilaya_code);
+        if (tourData.starting_point !== undefined) formData.append('starting_point', tourData.starting_point);
+        if (tourData.latitude !== undefined) formData.append('latitude', tourData.latitude);
+        if (tourData.longitude !== undefined) formData.append('longitude', tourData.longitude);
+
 
         // Photos
         if (tourData.photos && Array.isArray(tourData.photos)) {

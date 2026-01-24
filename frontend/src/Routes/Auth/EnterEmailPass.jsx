@@ -3,10 +3,14 @@
 import React, { useState } from 'react';
 import { KeyRound } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { AuthAPI } from '../../utils/api';
 
+
 export default function EnterEmailPass() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -16,9 +20,10 @@ export default function EnterEmailPass() {
 
   const handleSubmit = async () => {
     if (!email || !email.includes('@')) {
-      setError('Please enter a valid email address');
+      setError(t('auth.validEmailRequired'));
       return;
     }
+
 
     setIsLoading(true);
     setError('');
@@ -28,7 +33,8 @@ export default function EnterEmailPass() {
       const response = await AuthAPI.requestPasswordReset(email);
 
       if (response && response.success) {
-        setSuccessMsg(response.message || 'Code sent!');
+        setSuccessMsg(response.message || t('auth.codeSent'));
+
 
         const data = response.data || {};
         if (data.dev_reset_code) {
@@ -44,9 +50,10 @@ export default function EnterEmailPass() {
         navigate('/verify-reset', { state: { email: data.email || email, dev_reset_code: data.dev_reset_code } });
       }
     } catch (err) {
-      const message = err?.data?.message || err.message || 'Failed to send reset code';
+      const message = err?.data?.message || err.message || t('auth.unexpectedError');
       setError(message);
     } finally {
+
       setIsLoading(false);
     }
   };
@@ -62,9 +69,10 @@ export default function EnterEmailPass() {
           </div>
 
           <div className="text-center mb-6">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Forgot Your Password?</h1>
-            <p className="text-sm text-gray-600">Enter your email and we'll send you a reset code</p>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">{t('auth.forgotPasswordTitle')}</h1>
+            <p className="text-sm text-gray-600">{t('auth.forgotPasswordText')}</p>
           </div>
+
 
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
@@ -86,7 +94,8 @@ export default function EnterEmailPass() {
           )}
 
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{t('auth.email')}</label>
+
             <input
               type="email"
               value={email}
@@ -103,14 +112,16 @@ export default function EnterEmailPass() {
             disabled={isLoading}
             className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition-colors duration-200"
           >
-            {isLoading ? 'Sending Code...' : 'Send Reset Code'}
+            {isLoading ? t('auth.sendingCode') : t('auth.sendResetCode')}
           </button>
+
 
           <div className="text-center mt-4">
             <button onClick={() => navigate('/signin')} className="text-sm text-gray-600 hover:text-gray-900">
-              Back to Sign In
+              {t('auth.backToSignIn')}
             </button>
           </div>
+
         </div>
       </div>
     </div>
