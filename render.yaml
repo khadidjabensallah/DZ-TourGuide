@@ -1,7 +1,9 @@
 services:
+  # Backend Web Service (Django)
   - type: web
     name: dz-tourguide-backend
     runtime: python
+    plan: free
     buildCommand: ./build.sh
     startCommand: gunicorn core.wsgi:application
     envVars:
@@ -16,11 +18,14 @@ services:
       - key: ALLOWED_HOSTS
         value: dz-tourguide-backend.onrender.com
 
-  - type: static_site
+  # Frontend Web Service (Static Site)
+  - type: web
     name: dz-tourguide-frontend
-    buildCommand: npm install && npm run build
-    publishPath: dist
+    runtime: static
+    plan: free
     rootDirectory: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
     envVars:
       - key: VITE_API_URL
         value: https://dz-tourguide-backend.onrender.com
@@ -30,5 +35,6 @@ services:
         destination: /index.html
 
 databases:
+  # PostgreSQL Database
   - name: dz-tourguide-db
     plan: free
