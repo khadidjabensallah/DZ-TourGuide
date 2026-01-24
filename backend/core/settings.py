@@ -24,12 +24,14 @@ dotenv.load_dotenv(os.path.join(BASE_DIR.parent, '.env'))
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-)7al!or!peof7&u9r&$)j#!2a9uf4$u6z8o#tmz-3$x@p@%jm_'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-)7al!or!peof7&u9r&$)j#!2a9uf4$u6z8o#tmz-3$x@p@%jm_')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS += ['.onrender.com']
+
 
 
 # Application definition
@@ -46,6 +48,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',  # CORS middleware (should be early)
     'django.middleware.common.CommonMiddleware',
@@ -55,6 +58,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'backend_app.middleware.URLNormalizeMiddleware',
 ]
+
 
 ROOT_URLCONF = 'core.urls'
 
@@ -79,16 +83,15 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+import dj_database_url
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DATABASE_NAME', 'dz_tourguide'),
-        'USER': os.environ.get('DATABASE_USER', 'dz_user'),
-        'PASSWORD': os.environ.get('DATABASE_PASSWORD', 'dz_tourguide5'),
-        'HOST': os.environ.get('DATABASE_HOST', 'localhost'),
-        'PORT': os.environ.get('DATABASE_PORT', '5432'),
-    }
+    'default': dj_database_url.config(
+        default=os.environ.get('DATABASE_URL', f"postgres://{os.environ.get('DATABASE_USER', 'dz_user')}:{os.environ.get('DATABASE_PASSWORD', 'dz_tourguide5')}@{os.environ.get('DATABASE_HOST', 'localhost')}:{os.environ.get('DATABASE_PORT', '5432')}/{os.environ.get('DATABASE_NAME', 'dz_tourguide')}"),
+        conn_max_age=600
+    )
 }
+
 
 # Development convenience: when DEBUG=True we often don't have PostgreSQL
 # or psycopg installed in the local environment. To make `runserver`
@@ -129,6 +132,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 
 # Media files
 MEDIA_URL = '/media/'
@@ -160,3 +166,7 @@ FORCE_REAL_EMAIL = True
 
 if DEBUG and not FORCE_REAL_EMAIL:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', 'http://localhost:5173,http://127.0.0.1:5173').split(',')
+CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
+
