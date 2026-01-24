@@ -1,11 +1,15 @@
 #!/usr/bin/env python
 import os
 import sys
+from pathlib import Path
+
+# Add the 'backend' directory to the Python path
+# This allows Django to find 'core' and 'backend_app' from the root
+BASE_DIR = Path(__file__).resolve().parent
+sys.path.append(str(BASE_DIR / "backend"))
 
 if __name__ == "__main__":
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings")
-    # Add backend to sys.path so 'core' and 'backend_app' can be found
-    sys.path.append(os.path.join(os.path.dirname(__file__), 'backend'))
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
