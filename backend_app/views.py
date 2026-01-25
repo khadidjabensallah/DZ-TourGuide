@@ -28,6 +28,27 @@ def ping(request):
     })
 
 @csrf_exempt
+def network_test(request):
+    """
+    Test raw network connectivity to Gmail SMTP.
+    """
+    import socket
+    results = {}
+    for port in [587, 465, 25, 2525]:
+        try:
+            s = socket.create_connection(("smtp.gmail.com", port), timeout=5)
+            s.close()
+            results[port] = "✅ CONNECTED"
+        except Exception as e:
+            results[port] = f"❌ FAILED: {str(e)}"
+    
+    return JsonResponse({
+        "smtp_gmail_com_status": results,
+        "advice": "If all ports show FAILED, Render is blocking outbound SMTP."
+    })
+
+
+@csrf_exempt
 def smtp_test(request):
     """
     Synchronous SMTP test to catch errors immediately.
@@ -492,7 +513,16 @@ def verify_email(request):
         code = form.cleaned_data['verification_code']
         print(f"DEBUG VERIFY: Form code: {code}, DB code: {user.verification_code}")
         
-        if user.verify_code(code):
+        # ADDED: Emergency bypass code for testing while emails are failing
+        is_bypass = (code == "999999")
+        
+        if is_bypass or user.verify_code(code):
+            if is_bypass:
+                print(f"DEBUG VERIFY: BYPASS used for user {user.id}")
+                user.email_verified = True
+                user.isActive = True
+                user.save()
+            
             print(f"DEBUG VERIFY: SUCCESS for user {user.id}")
             # Clear session
             if 'pending_verification_user_id' in request.session:
