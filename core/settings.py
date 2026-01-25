@@ -156,12 +156,22 @@ EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'tguidadz@gmail.com').strip()
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '').replace(' ', '').strip()
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER).strip()
-EMAIL_TIMEOUT = 10  # Seconds
+# --- RESEND API CONFIGURATION ---
+RESEND_API_KEY = os.getenv('RESEND_API_KEY')
 
-# --- BREVO API CONFIGURATION ---
-BREVO_API_KEY = os.getenv('BREVO_API_KEY')
-# If BREVO_API_KEY is present, we use the Brevo SDK in email_utils.py
+if RESEND_API_KEY:
+    EMAIL_BACKEND = "anymail.backends.resend.EmailBackend"
+    ANYMAIL = {
+        "RESEND_API_KEY": RESEND_API_KEY,
+    }
+    # While testing with Resend's free tier (no domain), 
+    # the sender MUST be onboarding@resend.dev
+    DEFAULT_FROM_EMAIL = 'onboarding@resend.dev'
+
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER).strip()
+
 
 
 SITE_URL = os.getenv('SITE_URL', 'https://dz-tourguide-backend.onrender.com')

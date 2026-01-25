@@ -1,51 +1,21 @@
-from django.core.mail import send_mail
-from django.conf import settings
-import threading
-import sib_api_v3_sdk
-from sib_api_v3_sdk.rest import ApiException
-
-
-
 def send_generic_email(subject, message, recipient_list):
     """
     Core email dispatcher. 
-    Uses Brevo API if BREVO_API_KEY is present, otherwise falls back to SMTP.
+    Uses standard Django send_mail, which is intercepted by django-resend if configured.
     """
     def send_async():
         try:
-            brevo_key = getattr(settings, 'BREVO_API_KEY', None)
             from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'tguidadz@gmail.com')
-
-            if brevo_key:
-                print(f"📡 Sending via BREVO API to {recipient_list}...")
-                configuration = sib_api_v3_sdk.Configuration()
-                configuration.api_key['api-key'] = brevo_key
-                
-                api_instance = sib_api_v3_sdk.TransactionalEmailsApi(sib_api_v3_sdk.ApiClient(configuration))
-                
-                # Setup email parameters
-                sender = {"name": "TGUIDA", "email": from_email}
-                to = [{"email": email} for email in recipient_list]
-                
-                send_smtp_email = sib_api_v3_sdk.SendSmtpEmail(
-                    to=to,
-                    sender=sender,
-                    subject=subject,
-                    text_content=message
-                )
-
-                api_response = api_instance.send_transac_email(send_smtp_email)
-                print(f"✅ EMAIL SENT via BREVO. MessageId: {api_response.message_id}")
-            else:
-                print(f"📨 Sending via SMTP to {recipient_list}...")
-                send_mail(
-                    subject,
-                    message,
-                    from_email,
-                    recipient_list,
-                    fail_silently=False,
-                )
-                print(f"✅ EMAIL SENT via SMTP to {recipient_list}")
+            
+            print(f"📨 Sending email to {recipient_list} (Subject: {subject})...")
+            send_mail(
+                subject,
+                message,
+                from_email,
+                recipient_list,
+                fail_silently=False,
+            )
+            print(f"✅ EMAIL SENT to {recipient_list}")
                 
         except Exception as e:
             print(f"❌ EMAIL FAILED ({recipient_list}): {str(e)}")
@@ -54,6 +24,7 @@ def send_generic_email(subject, message, recipient_list):
     thread.daemon = True
     thread.start()
     return True
+
 
 
 def send_tour_cancellation_email(tourist_user, tour):
