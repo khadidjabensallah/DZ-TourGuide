@@ -21,11 +21,9 @@ urlpatterns = [
     path('signup-success/', views.signup_success, name='signup_success'),
     path('signin/', views.signin, name='signin'),
     path('logout/', views.logout, name='logout'),
-    path('test-email/', views.test_email, name='test_email'),
-    path('simple-test-email/', views.test_email_simple, name='test_email_simple'),
-
     
     # ========================================
+
     # PASSWORD RESET URLS (views.py)
     # ========================================
     path('forgot-password/', views.forgot_password, name='forgot_password'),

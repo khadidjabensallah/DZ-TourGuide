@@ -28,106 +28,63 @@ def ping(request):
     })
 
 
-
-@csrf_exempt
-@require_http_methods(["POST"])
-def test_email(request):
+def send_verification_email(user):
     """
-    Debug endpoint to attempt sending a test email and return detailed errors.
-    """
-    to_email = request.POST.get('email')
-    print(f"DEBUG: test_email called for {to_email}")
-    if not to_email:
-        return JsonResponse({'success': False, 'message': 'Missing email parameter'}, status=400)
-
-    subject = request.POST.get('subject') or 'Test Email from DZ-TourGuide'
-    body = request.POST.get('body') or 'This is a test email from the DZ-TourGuide debug endpoint.'
-
-    print(f"DEBUG: EMAIL_HOST={settings.EMAIL_HOST}")
-    print(f"DEBUG: EMAIL_PORT={settings.EMAIL_PORT}")
-    print(f"DEBUG: EMAIL_HOST_USER={settings.EMAIL_HOST_USER}")
-    print(f"DEBUG: DEFAULT_FROM_EMAIL={settings.DEFAULT_FROM_EMAIL}")
-    print(f"DEBUG: FORCE_REAL_EMAIL={getattr(settings, 'FORCE_REAL_EMAIL', 'N/A')}")
-
-    try:
-        sent = send_mail(subject, body, settings.DEFAULT_FROM_EMAIL, [to_email], fail_silently=False)
-        print(f"DEBUG: send_mail returned {sent}")
-        return JsonResponse({'success': True, 'message': f'Email sent (sent={sent}) to {to_email}'} , status=200)
-    except Exception as e:
-        print(f"DEBUG: test_email EXCEPTION: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        return JsonResponse({'success': False, 'message': 'Failed to send email', 'error': str(e)}, status=500)
-
-
-@csrf_exempt
-def test_email_simple(request):
-    """
-    Very simple test to bypass any POST parsing issues.
-    """
-    email = request.GET.get('email', settings.DEFAULT_FROM_EMAIL)
-    try:
-        sent = send_mail(
-            'Simple Test',
-            'This is a simple test email.',
-            settings.DEFAULT_FROM_EMAIL,
-            [email],
-            fail_silently=False
-        )
-        return JsonResponse({"success": True, "sent": sent, "to": email})
-    except Exception as e:
-        return JsonResponse({"success": False, "error": str(e), "conf": {
-            "USER": settings.EMAIL_HOST_USER,
-            "HOST": settings.EMAIL_HOST,
-            "PORT": settings.EMAIL_PORT
-        }})
-    """
-    Send verification code to user's email
-    Returns True if successful, False otherwise
+    Send verification code to user's email asynchronously.
     """
     try:
         # Generate 6-digit code
         code = user.generate_verification_code()
         
-        subject = 'Verify Your Email - Tour Guide Platform'
+        subject = 'Verify Your Email - TGUIDA'
         message = f"""
 Hello {user.firstname},
 
-Thank you for signing up!
+Thank you for joining TGUIDA!
 
 Your verification code is: {code}
 
 This code will expire in 10 minutes.
 
-If you didn't request this code, please ignore this email.
+If you didn't request this, please ignore this email.
 
 Best regards, 
-Tour Guide Platform Team
+TGUIDA Team
         """
         
-        send_mail(
-            subject,
-            message,
-            settings.DEFAULT_FROM_EMAIL,
-            [user.email],
-            fail_silently=False,
-        )
+        # Send email asynchronously
+        def send_async():
+            try:
+                send_mail(
+                    subject,
+                    message,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [user.email],
+                    fail_silently=False,
+                )
+                print(f"✅ Verification email sent to {user.email}")
+            except Exception as e:
+                print(f"❌ Error sending verification email: {e}")
+        
+        thread = threading.Thread(target=send_async)
+        thread.daemon = True
+        thread.start()
+        
         return True
     except Exception as e:
-        print(f"Error sending email: {e}")
+        print(f"Error preparing verification email: {e}")
         return False
 
 
 def send_password_reset_email(user):
     """
-    Send password reset verification code to user's email
-    Returns True if successful, False otherwise
+    Send password reset verification code to user's email asynchronously.
     """
     try:
         # Generate 6-digit code
         code = user.generate_verification_code()
         
-        subject = 'Password Reset - Tour Guide Platform'
+        subject = 'Password Reset - TGUIDA'
         message = f"""
 Hello {user.firstname},
 
@@ -137,23 +94,33 @@ Your verification code is: {code}
 
 This code will expire in 10 minutes.
 
-If you didn't request a password reset, please ignore this email and your password will remain unchanged.
+If you didn't request a password reset, please ignore this email.
 
 Best regards,
-Tour Guide Platform Team
+TGUIDA Team
         """
         
-        send_mail(
-            subject,
-            message,
-            settings.DEFAULT_FROM_EMAIL,
-            [user.email],
-            fail_silently=False,
-        )
-        # Return a dict so callers can access both send status and the code
+        # Send email asynchronously
+        def send_async():
+            try:
+                send_mail(
+                    subject,
+                    message,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [user.email],
+                    fail_silently=False,
+                )
+                print(f"✅ Password reset email sent to {user.email}")
+            except Exception as e:
+                print(f"❌ Error sending password reset email: {e}")
+        
+        thread = threading.Thread(target=send_async)
+        thread.daemon = True
+        thread.start()
+        
         return { 'sent': True, 'code': code }
     except Exception as e:
-        print(f"Error sending password reset email: {e}")
+        print(f"Error preparing password reset email: {e}")
         return { 'sent': False, 'code': None }
 
 
