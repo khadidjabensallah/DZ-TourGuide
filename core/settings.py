@@ -182,3 +182,12 @@ CSRF_TRUSTED_ORIGINS = [
     'https://dz-tourguide-4pjy.onrender.com',
 ]
 
+# Production Security Settings (essential for Render/HTTPS)
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = False # Let Render handle the redirect to HTTPS
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SAMESITE = 'None'
+CSRF_COOKIE_SAMESITE = 'None'
+
+
