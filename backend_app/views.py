@@ -13,6 +13,7 @@ import requests
 from decimal import Decimal
 from django.utils import timezone
 from django.contrib.auth import authenticate
+import threading
 from .forms import TouristSignupForm, GuideSignupForm, VerificationForm, ForgotPasswordForm, VerifyPasswordResetCodeForm, ResetPasswordForm
 from .models import Tourist, Guide, CoverageZone, User, Admin, Tour, Reservation, Review, Wilaya, WeatherInfo, Report
 from .ping_view import ping

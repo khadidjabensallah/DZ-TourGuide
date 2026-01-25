@@ -3,11 +3,29 @@
  * Handles all API calls to Django backend
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL
-    ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : `${import.meta.env.VITE_API_URL.replace(/\/$/, '')}/api`)
-    : 'https://dz-tourguide-backend.onrender.com/api';
+// Determine API Base URL with proper fallback handling
+const API_BASE_URL = (() => {
+    const envUrl = import.meta.env.VITE_API_URL;
+    const fallbackUrl = 'https://dz-tourguide-backend.onrender.com/api';
 
-console.log('API Base URL:', API_BASE_URL);
+    if (envUrl) {
+        // If VITE_API_URL is set, ensure it ends with /api
+        return envUrl.endsWith('/api') ? envUrl : `${envUrl.replace(/\/$/, '')}/api`;
+    } else {
+        // Warn in development if environment variable is missing
+        if (import.meta.env.DEV) {
+            console.warn(
+                '⚠️ VITE_API_URL not set! Falling back to production URL.',
+                '\nFor local development, create frontend/.env.development with:',
+                '\nVITE_API_URL=http://127.0.0.1:8000/api'
+            );
+        }
+        return fallbackUrl;
+    }
+})();
+
+console.log('🌐 API Base URL:', API_BASE_URL);
+console.log('🔗 Current Origin:', window.location.origin);
 
 
 /**
@@ -75,7 +93,24 @@ export async function apiRequest(endpoint, options = {}) {
 
         return data;
     } catch (error) {
-        console.error('API Request Error:', error);
+        // Enhance error information for better debugging
+        if (error.message === 'Failed to fetch' || error.name === 'TypeError') {
+            // This is likely a network error (CORS, connection refused, etc.)
+            const networkError = new Error(
+                `Network Error: Unable to reach ${url}. ` +
+                `Ensure the backend is running and allows requests from ${window.location.origin}.`
+            );
+            networkError.originalError = error;
+            networkError.isNetworkError = true;
+            console.error('❌ Network Error Details:', {
+                url,
+                origin: window.location.origin,
+                error: error.message
+            });
+            throw networkError;
+        }
+
+        console.error('❌ API Request Error:', error);
         throw error;
     }
 }
