@@ -201,6 +201,7 @@ def tourist_signup(request):
         
         if form.is_valid():
             try:
+                print(f"DEBUG SIGNUP: Creating user object for {form.cleaned_data['email']}")
                 user = User.objects.create(
                     email=form.cleaned_data['email'],
                     firstname=form.cleaned_data['firstname'],
@@ -210,20 +211,24 @@ def tourist_signup(request):
                     email_verified=False
                 )
                 
+                print(f"DEBUG SIGNUP: Setting password for user {user.id}")
                 user.set_password(form.cleaned_data['password'])
                 user.save()
                 
+                print(f"DEBUG SIGNUP: Creating tourist profile for user {user.id}")
                 tourist = Tourist.objects.create(
                     user=user,
                     nationality=form.cleaned_data.get('nationality', '')
                 )
                 
                 # Step 4: Send verification email
+                print(f"DEBUG SIGNUP: Initiating verification email for user {user.id}")
                 email_sent = send_verification_email(user)
                 
                 # Store user_id in session for verification
                 request.session['pending_verification_user_id'] = user.id
                 
+                print(f"DEBUG SIGNUP: SUCCESS for {user.email}")
                 return JsonResponse({
                     'success': True,
                     'message': 'Tourist account created successfully! Please check your email for verification code.',
@@ -237,13 +242,14 @@ def tourist_signup(request):
                     }
                 }, status=201)
             except Exception as e:
-                print(f"❌ CRITICAL ERROR IN SIGNUP (DB): {str(e)}")
+                error_msg = str(e)
+                print(f"❌ CRITICAL ERROR IN SIGNUP (DB): {error_msg}")
                 import traceback
                 traceback.print_exc()
                 return JsonResponse({
                     'success': False,
-                    'message': 'An internal server error occurred',
-                    'error': str(e)
+                    'message': f'Server Error during creation: {error_msg}',
+                    'error': error_msg
                 }, status=500)
         else:
             # Return validation errors
@@ -256,13 +262,14 @@ def tourist_signup(request):
             
     except Exception as e:
         # Catch ANY other error in the view
-        print(f"❌ UNHANDLED ERROR IN SIGNUP VIEW: {str(e)}")
+        error_msg = str(e)
+        print(f"❌ UNHANDLED ERROR IN SIGNUP VIEW: {error_msg}")
         import traceback
         traceback.print_exc()
         return JsonResponse({
             'success': False,
-            'message': 'A critical server error occurred.',
-            'error': str(e)
+            'message': f'Critical system error: {error_msg}',
+            'error': error_msg
         }, status=500)
 
 
