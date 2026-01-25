@@ -16,6 +16,8 @@ from django.contrib.auth import authenticate
 import threading
 from .forms import TouristSignupForm, GuideSignupForm, VerificationForm, ForgotPasswordForm, VerifyPasswordResetCodeForm, ResetPasswordForm
 from .models import Tourist, Guide, CoverageZone, User, Admin, Tour, Reservation, Review, Wilaya, WeatherInfo, Report
+from .email_utils import send_generic_email
+
 VERSION_TAG = "VERIFY_V_109"
 
 @csrf_exempt
@@ -117,27 +119,11 @@ Best regards,
 TGUIDA Team
         """
         
-        # Send email asynchronously
-        def send_async():
-            try:
-                send_mail(
-                    subject,
-                    message,
-                    settings.DEFAULT_FROM_EMAIL,
-                    [user.email],
-                    fail_silently=False,
-                )
-                print(f"✅ Verification email sent to {user.email}")
-            except Exception as e:
-                print(f"❌ Error sending verification email: {e}")
+        # Send email via centralized dispatcher (Supports Resend API)
+        return send_generic_email(subject, message, [user.email])
         
-        thread = threading.Thread(target=send_async)
-        thread.daemon = True
-        thread.start()
-        
-        return True
     except Exception as e:
-        print(f"Error preparing verification email: {e}")
+        print(f"Error preparing verification email for {user.email}: {e}")
         return False
 
 
