@@ -159,13 +159,21 @@ EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '').replace(' ', '').stri
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER).strip()
 EMAIL_TIMEOUT = 10  # Seconds
 
+# --- SENDGRID API CONFIGURATION ---
+SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY')
+if SENDGRID_API_KEY:
+    EMAIL_BACKEND = 'sendgrid_backend.SendgridBackend'
+    SENDGRID_SANDBOX_MODE_IN_DEBUG = False
+    SENDGRID_ECHO_TO_STDOUT = DEBUG
+
 SITE_URL = os.getenv('SITE_URL', 'https://dz-tourguide-backend.onrender.com')
 
 # Force real email delivery
 FORCE_REAL_EMAIL = True
 
-if DEBUG and not os.getenv('FORCE_REAL_EMAIL', 'True').lower() in ('true', '1', 'yes'):
+if DEBUG and not os.getenv('FORCE_REAL_EMAIL', 'True').lower() in ('true', '1', 'yes') and not SENDGRID_API_KEY:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
 
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOW_CREDENTIALS = True
