@@ -467,6 +467,10 @@ def verify_email(request):
     # Try to get user_id from POST data first, then session
     user_id = request.POST.get('user_id') or request.session.get('pending_verification_user_id')
     
+    print(f"DEBUG VERIFY: Attempting verification for user_id: {user_id}")
+    print(f"DEBUG VERIFY: Session user_id: {request.session.get('pending_verification_user_id')}")
+    print(f"DEBUG VERIFY: POST user_id: {request.POST.get('user_id')}")
+    
     if not user_id:
         return JsonResponse({
             'success': False,
@@ -476,6 +480,7 @@ def verify_email(request):
     try:
         user = User.objects.get(id=user_id, email_verified=False)
     except User.DoesNotExist:
+        print(f"DEBUG VERIFY: User {user_id} not found or already verified.")
         return JsonResponse({
             'success': False,
             'message': 'Invalid verification request or email already verified.'
@@ -485,8 +490,10 @@ def verify_email(request):
     
     if form.is_valid():
         code = form.cleaned_data['verification_code']
+        print(f"DEBUG VERIFY: Form code: {code}, DB code: {user.verification_code}")
         
         if user.verify_code(code):
+            print(f"DEBUG VERIFY: SUCCESS for user {user.id}")
             # Clear session
             if 'pending_verification_user_id' in request.session:
                 del request.session['pending_verification_user_id']
@@ -515,16 +522,19 @@ def verify_email(request):
                 }
             }, status=200)
         else:
+            print(f"DEBUG VERIFY: Code mismatch or expired for user {user.id}")
             return JsonResponse({
                 'success': False,
                 'message': 'Invalid or expired verification code. Please try again.'
             }, status=400)
     else:
+        print(f"DEBUG VERIFY: Form validation FAILED: {form.errors}")
         return JsonResponse({
             'success': False,
             'message': 'Validation failed',
             'errors': form.errors
         }, status=400)
+
 
 
 
