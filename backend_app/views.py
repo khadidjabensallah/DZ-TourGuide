@@ -17,29 +17,14 @@ import threading
 from .forms import TouristSignupForm, GuideSignupForm, VerificationForm, ForgotPasswordForm, VerifyPasswordResetCodeForm, ResetPasswordForm
 from .models import Tourist, Guide, CoverageZone, User, Admin, Tour, Reservation, Review, Wilaya, WeatherInfo, Report
 @csrf_exempt
-def minimal_ping(request):
-    return JsonResponse({"status": "connected"})
-
-@csrf_exempt
 @require_http_methods(["GET"])
 def ping(request):
     """
-    Health check endpoint with database connectivity check.
+    Health check endpoint.
     """
-    db_ok = False
-    try:
-        from django.db import connection
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT 1")
-        db_ok = True
-    except Exception as e:
-        print(f"Health check DB error: {e}")
-
     return JsonResponse({
         'status': 'ok',
-        'database': 'connected' if db_ok else 'disconnected',
-        'timestamp': timezone.now().isoformat(),
-        'origin_received': request.headers.get('Origin', 'none')
+        'timestamp': timezone.now().isoformat()
     })
 
 
