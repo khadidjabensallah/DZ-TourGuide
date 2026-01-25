@@ -149,21 +149,19 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # truthy value in the environment. This lets you test real email delivery
 # without changing code.
 
-EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
-EMAIL_HOST = os.getenv('EMAIL_HOST')
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
 EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() in ('true', '1', 'yes')
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
-SITE_URL = os.getenv('SITE_URL', 'http://127.0.0.1:8000')
+SITE_URL = os.getenv('SITE_URL', 'https://dz-tourguide-backend.onrender.com')
 
-# When DEBUG=True we normally use the console backend so emails are printed
-# to the server log. If you want to force real SMTP delivery in your local
-# environment, set FORCE_REAL_EMAIL=True in .env. This is safer than editing code.
-FORCE_REAL_EMAIL = os.getenv('FORCE_REAL_EMAIL', 'False').lower() in ('true', '1', 'yes')
+# Force real email delivery
+FORCE_REAL_EMAIL = True
 
-if DEBUG and not FORCE_REAL_EMAIL:
+if DEBUG and not os.getenv('FORCE_REAL_EMAIL', 'True').lower() in ('true', '1', 'yes'):
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 CORS_ALLOW_ALL_ORIGINS = False
