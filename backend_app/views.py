@@ -51,49 +51,57 @@ def network_test(request):
 @csrf_exempt
 def smtp_test(request):
     """
-    Synchronous SMTP test to catch errors immediately.
+    Synchronous SMTP test with shorter timeout to reveal specific errors.
     """
     target = request.GET.get('email', settings.DEFAULT_FROM_EMAIL)
     print(f"--- STARTING SMTP TEST TO {target} ---")
-    print(f"HOST: {settings.EMAIL_HOST}:{settings.EMAIL_PORT}")
-    print(f"USER: {settings.EMAIL_HOST_USER}")
+    
+    results = {
+        "config": {
+            "HOST": settings.EMAIL_HOST,
+            "PORT": settings.EMAIL_PORT,
+            "USER": settings.EMAIL_HOST_USER,
+            "USE_TLS": settings.EMAIL_USE_TLS,
+            "USE_SSL": getattr(settings, 'EMAIL_USE_SSL', False),
+            "PASSWORD_LEN": len(settings.EMAIL_HOST_PASSWORD) if settings.EMAIL_HOST_PASSWORD else 0
+        },
+        "steps": []
+    }
     
     try:
         from django.core.mail import get_connection
-        connection = get_connection(fail_silently=False)
-        print("Attempting to open connection...")
+        results["steps"].append("Imported get_connection")
+        
+        # Use a short timeout for the connection itself
+        connection = get_connection(fail_silently=False, timeout=10)
+        results["steps"].append("Created connection object (timeout=10)")
+        
+        results["steps"].append("Attempting connection.open()...")
         connection.open()
-        print("Connection opened! Attempting to send...")
+        results["steps"].append("✅ Connection opened successfully!")
         
         sent = send_mail(
             "SMTP DIAGNOSTIC",
-            "This is a synchronous test to find why emails are failing.",
+            "Production connectivity test.",
             settings.DEFAULT_FROM_EMAIL,
             [target],
             connection=connection,
             fail_silently=False
         )
-        print(f"Send successful! Result: {sent}")
-        return JsonResponse({
-            "success": True,
-            "message": f"Email sent successfully to {target}",
-            "config": {
-                "host": settings.EMAIL_HOST,
-                "user": settings.EMAIL_HOST_USER,
-                "use_tls": settings.EMAIL_USE_TLS
-            }
-        })
+        results["success"] = True
+        results["sent_count"] = sent
+        results["message"] = f"Email sent successfully to {target}"
+        return JsonResponse(results)
+        
     except Exception as e:
         import traceback
-        err_msg = str(e)
-        stack = traceback.format_exc()
-        print(f"❌ SMTP TEST FAILED: {err_msg}")
-        return JsonResponse({
-            "success": False,
-            "error": err_msg,
-            "details": stack,
-            "advice": "Check if Gmail App Password is correct and has NO spaces if Render env parser keeps them."
-        }, status=500)
+        results["success"] = False
+        results["error"] = str(e)
+        results["error_type"] = type(e).__name__
+        results["traceback"] = traceback.format_exc()
+        print(f"❌ SMTP TEST FAILED: {str(e)}")
+        return JsonResponse(results, status=500)
+
 
 
 
