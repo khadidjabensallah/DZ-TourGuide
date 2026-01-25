@@ -124,6 +124,8 @@ TGUIDA Team
         return { 'sent': False, 'code': None }
 
 
+VERSION_TAG = "DEBUG_V_103"
+
 @csrf_exempt
 @require_http_methods(["POST"])
 def tourist_signup(request):
@@ -131,6 +133,9 @@ def tourist_signup(request):
     API endpoint for tourist signup
     Returns JSON response
     """
+    print(f"DEBUG VERSION: {VERSION_TAG}")
+    print(f"DEBUG SCOPE: send_verification_email in globals: {'send_verification_email' in globals()}")
+
     try:
         # Check for existing unverified user to handle "zombie" accounts from failed attempts
         raw_email = request.POST.get('email', '')
