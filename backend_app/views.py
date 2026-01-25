@@ -127,7 +127,6 @@ def tourist_signup(request):
     form = TouristSignupForm(request.POST)
     
     if form.is_valid():
-    if form.is_valid():
         try:
             user = User.objects.create(
                 email=form.cleaned_data['email'],
