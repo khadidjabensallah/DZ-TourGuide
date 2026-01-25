@@ -80,7 +80,8 @@ export default function VerifyEmail() {
 
 
 
-      const response = await AuthAPI.verifyEmail(userId, verificationCode);
+      const response = await AuthAPI.verifyEmail(userId, verificationCode, userEmail);
+
 
       if (response.success) {
         setSuccess(true);
@@ -117,7 +118,10 @@ export default function VerifyEmail() {
   const handleResendCode = async () => {
     setError("");
     try {
-      await AuthAPI.resendVerificationCode();
+      // Get userId from state if available, or session
+      const userId = sessionStorage.getItem('pending_verification_user_id');
+      await AuthAPI.resendVerificationCode(userId, userEmail);
+
       setError(""); // Clear any previous errors
       alert(t('auth.codeSentNotice'));
     } catch (error) {

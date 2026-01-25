@@ -181,10 +181,11 @@ export const AuthAPI = {
         });
     },
 
-    verifyEmail: async (userId, code) => {
+    verifyEmail: async (userId, code, email = null) => {
         const formData = new FormData();
         formData.append('user_id', userId);
         formData.append('verification_code', code);
+        if (email) formData.append('email', email);
 
         return apiRequest('/verify-email/', {
             method: 'POST',
@@ -192,11 +193,18 @@ export const AuthAPI = {
         });
     },
 
-    resendVerificationCode: async () => {
+
+    resendVerificationCode: async (userId = null, email = null) => {
+        const formData = new FormData();
+        if (userId) formData.append('user_id', userId);
+        if (email) formData.append('email', email);
+
         return apiRequest('/resend-verification/', {
             method: 'POST',
+            body: formData,
         });
     },
+
 
     // ✅ Password reset: request sending reset code to email
     requestPasswordReset: async (email) => {

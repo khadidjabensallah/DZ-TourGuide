@@ -310,9 +310,15 @@ export default function SignUpTourist() {
               </button>
             </div>
 
+            <div className="mt-4 text-center">
+              <span className="text-[8px] text-gray-300">V.1.0.8.RESILIENT</span>
+            </div>
           </div>
+
+
         </div>
       </div>
     </div>
+    </div >
   );
 }
