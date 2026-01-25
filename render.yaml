@@ -21,6 +21,19 @@ services:
         value: .
       - key: CORS_ALLOWED_ORIGINS
         value: https://dz-tourguide-frontend.onrender.com
+      - key: EMAIL_HOST
+        value: smtp.gmail.com
+      - key: EMAIL_PORT
+        value: "587"
+      - key: EMAIL_USE_TLS
+        value: "true"
+      - key: EMAIL_HOST_USER
+        value: tguidadz@gmail.com
+      - key: FORCE_REAL_EMAIL
+        value: "true"
+      - key: EMAIL_HOST_PASSWORD
+        sync: false # Set this value manually in Render dashboard
+
 
   # Frontend Static Site (React)
   - type: web
