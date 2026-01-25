@@ -124,89 +124,106 @@ def tourist_signup(request):
     API endpoint for tourist signup
     Returns JSON response
     """
-    # Check for existing unverified user to handle "zombie" accounts from failed attempts
-    email = request.POST.get('email')
-    if email:
-        try:
-            existing_user = User.objects.filter(email=email).first()
-            if existing_user and not existing_user.email_verified:
-                # Resend verification email
-                email_sent = send_verification_email(existing_user)
+    try:
+        # Check for existing unverified user to handle "zombie" accounts from failed attempts
+        raw_email = request.POST.get('email', '')
+        email = raw_email.strip().lower() if raw_email else None
+        
+        if email:
+            try:
+                # Use iexact to be case-insensitive safe
+                existing_user = User.objects.filter(email__iexact=email).first()
+                if existing_user:
+                    print(f"Checking existing user: {existing_user.email}, Verified: {existing_user.email_verified}")
+                    if not existing_user.email_verified:
+                        # Resend verification email
+                        email_sent = send_verification_email(existing_user)
+                        
+                        # Update session
+                        request.session['pending_verification_user_id'] = existing_user.id
+                        
+                        return JsonResponse({
+                            'success': True,
+                            'message': 'Account exists but was not verified. We sent a new verification code.',
+                            'data': {
+                                'user_id': existing_user.id,
+                                'email': existing_user.email,
+                                'firstname': existing_user.firstname,
+                                'lastname': existing_user.lastname,
+                                'user_type': existing_user.user_type,
+                                'email_sent': email_sent
+                            }
+                        }, status=200)
+            except Exception as e:
+                print(f"Error checking existing user: {e}")
+
+        form = TouristSignupForm(request.POST)
+        
+        if form.is_valid():
+            try:
+                user = User.objects.create(
+                    email=form.cleaned_data['email'],
+                    firstname=form.cleaned_data['firstname'],
+                    lastname=form.cleaned_data['lastname'],
+                    user_type='tourist',
+                    isActive=False,
+                    email_verified=False
+                )
                 
-                # Update session
-                request.session['pending_verification_user_id'] = existing_user.id
+                user.set_password(form.cleaned_data['password'])
+                user.save()
+                
+                tourist = Tourist.objects.create(
+                    user=user,
+                    nationality=form.cleaned_data.get('nationality', '')
+                )
+                
+                # Step 4: Send verification email
+                email_sent = send_verification_email(user)
+                
+                # Store user_id in session for verification
+                request.session['pending_verification_user_id'] = user.id
                 
                 return JsonResponse({
                     'success': True,
-                    'message': 'Account exists but was not verified. We sent a new verification code.',
+                    'message': 'Tourist account created successfully! Please check your email for verification code.',
                     'data': {
-                        'user_id': existing_user.id,
-                        'email': existing_user.email,
-                        'firstname': existing_user.firstname,
-                        'lastname': existing_user.lastname,
-                        'user_type': existing_user.user_type,
+                        'user_id': user.id,
+                        'email': user.email,
+                        'firstname': user.firstname,
+                        'lastname': user.lastname,
+                        'user_type': user.user_type,
                         'email_sent': email_sent
                     }
-                }, status=200)
-        except Exception as e:
-            print(f"Error checking existing user: {e}")
-
-    form = TouristSignupForm(request.POST)
-    
-    if form.is_valid():
-        try:
-            user = User.objects.create(
-                email=form.cleaned_data['email'],
-                firstname=form.cleaned_data['firstname'],
-                lastname=form.cleaned_data['lastname'],
-                user_type='tourist',
-                isActive=False,
-                email_verified=False
-            )
-            
-            user.set_password(form.cleaned_data['password'])
-            user.save()
-            
-            tourist = Tourist.objects.create(
-                user=user,
-                nationality=form.cleaned_data.get('nationality', '')
-            )
-            
-            # Step 4: Send verification email
-            email_sent = send_verification_email(user)
-            
-            # Store user_id in session for verification
-            request.session['pending_verification_user_id'] = user.id
-            
-            return JsonResponse({
-                'success': True,
-                'message': 'Tourist account created successfully! Please check your email for verification code.',
-                'data': {
-                    'user_id': user.id,
-                    'email': user.email,
-                    'firstname': user.firstname,
-                    'lastname': user.lastname,
-                    'user_type': user.user_type,
-                    'email_sent': email_sent
-                }
-            }, status=201)
-        except Exception as e:
-            print(f"❌ CRITICAL ERROR IN SIGNUP: {str(e)}")
-            import traceback
-            traceback.print_exc()
+                }, status=201)
+            except Exception as e:
+                print(f"❌ CRITICAL ERROR IN SIGNUP (DB): {str(e)}")
+                import traceback
+                traceback.print_exc()
+                return JsonResponse({
+                    'success': False,
+                    'message': 'An internal server error occurred',
+                    'error': str(e)
+                }, status=500)
+        else:
+            # Return validation errors
+            print(f"❌ VALIDATION FAILED: {form.errors}")
             return JsonResponse({
                 'success': False,
-                'message': 'An internal server error occurred',
-                'error': str(e)
-            }, status=500)
-    else:
-        # Return validation errors
-        print(f"❌ VALIDATION FAILED: {form.errors}")
+                'message': 'Validation failed',
+                'errors': form.errors
+            }, status=400)
+            
+    except Exception as e:
+        # Catch ANY other error in the view
+        print(f"❌ UNHANDLED ERROR IN SIGNUP VIEW: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return JsonResponse({
             'success': False,
-            'message': 'Validation failed',
-            'errors': form.errors
-        }, status=400)
+            'message': 'A critical server error occurred.',
+            'error': str(e)
+        }, status=500)
 
 
 @csrf_exempt
