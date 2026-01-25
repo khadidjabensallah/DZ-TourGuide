@@ -55,56 +55,40 @@ def network_test(request):
 @csrf_exempt
 def smtp_test(request):
     """
-    Synchronous SMTP test with shorter timeout to reveal specific errors.
+    Diagnostic to scan multiple ports and find what works on Render.
     """
     target = request.GET.get('email', settings.DEFAULT_FROM_EMAIL)
-    print(f"--- STARTING SMTP TEST TO {target} ---")
+    results = {"results": []}
     
-    results = {
-        "config": {
-            "HOST": settings.EMAIL_HOST,
-            "PORT": settings.EMAIL_PORT,
-            "USER": settings.EMAIL_HOST_USER,
-            "USE_TLS": settings.EMAIL_USE_TLS,
-            "USE_SSL": getattr(settings, 'EMAIL_USE_SSL', False),
-            "PASSWORD_LEN": len(settings.EMAIL_HOST_PASSWORD) if settings.EMAIL_HOST_PASSWORD else 0
-        },
-        "steps": []
-    }
-    
-    try:
-        from django.core.mail import get_connection
-        results["steps"].append("Imported get_connection")
-        
-        # Use a short timeout for the connection itself
-        connection = get_connection(fail_silently=False, timeout=10)
-        results["steps"].append("Created connection object (timeout=10)")
-        
-        results["steps"].append("Attempting connection.open()...")
-        connection.open()
-        results["steps"].append("✅ Connection opened successfully!")
-        
-        sent = send_mail(
-            "SMTP DIAGNOSTIC",
-            "Production connectivity test.",
-            settings.DEFAULT_FROM_EMAIL,
-            [target],
-            connection=connection,
-            fail_silently=False
-        )
-        results["success"] = True
-        results["sent_count"] = sent
-        results["message"] = f"Email sent successfully to {target}"
-        return JsonResponse(results)
-        
-    except Exception as e:
-        import traceback
-        results["success"] = False
-        results["error"] = str(e)
-        results["error_type"] = type(e).__name__
-        results["traceback"] = traceback.format_exc()
-        print(f"❌ SMTP TEST FAILED: {str(e)}")
-        return JsonResponse(results, status=500)
+    # Common SMTP ports
+    for port, use_ssl, use_tls in [(587, False, True), (465, True, False), (2525, False, True)]:
+        try:
+            from django.core.mail import get_connection
+            # Create connection manual override
+            conn = get_connection(
+                host=settings.EMAIL_HOST,
+                port=port,
+                username=settings.EMAIL_HOST_USER or 'tguidadz@gmail.com', # Hard fallback
+                password=settings.EMAIL_HOST_PASSWORD,
+                use_tls=use_tls,
+                use_ssl=use_ssl,
+                timeout=5
+            )
+            report = {"port": port, "ssl": use_ssl, "tls": use_tls}
+            try:
+                conn.open()
+                report["status"] = "✅ CONNECTED"
+                conn.close()
+            except Exception as e:
+                report["status"] = f"❌ FAILED: {str(e)}"
+            
+            results["results"].append(report)
+        except Exception as e:
+            results["results"].append({"port": port, "error": str(e)})
+
+    results["config_user"] = settings.EMAIL_HOST_USER
+    return JsonResponse(results)
+
 
 
 
