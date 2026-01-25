@@ -34,20 +34,29 @@ def ping(request):
 def test_email(request):
     """
     Debug endpoint to attempt sending a test email and return detailed errors.
-    POST params: email (required), subject (optional), body (optional)
     """
     to_email = request.POST.get('email')
+    print(f"DEBUG: test_email called for {to_email}")
     if not to_email:
         return JsonResponse({'success': False, 'message': 'Missing email parameter'}, status=400)
 
     subject = request.POST.get('subject') or 'Test Email from DZ-TourGuide'
     body = request.POST.get('body') or 'This is a test email from the DZ-TourGuide debug endpoint.'
 
+    print(f"DEBUG: EMAIL_HOST={settings.EMAIL_HOST}")
+    print(f"DEBUG: EMAIL_PORT={settings.EMAIL_PORT}")
+    print(f"DEBUG: EMAIL_HOST_USER={settings.EMAIL_HOST_USER}")
+    print(f"DEBUG: DEFAULT_FROM_EMAIL={settings.DEFAULT_FROM_EMAIL}")
+    print(f"DEBUG: FORCE_REAL_EMAIL={getattr(settings, 'FORCE_REAL_EMAIL', 'N/A')}")
+
     try:
         sent = send_mail(subject, body, settings.DEFAULT_FROM_EMAIL, [to_email], fail_silently=False)
+        print(f"DEBUG: send_mail returned {sent}")
         return JsonResponse({'success': True, 'message': f'Email sent (sent={sent}) to {to_email}'} , status=200)
     except Exception as e:
-        # Return exception message to help debug SMTP configuration
+        print(f"DEBUG: test_email EXCEPTION: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return JsonResponse({'success': False, 'message': 'Failed to send email', 'error': str(e)}, status=500)
 
 
