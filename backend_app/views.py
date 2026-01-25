@@ -62,39 +62,45 @@ def network_test(request):
 @csrf_exempt
 def smtp_test(request):
     """
-    Diagnostic to scan multiple ports and find what works on Render.
+    Diagnostic to test the configured Email Backend (Anymail/Resend).
     """
-    target = request.GET.get('email', settings.DEFAULT_FROM_EMAIL)
-    results = {"results": []}
+    target = request.GET.get('email', 'tguidadz@gmail.com')
+    results = {
+        "backend": settings.EMAIL_BACKEND,
+        "api_key_prefix": os.getenv('RESEND_API_KEY', '')[:4],
+        "target_email": target,
+    }
     
-    # Common SMTP ports
-    for port, use_ssl, use_tls in [(587, False, True), (465, True, False), (2525, False, True)]:
-        try:
-            from django.core.mail import get_connection
-            # Create connection manual override
-            conn = get_connection(
-                host=settings.EMAIL_HOST,
-                port=port,
-                username=settings.EMAIL_HOST_USER or 'tguidadz@gmail.com', # Hard fallback
-                password=settings.EMAIL_HOST_PASSWORD,
-                use_tls=use_tls,
-                use_ssl=use_ssl,
-                timeout=5
-            )
-            report = {"port": port, "ssl": use_ssl, "tls": use_tls}
-            try:
-                conn.open()
-                report["status"] = "✅ CONNECTED"
-                conn.close()
-            except Exception as e:
-                report["status"] = f"❌ FAILED: {str(e)}"
+    try:
+        from django.core.mail import send_mail
+        print(f"🚀 Sending test email via {settings.EMAIL_BACKEND} to {target}")
+        
+        sent_count = send_mail(
+            "Resend Connectivity Test",
+            "If you received this, your Resend integration on Render is working perfectly! \n\nNote: In Sandbox mode, you can ONLY receive emails at your verified address.",
+            'onboarding@resend.dev',
+            [target],
+            fail_silently=False
+        )
+        
+        results["success"] = True
+        results["sent_count"] = sent_count
+        results["message"] = f"✅ Email successfully handed off to Resend for {target}."
+        return JsonResponse(results)
+        
+    except Exception as e:
+        import traceback
+        results["success"] = False
+        results["error"] = str(e)
+        results["traceback"] = traceback.format_exc()
+        print(f"❌ TEST FAILED: {str(e)}")
+        
+        # Check for common Resend errors
+        if "403" in str(e) or "forbidden" in str(e).lower():
+            results["advice"] = "⚠️ RESEND SANDBOX ERROR: You can only send to your VERIFIED email address unless you add a domain."
             
-            results["results"].append(report)
-        except Exception as e:
-            results["results"].append({"port": port, "error": str(e)})
+        return JsonResponse(results, status=500)
 
-    results["config_user"] = settings.EMAIL_HOST_USER
-    return JsonResponse(results)
 
 
 
