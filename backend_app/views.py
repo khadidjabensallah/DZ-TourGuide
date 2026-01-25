@@ -18,7 +18,7 @@ from .forms import TouristSignupForm, GuideSignupForm, VerificationForm, ForgotP
 from .models import Tourist, Guide, CoverageZone, User, Admin, Tour, Reservation, Review, Wilaya, WeatherInfo, Report
 from .email_utils import send_generic_email
 
-VERSION_TAG = "VERIFY_V_109"
+VERSION_TAG = "VERIFY_V_110"
 
 @csrf_exempt
 @require_http_methods(["GET"])
@@ -26,11 +26,16 @@ def ping(request):
     """
     Health check endpoint with tracking version.
     """
+    resend_key = os.getenv('RESEND_API_KEY', '')
     return JsonResponse({
         'status': 'ok',
         'version': VERSION_TAG,
+        'email_backend': settings.EMAIL_BACKEND,
+        'resend_key_present': bool(resend_key),
+        'resend_key_prefix': resend_key[:4] if resend_key else "NONE",
         'timestamp': timezone.now().isoformat()
     })
+
 
 
 @csrf_exempt
