@@ -16,16 +16,20 @@ from django.contrib.auth import authenticate
 import threading
 from .forms import TouristSignupForm, GuideSignupForm, VerificationForm, ForgotPasswordForm, VerifyPasswordResetCodeForm, ResetPasswordForm
 from .models import Tourist, Guide, CoverageZone, User, Admin, Tour, Reservation, Review, Wilaya, WeatherInfo, Report
+VERSION_TAG = "VERIFY_V_109"
+
 @csrf_exempt
 @require_http_methods(["GET"])
 def ping(request):
     """
-    Health check endpoint.
+    Health check endpoint with tracking version.
     """
     return JsonResponse({
         'status': 'ok',
+        'version': VERSION_TAG,
         'timestamp': timezone.now().isoformat()
     })
+
 
 @csrf_exempt
 def network_test(request):
