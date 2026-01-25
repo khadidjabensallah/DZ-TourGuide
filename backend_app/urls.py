@@ -11,8 +11,6 @@ from . import weather_views
 urlpatterns = [
     # ========================================
     path('ping/', views.ping, name='ping'),
-    path('smtp-test/', views.smtp_test, name='smtp_test'),
-    path('network-test/', views.network_test, name='network_test'),
 
 
 

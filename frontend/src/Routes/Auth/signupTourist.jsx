@@ -319,6 +319,5 @@ export default function SignUpTourist() {
         </div>
       </div>
     </div>
-    </div >
   );
 }
