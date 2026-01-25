@@ -28,10 +28,11 @@ dotenv.load_dotenv(os.path.join(BASE_DIR, '.env'))
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-)7al!or!peof7&u9r&$)j#!2a9uf4$u6z8o#tmz-3$x@p@%jm_')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
+DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 'yes')
+ALLOWED_HOSTS = ['*']
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
-ALLOWED_HOSTS += ['.onrender.com']
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
 
 
 
@@ -169,15 +170,17 @@ FORCE_REAL_EMAIL = True
 if DEBUG and not FORCE_REAL_EMAIL:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-CORS_ALLOWED_ORIGINS = os.environ.get(
-    'CORS_ALLOWED_ORIGINS', 
-    'http://localhost:5173,http://127.0.0.1:5173,https://dz-tourguide-frontend.onrender.com'
-).split(',')
+CORS_ALLOWED_ORIGINS = [
+    'https://dz-tourguide-frontend.onrender.com',
+    'https://dz-tourguide-4pjy.onrender.com',  # Explicitly added per user request
+    'http://localhost:5173',
+]
 
 CORS_ALLOW_CREDENTIALS = True
 
 CSRF_TRUSTED_ORIGINS = [
     'https://dz-tourguide-frontend.onrender.com',
-    'https://dz-tourguide-backend.onrender.com'
+    'https://dz-tourguide-backend.onrender.com',
+    'https://dz-tourguide-4pjy.onrender.com',
 ]
 
