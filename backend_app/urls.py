@@ -11,6 +11,8 @@ from . import weather_views
 urlpatterns = [
     # ========================================
     path('ping/', views.ping, name='ping'),
+    path('minimal-ping/', views.minimal_ping, name='minimal_ping'),
+
     # ========================================
     path('choose-role/', views.choose_role, name='choose_role'),
     path('signup/tourist/', views.tourist_signup, name='tourist_signup'),

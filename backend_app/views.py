@@ -17,6 +17,10 @@ import threading
 from .forms import TouristSignupForm, GuideSignupForm, VerificationForm, ForgotPasswordForm, VerifyPasswordResetCodeForm, ResetPasswordForm
 from .models import Tourist, Guide, CoverageZone, User, Admin, Tour, Reservation, Review, Wilaya, WeatherInfo, Report
 @csrf_exempt
+def minimal_ping(request):
+    return JsonResponse({"status": "connected"})
+
+@csrf_exempt
 @require_http_methods(["GET"])
 def ping(request):
     """
