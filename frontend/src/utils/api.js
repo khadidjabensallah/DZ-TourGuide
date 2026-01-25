@@ -5,7 +5,7 @@
 
 const API_BASE_URL = import.meta.env.VITE_API_URL
     ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : `${import.meta.env.VITE_API_URL.replace(/\/$/, '')}/api`)
-    : '/api';
+    : 'https://dz-tourguide-backend.onrender.com/api';
 
 console.log('API Base URL:', API_BASE_URL);
 
