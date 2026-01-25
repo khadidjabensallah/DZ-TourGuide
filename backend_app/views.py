@@ -60,7 +60,27 @@ def test_email(request):
         return JsonResponse({'success': False, 'message': 'Failed to send email', 'error': str(e)}, status=500)
 
 
-def send_verification_email(user):
+@csrf_exempt
+def test_email_simple(request):
+    """
+    Very simple test to bypass any POST parsing issues.
+    """
+    email = request.GET.get('email', settings.DEFAULT_FROM_EMAIL)
+    try:
+        sent = send_mail(
+            'Simple Test',
+            'This is a simple test email.',
+            settings.DEFAULT_FROM_EMAIL,
+            [email],
+            fail_silently=False
+        )
+        return JsonResponse({"success": True, "sent": sent, "to": email})
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e), "conf": {
+            "USER": settings.EMAIL_HOST_USER,
+            "HOST": settings.EMAIL_HOST,
+            "PORT": settings.EMAIL_PORT
+        }})
     """
     Send verification code to user's email
     Returns True if successful, False otherwise
