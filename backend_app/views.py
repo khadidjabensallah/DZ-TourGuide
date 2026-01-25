@@ -127,44 +127,52 @@ def tourist_signup(request):
     form = TouristSignupForm(request.POST)
     
     if form.is_valid():
-  
-        user = User.objects.create(
-            email=form.cleaned_data['email'],
-            firstname=form.cleaned_data['firstname'],
-            lastname=form.cleaned_data['lastname'],
-            user_type='tourist',
-            isActive=False,
-            email_verified=False
-        )
-        
-
-        user.set_password(form.cleaned_data['password'])
-        user.save()
-        
-
-        tourist = Tourist.objects.create(
-            user=user,
-            nationality=form.cleaned_data.get('nationality', '')
-        )
-        
-        # Step 4: Send verification email
-        email_sent = send_verification_email(user)
-        
-        # Store user_id in session for verification
-        request.session['pending_verification_user_id'] = user.id
-        
-        return JsonResponse({
-            'success': True,
-            'message': 'Tourist account created successfully! Please check your email for verification code.',
-            'data': {
-                'user_id': user.id,
-                'email': user.email,
-                'firstname': user.firstname,
-                'lastname': user.lastname,
-                'user_type': user.user_type,
-                'email_sent': email_sent
-            }
-        }, status=201)
+    if form.is_valid():
+        try:
+            user = User.objects.create(
+                email=form.cleaned_data['email'],
+                firstname=form.cleaned_data['firstname'],
+                lastname=form.cleaned_data['lastname'],
+                user_type='tourist',
+                isActive=False,
+                email_verified=False
+            )
+            
+            user.set_password(form.cleaned_data['password'])
+            user.save()
+            
+            tourist = Tourist.objects.create(
+                user=user,
+                nationality=form.cleaned_data.get('nationality', '')
+            )
+            
+            # Step 4: Send verification email
+            email_sent = send_verification_email(user)
+            
+            # Store user_id in session for verification
+            request.session['pending_verification_user_id'] = user.id
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Tourist account created successfully! Please check your email for verification code.',
+                'data': {
+                    'user_id': user.id,
+                    'email': user.email,
+                    'firstname': user.firstname,
+                    'lastname': user.lastname,
+                    'user_type': user.user_type,
+                    'email_sent': email_sent
+                }
+            }, status=201)
+        except Exception as e:
+            print(f"❌ CRITICAL ERROR IN SIGNUP: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return JsonResponse({
+                'success': False,
+                'message': 'An internal server error occurred',
+                'error': str(e)
+            }, status=500)
     else:
         # Return validation errors
         print(f"❌ VALIDATION FAILED: {form.errors}")
