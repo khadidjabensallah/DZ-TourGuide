@@ -20,6 +20,7 @@ urlpatterns = [
     path('signup-success/', views.signup_success, name='signup_success'),
     path('signin/', views.signin, name='signin'),
     path('logout/', views.logout, name='logout'),
+    path('test-email/', views.test_email, name='test_email'),
     
     # ========================================
     # PASSWORD RESET URLS (views.py)
