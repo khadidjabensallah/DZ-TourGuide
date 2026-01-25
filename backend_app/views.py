@@ -167,6 +167,7 @@ def tourist_signup(request):
         }, status=201)
     else:
         # Return validation errors
+        print(f"❌ VALIDATION FAILED: {form.errors}")
         return JsonResponse({
             'success': False,
             'message': 'Validation failed',
