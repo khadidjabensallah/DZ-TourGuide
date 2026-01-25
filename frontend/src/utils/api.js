@@ -64,25 +64,20 @@ export async function apiRequest(endpoint, options = {}) {
             }
         }
 
-    } else {
-        data = {};
-    }
-}
+        if (!response.ok) {
+            console.error('API Error Response:', data); // Log the full error
+            const errMsg = (data && data.message) ? data.message : `Server Error: ${response.status} ${response.statusText}`;
+            const err = new Error(errMsg);
+            err.status = response.status;
+            err.data = data;
+            throw err;
+        }
 
-if (!response.ok) {
-    console.error('API Error Response:', data); // Log the full error
-    const errMsg = (data && data.message) ? data.message : `Server Error: ${response.status} ${response.statusText}`;
-    const err = new Error(errMsg);
-    err.status = response.status;
-    err.data = data;
-    throw err;
-}
-
-return data;
+        return data;
     } catch (error) {
-    console.error('API Request Error:', error);
-    throw error;
-}
+        console.error('API Request Error:', error);
+        throw error;
+    }
 }
 
 /**
