@@ -166,21 +166,22 @@ FORCE_REAL_EMAIL = os.getenv('FORCE_REAL_EMAIL', 'False').lower() in ('true', '1
 if DEBUG and not FORCE_REAL_EMAIL:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https://.*\.onrender\.com$",
+    r"^https://.*\.github\.io$",
 ]
 
-CORS_ALLOWED_ORIGINS = [
-    'http://localhost:5173',
-]
-
-CORS_ALLOW_CREDENTIALS = True
+ALLOWED_HOSTS = ['*']
 
 CSRF_TRUSTED_ORIGINS = [
     'https://dz-tourguide-frontend.onrender.com',
     'https://dz-tourguide-backend.onrender.com',
     'https://dz-tourguide-4pjy.onrender.com',
 ]
+
 
 # Production Security Settings (essential for Render/HTTPS)
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
