@@ -124,6 +124,33 @@ def tourist_signup(request):
     API endpoint for tourist signup
     Returns JSON response
     """
+    # Check for existing unverified user to handle "zombie" accounts from failed attempts
+    email = request.POST.get('email')
+    if email:
+        try:
+            existing_user = User.objects.filter(email=email).first()
+            if existing_user and not existing_user.email_verified:
+                # Resend verification email
+                email_sent = send_verification_email(existing_user)
+                
+                # Update session
+                request.session['pending_verification_user_id'] = existing_user.id
+                
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Account exists but was not verified. We sent a new verification code.',
+                    'data': {
+                        'user_id': existing_user.id,
+                        'email': existing_user.email,
+                        'firstname': existing_user.firstname,
+                        'lastname': existing_user.lastname,
+                        'user_type': existing_user.user_type,
+                        'email_sent': email_sent
+                    }
+                }, status=200)
+        except Exception as e:
+            print(f"Error checking existing user: {e}")
+
     form = TouristSignupForm(request.POST)
     
     if form.is_valid():
@@ -516,10 +543,19 @@ def signin(request):
         
         # Require email verification before sign in
         if not user.email_verified:
+            # Resend verification code automatically if they try to sign in
+            send_verification_email(user)
+            request.session['pending_verification_user_id'] = user.id
+            
             return JsonResponse({
-                'success': False,
-                'message': 'Please verify your email before signing in.'
-            }, status=403)
+                'success': false,  # Still false for signin, but provides action
+                'message': 'Please verify your email before signing in. A new code has been sent.',
+                'require_verification': True,
+                'data': {
+                    'user_id': user.id,
+                    'email': user.email
+                }
+            }, status=200) # Changed to 200 so frontend can handle it easily, or keep 403 but parse body
 
         # Non-guide accounts must be active to sign in. Guides may sign in after
         # verifying their email but remain limited until admin approval.
