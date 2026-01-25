@@ -27,6 +27,54 @@ def ping(request):
         'timestamp': timezone.now().isoformat()
     })
 
+@csrf_exempt
+def smtp_test(request):
+    """
+    Synchronous SMTP test to catch errors immediately.
+    """
+    target = request.GET.get('email', settings.DEFAULT_FROM_EMAIL)
+    print(f"--- STARTING SMTP TEST TO {target} ---")
+    print(f"HOST: {settings.EMAIL_HOST}:{settings.EMAIL_PORT}")
+    print(f"USER: {settings.EMAIL_HOST_USER}")
+    
+    try:
+        from django.core.mail import get_connection
+        connection = get_connection(fail_silently=False)
+        print("Attempting to open connection...")
+        connection.open()
+        print("Connection opened! Attempting to send...")
+        
+        sent = send_mail(
+            "SMTP DIAGNOSTIC",
+            "This is a synchronous test to find why emails are failing.",
+            settings.DEFAULT_FROM_EMAIL,
+            [target],
+            connection=connection,
+            fail_silently=False
+        )
+        print(f"Send successful! Result: {sent}")
+        return JsonResponse({
+            "success": True,
+            "message": f"Email sent successfully to {target}",
+            "config": {
+                "host": settings.EMAIL_HOST,
+                "user": settings.EMAIL_HOST_USER,
+                "use_tls": settings.EMAIL_USE_TLS
+            }
+        })
+    except Exception as e:
+        import traceback
+        err_msg = str(e)
+        stack = traceback.format_exc()
+        print(f"❌ SMTP TEST FAILED: {err_msg}")
+        return JsonResponse({
+            "success": False,
+            "error": err_msg,
+            "details": stack,
+            "advice": "Check if Gmail App Password is correct and has NO spaces if Render env parser keeps them."
+        }, status=500)
+
+
 
 def send_verification_email(user):
     """

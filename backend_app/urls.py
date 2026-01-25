@@ -11,6 +11,8 @@ from . import weather_views
 urlpatterns = [
     # ========================================
     path('ping/', views.ping, name='ping'),
+    path('smtp-test/', views.smtp_test, name='smtp_test'),
+
 
     # ========================================
     path('choose-role/', views.choose_role, name='choose_role'),
