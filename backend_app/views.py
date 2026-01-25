@@ -124,8 +124,6 @@ TGUIDA Team
         return { 'sent': False, 'code': None }
 
 
-VERSION_TAG = "DEBUG_V_103"
-
 @csrf_exempt
 @require_http_methods(["POST"])
 def tourist_signup(request):
@@ -133,9 +131,6 @@ def tourist_signup(request):
     API endpoint for tourist signup
     Returns JSON response
     """
-    print(f"DEBUG VERSION: {VERSION_TAG}")
-    print(f"DEBUG SCOPE: send_verification_email in globals: {'send_verification_email' in globals()}")
-
     try:
         # Check for existing unverified user to handle "zombie" accounts from failed attempts
         raw_email = request.POST.get('email', '')
@@ -173,7 +168,6 @@ def tourist_signup(request):
         
         if form.is_valid():
             try:
-                print(f"DEBUG SIGNUP: Creating user object for {form.cleaned_data['email']}")
                 user = User.objects.create(
                     email=form.cleaned_data['email'],
                     firstname=form.cleaned_data['firstname'],
@@ -183,24 +177,20 @@ def tourist_signup(request):
                     email_verified=False
                 )
                 
-                print(f"DEBUG SIGNUP: Setting password for user {user.id}")
                 user.set_password(form.cleaned_data['password'])
                 user.save()
                 
-                print(f"DEBUG SIGNUP: Creating tourist profile for user {user.id}")
                 tourist = Tourist.objects.create(
                     user=user,
                     nationality=form.cleaned_data.get('nationality', '')
                 )
                 
                 # Step 4: Send verification email
-                print(f"DEBUG SIGNUP: Initiating verification email for user {user.id}")
                 email_sent = send_verification_email(user)
                 
                 # Store user_id in session for verification
                 request.session['pending_verification_user_id'] = user.id
                 
-                print(f"DEBUG SIGNUP: SUCCESS for {user.email}")
                 return JsonResponse({
                     'success': True,
                     'message': 'Tourist account created successfully! Please check your email for verification code.',
