@@ -1,0 +1,57 @@
+services:
+  # Backend Web Service (Django)
+  - type: web
+    name: dz-tourguide-backend
+    runtime: python
+    plan: free
+    buildCommand: ./build.sh
+    startCommand: gunicorn core.wsgi:application
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: dz-tourguide-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "false"
+      - key: ALLOWED_HOSTS
+        value: dz-tourguide-backend.onrender.com,dz-tourguide-frontend.onrender.com
+      - key: PYTHONPATH
+        value: .
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://dz-tourguide-frontend.onrender.com
+      - key: EMAIL_HOST
+        value: smtp.gmail.com
+      - key: EMAIL_PORT
+        value: "587"
+      - key: EMAIL_USE_TLS
+        value: "true"
+      - key: EMAIL_HOST_USER
+        value: tguidadz@gmail.com
+      - key: FORCE_REAL_EMAIL
+        value: "true"
+      - key: EMAIL_HOST_PASSWORD
+        sync: false # Set this value manually in Render dashboard
+
+
+  # Frontend Static Site (React)
+  - type: web
+    name: dz-tourguide-frontend
+    runtime: static
+    plan: free
+    rootDirectory: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://dz-tourguide-backend.onrender.com
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+databases:
+  # PostgreSQL Database
+  - name: dz-tourguide-db
+    plan: free

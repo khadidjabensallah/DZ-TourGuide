@@ -194,6 +194,7 @@
         "passwordsDoNotMatch": "Passwords do not match",
         "certificatesRequired": "At least one certificate is required",
         "signupFailed": "Failed to create account. Please try again.",
+        "validationFailed": "Please check the highlighted fields for errors.",
         "forgotPasswordTitle": "Forgot Your Password?",
         "forgotPasswordText": "Enter your email and we'll send you a reset code",
         "sendResetCode": "Send Reset Code",

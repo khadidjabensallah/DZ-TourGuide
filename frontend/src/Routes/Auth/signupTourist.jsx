@@ -99,7 +99,25 @@ export default function SignUpTourist() {
       }
     } catch (error) {
       console.error("Signup error:", error);
-      setApiError(error.message || t('auth.signupFailed'));
+
+      // Handle backend validation errors
+      if (error.data && error.data.errors) {
+        const backendErrors = error.data.errors;
+        const newErrors = {};
+
+        // Map backend fields to frontend fields
+        if (backendErrors.firstname) newErrors.firstName = backendErrors.firstname[0];
+        if (backendErrors.lastname) newErrors.familyName = backendErrors.lastname[0];
+        if (backendErrors.email) newErrors.email = backendErrors.email[0];
+        if (backendErrors.password) newErrors.password = backendErrors.password[0];
+        if (backendErrors.confirm_password) newErrors.confirmPassword = backendErrors.confirm_password[0];
+        if (backendErrors.phone) newErrors.phone = backendErrors.phone[0]; // For consistency if needed
+
+        setErrors(newErrors);
+        setApiError(t('auth.validationFailed'));
+      } else {
+        setApiError(error.message || t('auth.signupFailed'));
+      }
     } finally {
 
 
@@ -292,7 +310,12 @@ export default function SignUpTourist() {
               </button>
             </div>
 
+            <div className="mt-4 text-center">
+              <span className="text-[8px] text-gray-300">V.1.0.8.RESILIENT</span>
+            </div>
           </div>
+
+
         </div>
       </div>
     </div>
