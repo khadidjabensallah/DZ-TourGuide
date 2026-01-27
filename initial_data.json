@@ -1,0 +1,111 @@
+[
+    {
+        "model": "backend_app.wilaya",
+        "pk": "16",
+        "fields": {
+            "name": "Algiers",
+            "region": "Central",
+            "latitude": "36.752500",
+            "longitude": "3.041970"
+        }
+    },
+    {
+        "model": "backend_app.wilaya",
+        "pk": "31",
+        "fields": {
+            "name": "Oran",
+            "region": "West",
+            "latitude": "35.696900",
+            "longitude": "-0.633100"
+        }
+    },
+    {
+        "model": "backend_app.user",
+        "pk": 1,
+        "fields": {
+            "email": "guide@example.com",
+            "password": "pbkdf2_sha256$600000$re7s4a8w9$j/ThisIsAHashedPasswordExample/NotReal==",
+            "firstname": "Karim",
+            "lastname": "Guide",
+            "isActive": true,
+            "email_verified": true,
+            "user_type": "guide"
+        }
+    },
+    {
+        "model": "backend_app.user",
+        "pk": 2,
+        "fields": {
+            "email": "tourist@example.com",
+            "password": "pbkdf2_sha256$600000$re7s4a8w9$j/ThisIsAHashedPasswordExample/NotReal==",
+            "firstname": "John",
+            "lastname": "Tourist",
+            "isActive": true,
+            "email_verified": true,
+            "user_type": "tourist"
+        }
+    },
+    {
+        "model": "backend_app.guide",
+        "pk": 1,
+        "fields": {
+            "user": 1,
+            "biography": "Professional guide with 10 years experience in Algiers.",
+            "offering_spoken_languages": [
+                "English",
+                "French",
+                "Arabic"
+            ],
+            "phone": "+213555000001",
+            "is_verified": true,
+            "approval_status": "approved",
+            "submitted_at": "2024-01-01T12:00:00Z",
+            "full_day_price": "10000.00",
+            "half_day_price": "6000.00",
+            "additional_hour_price": "1500.00",
+            "custom_request_markup": "10.00",
+            "certifications_files": []
+        }
+    },
+    {
+        "model": "backend_app.tourist",
+        "pk": 2,
+        "fields": {
+            "user": 2,
+            "nationality": "USA"
+        }
+    },
+    {
+        "model": "backend_app.coveragezone",
+        "pk": 1,
+        "fields": {
+            "guide": 1,
+            "wilaya": "16",
+            "displayed": "Algiers"
+        }
+    },
+    {
+        "model": "backend_app.tour",
+        "pk": 1,
+        "fields": {
+            "guide": 1,
+            "title": "Discover the Casbah of Algiers",
+            "description": "A deep dive into the history of the old medina.",
+            "date": "2026-06-15",
+            "itinerary": "9:00 AM - Meet at Ketchaoua Mosque\n10:00 AM - Visit Dar Aziza\n12:00 PM - Lunch with local family",
+            "highlights": "Architecture\nFood\nHistory",
+            "whats_included": "Lunch\nTransportation",
+            "whats_excluded": "Souvenirs",
+            "estimated_duration": "5.00",
+            "scheduled_time": "09:00:00",
+            "calc_price": "10000.00",
+            "wilaya": "16",
+            "starting_point": "Place des Martyrs",
+            "max_places": 15,
+            "available_places": 15,
+            "is_active": true,
+            "photo_urls": [],
+            "created_at": "2024-01-02T10:00:00Z"
+        }
+    }
+]
