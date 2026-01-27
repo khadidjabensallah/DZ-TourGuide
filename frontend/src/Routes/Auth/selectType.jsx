@@ -1,9 +1,13 @@
 import { MapPin, Plane } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import logo from "../../assets/logo.png";
 
+
 export default function SelectType() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 flex items-center justify-center p-4">
@@ -18,11 +22,13 @@ export default function SelectType() {
             />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            Create Your Account
+            {t('auth.register')}
           </h1>
           <p className="text-gray-500 text-sm">
-            Choose Your Role To Get Started
+            {t('auth.chooseRole')}
           </p>
+
+
         </div>
 
         {/* Tab Buttons */}
@@ -33,8 +39,9 @@ export default function SelectType() {
             className="flex-1 py-5 px-6 rounded-lg font-semibold text-base transition-all duration-200 flex items-center justify-center gap-3 bg-gray-50 border-2 border-transparent text-gray-600 hover:bg-orange-100"
           >
             <MapPin className="w-5 h-5" />
-            <span>Guide</span>
+            <span>{t('profile.guide')}</span>
           </button>
+
 
           {/* Tourist Tab */}
           <button
@@ -42,8 +49,10 @@ export default function SelectType() {
             className="flex-1 py-5 px-6 rounded-lg font-semibold text-base transition-all duration-200 flex items-center justify-center gap-3 bg-gray-50 border-2 border-transparent text-gray-600 hover:bg-orange-100"
           >
             <Plane className="w-5 h-5" />
-            <span>Tourist</span>
+            <span>{t('nav.tourist')}</span>
           </button>
+
+
         </div>
       </div>
     </div>

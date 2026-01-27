@@ -2,9 +2,13 @@ import { Mail } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { AuthAPI } from "../../utils/api";
+import { useTranslation } from "react-i18next";
+
 
 export default function VerifyEmail() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
+
   const location = useLocation();
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const inputRefs = useRef([]);
@@ -12,7 +16,7 @@ export default function VerifyEmail() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [userEmail, setUserEmail] = useState("");
-  
+
   useEffect(() => {
     // Get email from location state or sessionStorage
     const email = location.state?.email || sessionStorage.getItem('user_email') || "";
@@ -54,11 +58,13 @@ export default function VerifyEmail() {
 
   const handleVerify = async () => {
     const verificationCode = code.join("");
-    
+
     if (verificationCode.length !== 6) {
-      setError("Please enter the complete 6-digit code");
+      setError(t('auth.completeCodeRequired'));
       return;
     }
+
+
 
     setVerifying(true);
     setError("");
@@ -66,11 +72,13 @@ export default function VerifyEmail() {
     try {
       // Get user_id from sessionStorage
       const userId = sessionStorage.getItem('pending_verification_user_id');
-      
+
       if (!userId) {
-        setError("Session expired. Please sign up again.");
+        setError(t('auth.sessionExpired'));
         return;
       }
+
+
 
       const response = await AuthAPI.verifyEmail(userId, verificationCode);
 
@@ -79,20 +87,24 @@ export default function VerifyEmail() {
         // Clear session data
         sessionStorage.removeItem('pending_verification_user_id');
         sessionStorage.removeItem('user_email');
-        
+
         // Redirect to signin after 2 seconds
         setTimeout(() => {
-          navigate("/signin", { 
-            state: { 
-              message: "Email verified successfully! You can now sign in." 
-            } 
+          navigate("/signin", {
+            state: {
+              message: t('auth.verifiedRedirectMsg')
+            }
+
           });
         }, 2000);
+
       }
     } catch (error) {
       console.error("Verification error:", error);
-      setError(error.message || "Invalid verification code. Please try again.");
+      setError(error.message || t('auth.invalidCode'));
       // Clear code on error
+
+
       setCode(["", "", "", "", "", ""]);
       if (inputRefs.current[0]) {
         inputRefs.current[0].focus();
@@ -107,10 +119,12 @@ export default function VerifyEmail() {
     try {
       await AuthAPI.resendVerificationCode();
       setError(""); // Clear any previous errors
-      alert("Verification code sent! Please check your email.");
+      alert(t('auth.codeSentNotice'));
     } catch (error) {
-      setError(error.message || "Failed to resend code. Please try again.");
+      setError(error.message || t('auth.signupFailed'));
     }
+
+
   };
 
   return (
@@ -126,19 +140,22 @@ export default function VerifyEmail() {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            Verify Your Email
+            {t('auth.verifyEmail')}
           </h1>
           <p className="text-gray-500 text-sm">
-            Enter the 6-digit code sent to {userEmail || "your email"}
+            {t('auth.enterCodeSent')} {userEmail}
           </p>
+
         </div>
+
 
         {/* Success Message */}
         {success && (
           <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm mb-4">
-            Email verified successfully! Redirecting to sign in...
+            {t('auth.emailVerifiedSuccess')}
           </div>
         )}
+
 
         {/* Error Message */}
         {error && (
@@ -170,21 +187,23 @@ export default function VerifyEmail() {
           disabled={verifying || success}
           className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-lg transition-colors duration-200 mb-4 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {verifying ? "Verifying..." : success ? "Verified!" : "Verify Email"}
+          {verifying ? t('auth.verifying') : success ? t('auth.verified') : t('auth.verifyEmail')}
         </button>
+
 
         {/* Resend Code */}
         <div className="text-center">
           <p className="text-sm text-gray-600">
-            Didn't receive the code?{" "}
-            <button 
+            {t('auth.didntReceive')}{" "}
+            <button
               onClick={handleResendCode}
               className="text-orange-500 hover:text-orange-600 font-medium"
             >
-              Resend
+              {t('auth.resend')}
             </button>
           </p>
         </div>
+
       </div>
     </div>
   );

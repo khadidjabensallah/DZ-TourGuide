@@ -1,11 +1,29 @@
 import React, { useState } from "react";
 import { MapPin, Calendar } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import cercle from "../../assets/cercle.png";
 import Pics from "../../assets/pics.png";
+
+
+
 
 export default function AlgeriaHero() {
   const [location, setLocation] = useState("");
   const [date, setDate] = useState("");
+  const navigate = useNavigate();
+  const { t } = useTranslation();
+
+  const handleGetStarted = () => {
+
+    // Navigate to SearchPage with query parameters
+    const queryParams = new URLSearchParams();
+    if (location) queryParams.append('q', location);
+    if (date) queryParams.append('date_from', date);
+
+    navigate(`/searchPage?${queryParams.toString()}`);
+  };
+
 
   return (
     <div
@@ -18,11 +36,11 @@ export default function AlgeriaHero() {
           <div className="space-y-8 ">
             <div className="space-y-4 ">
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-slate-900 leading-tight mt-[2rem] -ml-3">
-                Discover
+                {t('hero.discover')}
                 <br />
-                Algeria's
+                {t('hero.algerias')}
                 <span className="relative inline-block mx-3">
-                  <span className="relative z-10 text-orange-500">Hidden</span>
+                  <span className="relative z-10 text-orange-500">{t('hero.hidden')}</span>
                   <img
                     src={cercle}
                     alt="circle decoration"
@@ -30,20 +48,22 @@ export default function AlgeriaHero() {
                   />
                 </span>
                 <br />
-                Wonders
+                {t('hero.wonders')}
               </h1>
+
 
               <div className="space-y-1 text-color: black -mt-2 -ml-3">
                 <p className="text-lg md:text-[17px] font-semibold">
-                  From desert dunes to coastal dreams — let our guides
+                  {t('hero.tagline1')}
                 </p>
                 <p className="text-lg md:text-[17px] font-semibold">
-                  show you the heart of Algeria!
+                  {t('hero.tagline2')}
                 </p>
                 <p className="text-lg md:text-[17px] font-semibold">
-                  And make unforunforgettable memories !
+                  {t('hero.tagline3')}
                 </p>
               </div>
+
             </div>
 
             {/* Search Box */}
@@ -61,15 +81,16 @@ export default function AlgeriaHero() {
                   </div>
                   <div className="flex-1">
                     <label className="block text-sm font-bold text-slate-900 mb-1">
-                      Location
+                      {t('hero.location')}
                     </label>
                     <input
                       type="text"
-                      placeholder="Where are you going?"
+                      placeholder={t('hero.locationPlaceholder')}
                       value={location}
                       onChange={(e) => setLocation(e.target.value)}
                       className="w-full text-slate-400 text-sm border-0 focus:outline-none bg-transparent placeholder:text-slate-400"
                     />
+
                   </div>
                 </div>
 
@@ -83,21 +104,25 @@ export default function AlgeriaHero() {
                   </div>
                   <div className="flex-1">
                     <label className="block text-sm font-bold text-slate-900 mb-1">
-                      Select Date
+                      {t('hero.selectDate')}
                     </label>
                     <input
                       type="text"
-                      placeholder="When are you going?"
+                      placeholder={t('hero.datePlaceholder')}
                       value={date}
                       onChange={(e) => setDate(e.target.value)}
                       className="w-full text-slate-400 text-sm border-0 focus:outline-none bg-transparent placeholder:text-slate-400"
                     />
+
                   </div>
                 </div>
 
                 {/* Get Started Button */}
-                <button className="bg-orange-500 hover:bg-orange-600 text-white font-bold px-8 py-4 rounded-xl transition-all transform hover:scale-105 shadow-lg whitespace-nowrap">
-                  Get Started
+                <button
+                  onClick={handleGetStarted}
+                  className="bg-orange-500 hover:bg-orange-600 text-white font-bold px-8 py-4 rounded-xl transition-all transform hover:scale-105 shadow-lg whitespace-nowrap"
+                >
+                  {t('hero.getStarted')}
                 </button>
               </div>
             </div>

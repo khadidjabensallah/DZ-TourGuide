@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useTranslation } from "react-i18next";
+
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Star,
@@ -18,7 +20,10 @@ import GuideHeader from "../../Layout/GuideHeader";
 import { GuideAPI, PersonalizedTourAPI, TourAPI, ReservationAPI } from "../../utils/api";
 
 const MyGuideTours = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
+
+
   const location = useLocation();
   const [activeTab, setActiveTab] = useState("public"); // 'public', 'custom', 'reservations'
   const [loading, setLoading] = useState(true);
@@ -57,8 +62,9 @@ const MyGuideTours = () => {
 
     } catch (err) {
       console.error("Error fetching guide data:", err);
-      setError("Failed to load data. Please try again.");
+      setError(t('common.errorOccurred'));
     } finally {
+
       setLoading(false);
     }
   }, []);
@@ -85,18 +91,20 @@ const MyGuideTours = () => {
         // Refresh data
         fetchData(guideId);
       } else {
-        alert(response.message || "Failed to respond to request");
+        alert(response.message || t('profile.respondError') || "Failed to respond to request");
       }
     } catch (err) {
       console.error("Error responding to request:", err);
-      alert(err.message || "An error occurred while responding to request");
+      alert(err.message || t('common.errorOccurred'));
     }
+
   };
 
   const handleCancelReservation = async (reservationId) => {
-    if (!window.confirm("Are you sure you want to cancel this reservation? The places will be restored to the tour.")) {
+    if (!window.confirm(t('profile.confirmCancelReservation') || "Are you sure you want to cancel this reservation?")) {
       return;
     }
+
 
     try {
       const response = await ReservationAPI.cancel(reservationId, guideId);
@@ -104,12 +112,14 @@ const MyGuideTours = () => {
         // Refresh data
         fetchData(guideId);
       } else {
-        alert(response.message || "Failed to cancel reservation");
+        alert(response.message || t('profile.cancelError') || "Failed to cancel reservation");
       }
+
     } catch (err) {
       console.error("Error cancelling reservation:", err);
-      alert(err.message || "An error occurred while cancelling reservation");
+      alert(err.message || t('common.errorOccurred'));
     }
+
   };
 
   const handleCompleteReservation = async (reservationId) => {
@@ -118,12 +128,13 @@ const MyGuideTours = () => {
       if (response.success) {
         fetchData(guideId);
       } else {
-        alert(response.message || "Failed to complete reservation");
+        alert(response.message || t('profile.completeError') || "Failed to complete reservation");
       }
     } catch (err) {
       console.error("Error completing reservation:", err);
-      alert(err.message || "An error occurred while completing reservation");
+      alert(err.message || t('common.errorOccurred'));
     }
+
   };
 
   const handleDeleteTour = async (tourId) => {
@@ -138,34 +149,44 @@ const MyGuideTours = () => {
         // Also update stats if needed
         fetchData(guideId);
       } else {
-        alert(response.message || "Failed to delete tour");
+        alert(response.message || t('profile.deleteTourError'));
       }
+
     } catch (err) {
       console.error("Error deleting tour:", err);
-      alert(err.message || "An error occurred while deleting the tour");
+      alert(err.message || t('profile.deleteTourError'));
     }
+
+
+
   };
 
   if (loading && !stats) {
     return (
       <div className="min-h-screen bg-orange-50/30 flex items-center justify-center">
-        <div className="text-xl font-medium text-orange-500 animate-pulse">Loading your dashboard...</div>
+        <div className="text-xl font-medium text-orange-500 animate-pulse">{t('profile.loadingDashboard') || "Loading your dashboard..."}</div>
       </div>
     );
   }
 
+
+
   const statItems = [
-    { label: "Upcoming visits", value: stats?.upcoming_reservations || "0" },
-    { label: "Completed tours", value: stats?.completed_reservations || "0" },
-    { label: "Pending requests", value: customRequests.filter(r => r.status === 'pending').length || "0" },
-    { label: "Average Rating", value: stats?.average_rating || "0.0", hasRating: true },
+    { label: t('profile.upcomingVisits') || "Upcoming visits", value: stats?.upcoming_reservations || "0" },
+    { label: t('profile.completedTours') || "Completed tours", value: stats?.completed_reservations || "0" },
+    { label: t('profile.pendingRequests') || "Pending requests", value: customRequests.filter(r => r.status === 'pending').length || "0" },
+    { label: t('profile.averageRating') || "Average Rating", value: stats?.average_rating || "0.0", hasRating: true },
   ];
+
+
 
   return (
     <div className="min-h-screen bg-orange-50/30">
       <GuideHeader />
       <div className="max-w-7xl mx-auto px-6 py-8">
-        <h1 className="text-4xl font-bold mb-8">Guide Dashboard</h1>
+        <h1 className="text-4xl font-bold mb-8">{t('profile.guideDashboard') || "Guide Dashboard"}</h1>
+
+
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
@@ -191,22 +212,28 @@ const MyGuideTours = () => {
               className={`flex-1 py-4 text-center font-semibold transition-colors ${activeTab === "public" ? "text-orange-600 bg-orange-50/50 border-b-2 border-orange-500" : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
                 }`}
             >
-              My Public Tours
+              {t('profile.myPublicTours') || "My Public Tours"}
             </button>
+
+
             <button
               onClick={() => setActiveTab("reservations")}
               className={`flex-1 py-4 text-center font-semibold transition-colors ${activeTab === "reservations" ? "text-orange-600 bg-orange-50/50 border-b-2 border-orange-500" : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
                 }`}
             >
-              Public Reservations
+              {t('profile.publicReservations') || "Public Reservations"}
             </button>
+
+
             <button
               onClick={() => setActiveTab("custom")}
               className={`flex-1 py-4 text-center font-semibold transition-colors ${activeTab === "custom" ? "text-orange-600 bg-orange-50/50 border-b-2 border-orange-500" : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
                 }`}
             >
-              Personalized Requests
+              {t('profile.personalizedRequests') || "Personalized Requests"}
             </button>
+
+
           </div>
 
           <div className="p-6">
@@ -214,20 +241,25 @@ const MyGuideTours = () => {
             {activeTab === "public" && (
               <div className="space-y-6">
                 <div className="flex justify-between items-center">
-                  <h2 className="text-2xl font-bold text-gray-800">Your Catalog</h2>
+                  <h2 className="text-2xl font-bold text-gray-800">{t('profile.yourCatalog') || "Your Catalog"}</h2>
+
+
                   <button
                     onClick={() => navigate("/createtour")}
                     className="bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600 transition-colors font-medium shadow-sm"
                   >
-                    Create New Tour
+                    {t('profile.createNewTour') || "Create New Tour"}
                   </button>
+
+
                 </div>
 
                 {/* Ensure publicTours is an array before checking length */}
                 {!publicTours || publicTours.length === 0 ? (
                   <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
-                    <p className="text-gray-500">You haven't created any tours yet.</p>
+                    <p className="text-gray-500">{t('profile.noToursYet')}</p>
                   </div>
+
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {publicTours.map((tour) => (
@@ -240,9 +272,11 @@ const MyGuideTours = () => {
                           />
                           {!tour.is_active && (
                             <div className="absolute top-2 right-2 bg-gray-800/80 text-white px-3 py-1 rounded-full text-xs">
-                              Inactive
+                              {t('profile.inactive') || "Inactive"}
                             </div>
                           )}
+
+
                         </div>
                         <div className="p-4">
                           <h3 className="font-bold text-lg mb-2 line-clamp-1">{tour.title}</h3>
@@ -259,20 +293,21 @@ const MyGuideTours = () => {
                               onClick={() => navigate(`/tour/${tour.id}`)}
                               className="flex-1 flex items-center justify-center gap-2 bg-orange-50 text-orange-600 py-2 rounded-lg hover:bg-orange-100 transition-colors font-medium text-sm"
                             >
-                              <Eye size={16} /> View
+                              <Eye size={16} /> {t('profile.view') || "View"}
                             </button>
                             <button
                               onClick={() => navigate(`/editTour/${tour.id}`)}
                               className="flex-1 border border-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm"
                             >
-                              Edit
+                              {t('profile.edit') || "Edit"}
                             </button>
                             <button
                               onClick={() => handleDeleteTour(tour.id)}
                               className="flex-1 border border-red-200 text-red-600 py-2 rounded-lg hover:bg-red-50 transition-colors font-medium text-sm flex items-center justify-center gap-2"
                             >
-                              <Trash2 size={16} /> Delete
+                              <Trash2 size={16} /> {t('common.delete')}
                             </button>
+
                           </div>
                         </div>
                       </div>
@@ -285,10 +320,10 @@ const MyGuideTours = () => {
             {/* Public Reservations Content */}
             {activeTab === "reservations" && (
               <div className="space-y-6">
-                <h2 className="text-2xl font-bold text-gray-800">Recent Bookings</h2>
+                <h2 className="text-2xl font-bold text-gray-800">{t('profile.recentBookings') || "Recent Bookings"}</h2>
                 {reservations.length === 0 ? (
                   <div className="text-center py-12 bg-gray-50 rounded-lg">
-                    <p className="text-gray-500">No reservations found for your tours.</p>
+                    <p className="text-gray-500">{t('profile.noReservations') || "No reservations found for your tours."}</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -299,13 +334,13 @@ const MyGuideTours = () => {
                             <div>
                               <h3 className="font-bold text-lg text-orange-600">{res.tour.title}</h3>
                               <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
-                                <Calendar size={14} /> {res.tour.scheduled_date} at {res.tour.scheduled_time}
+                                <Calendar size={14} /> {res.tour.scheduled_date} {t('profile.at')} {res.tour.scheduled_time}
                               </div>
                             </div>
                             <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${res.is_completed ? "bg-green-100 text-green-700" :
                               res.is_past ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"
                               }`}>
-                              {res.is_completed ? "Completed" : res.is_past ? "Past / Pending" : "Upcoming"}
+                              {res.is_completed ? t('profile.completed') || "Completed" : res.is_past ? t('profile.pastPending') || "Past / Pending" : t('profile.upcoming') || "Upcoming"}
                             </span>
                           </div>
 
@@ -320,12 +355,12 @@ const MyGuideTours = () => {
                               </div>
                             </div>
                             <div className="flex flex-col justify-center">
-                              <span className="text-xs text-gray-500">Participants</span>
-                              <span className="font-bold text-sm">{res.number_of_people} People</span>
+                              <span className="text-xs text-gray-500">{t('profile.participants') || "Participants"}</span>
+                              <span className="font-bold text-sm">{res.number_of_people} {t('profile.people') || "People"}</span>
                             </div>
                             <div className="flex flex-col justify-center">
-                              <span className="text-xs text-gray-500">Revenue</span>
-                              <span className="font-bold text-sm text-green-600">{res.final_price} DZD</span>
+                              <span className="text-xs text-gray-500">{t('profile.revenue') || "Revenue"}</span>
+                              <span className="font-bold text-sm text-green-600">{res.final_price} {t('common.dzd')}</span>
                             </div>
                           </div>
                         </div>
@@ -336,7 +371,7 @@ const MyGuideTours = () => {
                               onClick={() => handleCompleteReservation(res.id)}
                               className="w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition-colors font-bold text-sm shadow-sm"
                             >
-                              Mark Completed
+                              {t('profile.markCompleted') || "Mark Completed"}
                             </button>
                           </div>
                         )}
@@ -347,7 +382,7 @@ const MyGuideTours = () => {
                               onClick={() => handleCancelReservation(res.id)}
                               className="w-full bg-red-100 text-red-600 border border-red-200 py-2 rounded-lg hover:bg-red-200 transition-colors font-bold text-sm shadow-sm"
                             >
-                              Cancel Booking
+                              {t('profile.cancelBooking') || "Cancel Booking"}
                             </button>
                           </div>
                         )}
@@ -362,13 +397,14 @@ const MyGuideTours = () => {
             {activeTab === "custom" && (
               <div className="space-y-6">
                 <div className="flex justify-between items-center">
-                  <h2 className="text-2xl font-bold text-gray-800">Customer Requests</h2>
+                  <h2 className="text-2xl font-bold text-gray-800">{t('profile.customerRequests') || "Customer Requests"}</h2>
                 </div>
 
                 {customRequests.length === 0 ? (
                   <div className="text-center py-12 bg-gray-50 rounded-lg">
-                    <p className="text-gray-500">You haven't received any personalized requests yet.</p>
+                    <p className="text-gray-500">{t('profile.noCustomRequestsYet') || "You haven't received any personalized requests yet."}</p>
                   </div>
+
                 ) : (
                   <div className="space-y-6">
                     {customRequests.map((req) => (
@@ -400,7 +436,7 @@ const MyGuideTours = () => {
                           {/* Request Details */}
                           <div className="flex-1">
                             <div className="flex justify-between items-start mb-4">
-                              <h3 className="font-bold text-lg">Custom Request Details</h3>
+                              <h3 className="font-bold text-lg">{t('profile.customRequestDetails') || "Custom Request Details"}</h3>
                               <span className={`px-4 py-1 rounded-full text-xs font-bold uppercase ${req.status === 'pending' ? "bg-yellow-100 text-yellow-700 border border-yellow-200" :
                                 req.status === 'accepted' ? "bg-green-100 text-green-700 border border-green-200" :
                                   "bg-red-100 text-red-700 border border-red-200"
@@ -414,10 +450,11 @@ const MyGuideTours = () => {
 
                             {req.special_requests && (
                               <div className="mb-4">
-                                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Special Requests:</span>
+                                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">{t('profile.specialRequests') || "Special Requests"}:</span>
                                 <p className="text-sm text-gray-600 italic">"{req.special_requests}"</p>
                               </div>
                             )}
+
 
                             {req.status === 'pending' && (
                               <div className="flex gap-4">
@@ -425,8 +462,9 @@ const MyGuideTours = () => {
                                   onClick={() => handleRespondRequest(req.id, 'accept')}
                                   className="flex-1 flex items-center justify-center gap-2 bg-green-500 text-white py-2.5 rounded-lg hover:bg-green-600 transition-colors font-bold shadow-sm"
                                 >
-                                  <CheckCircle size={18} /> Accept Request
+                                  <CheckCircle size={18} /> {t('profile.acceptRequest') || "Accept Request"}
                                 </button>
+
                                 <button
                                   onClick={() => {
                                     const reason = prompt("Please provide a reason for declining:");
@@ -434,7 +472,7 @@ const MyGuideTours = () => {
                                   }}
                                   className="flex-1 flex items-center justify-center gap-2 border border-red-200 text-red-600 py-2.5 rounded-lg hover:bg-red-50 transition-colors font-bold"
                                 >
-                                  <XCircle size={18} /> Decline
+                                  <XCircle size={18} /> {t('profile.decline') || "Decline"}
                                 </button>
                               </div>
                             )}
@@ -442,11 +480,12 @@ const MyGuideTours = () => {
                             {req.status === 'rejected' && req.rejection_reason && (
                               <div className="mt-4 bg-red-50 border border-red-100 rounded-lg p-4 text-sm text-red-800">
                                 <div className="font-bold flex items-center gap-2 mb-1">
-                                  <MessageCircle size={16} /> Rejection Reason:
+                                  <MessageCircle size={16} /> {t('profile.rejectionReason') || "Rejection Reason"}:
                                 </div>
                                 {req.rejection_reason}
                               </div>
                             )}
+
                           </div>
                         </div>
                       </div>

@@ -2,10 +2,14 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, MapPin, Clock, Calendar, Star } from "lucide-react";
 import { SearchAPI } from "../../utils/api";
+import { useTranslation } from "react-i18next";
+
 
 // Tour Card Component
 const TourCard = ({ tour }) => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
+
   const handleClick = () => {
     navigate(`/tour/${tour.id}`);
   };
@@ -33,14 +37,15 @@ const TourCard = ({ tour }) => {
         {/* Available Places Badge */}
         {tour.available_places <= 5 && tour.available_places > 0 && (
           <div className="absolute top-4 left-4 bg-red-500 text-white px-3 py-1 rounded-full font-medium text-xs shadow-md">
-            Only {tour.available_places} left!
+            {t('search.onlyLeft', { count: tour.available_places })}
           </div>
         )}
         {tour.available_places === 0 && (
           <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <span className="text-white font-bold text-xl">SOLD OUT</span>
+            <span className="text-white font-bold text-xl">{t('search.soldOut')}</span>
           </div>
         )}
+
       </div>
 
       {/* Content */}
@@ -100,9 +105,10 @@ const TourCard = ({ tour }) => {
             </div>
             {tour.scheduled_time && (
               <span className="text-xs font-medium text-slate-500">
-                Starts at {tour.scheduled_time.substring(0, 5)}
+                {t('tours.startsAt')} {tour.scheduled_time.substring(0, 5)}
               </span>
             )}
+
           </div>
         </div>
       </div>
@@ -115,6 +121,8 @@ const SearchPage = () => {
   const [tours, setTours] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const { t } = useTranslation();
+
 
   // Fetch tours from backend
   const fetchTours = async (query = "") => {
@@ -140,9 +148,10 @@ const SearchPage = () => {
     } catch (err) {
       console.error('Error fetching tours:', err);
       // More user friendly error
-      setError('Failed to fetch tours. Please try again later.');
+      setError(t('search.fetchError') || 'Failed to fetch tours. Please try again later.');
       setTours([]);
     } finally {
+
       setLoading(false);
     }
   };
@@ -167,12 +176,12 @@ const SearchPage = () => {
       <div className="py-20 px-4">
         <div className="container mx-auto text-center">
           <h1 className="text-5xl md:text-7xl font-bold mb-8">
-            Discover{" "}
-            <span className="text-orange-500">Algeria</span>
+            {t('search.discoverAlgeria')}
           </h1>
           <p className="text-gray-700 text-xl max-w-3xl mx-auto mb-12">
-            Search by guide name, location, language, or tour name
+            {t('search.searchTagline')}
           </p>
+
 
           {/* Simple Search Bar */}
           <form onSubmit={handleSearch} className="max-w-3xl mx-auto">
@@ -180,7 +189,7 @@ const SearchPage = () => {
               <Search className="absolute left-6 top-1/2 transform -translate-y-1/2 text-gray-400 w-6 h-6" />
               <input
                 type="text"
-                placeholder="Search for tours, guides, cities, or languages..."
+                placeholder={t('search.placeholder')}
                 value={searchQuery}
                 onChange={handleInputChange}
                 className="w-full pl-16 pr-6 py-6 border-2 border-gray-300 rounded-full text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-orange-300 focus:border-orange-500 text-lg shadow-lg"
@@ -190,8 +199,9 @@ const SearchPage = () => {
                 disabled={loading}
                 className="absolute right-2 top-1/2 transform -translate-y-1/2 px-8 py-3 bg-orange-500 text-white rounded-full font-semibold hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
               >
-                {loading ? "Searching..." : "Search"}
+                {loading ? t('search.searching') : t('search.search')}
               </button>
+
             </div>
           </form>
 
@@ -246,25 +256,27 @@ const SearchPage = () => {
             <p className="text-gray-600 text-lg">
               {tours.length > 0 ? (
                 <>
-                  Found <span className="font-bold text-orange-500">{tours.length}</span> tour{tours.length !== 1 ? 's' : ''}
-                  {searchQuery && <> for "<span className="font-semibold">{searchQuery}</span>"</>}
+                  {t('search.found')} <span className="font-bold text-orange-500">{tours.length}</span> {tours.length !== 1 ? t('search.tours') : t('search.tour')}
+                  {searchQuery && <> {t('search.for')} "<span className="font-semibold">{searchQuery}</span>"</>}
                 </>
               ) : searchQuery ? (
-                <>No tours found for "<span className="font-semibold">{searchQuery}</span>"</>
+                <>{t('search.noToursMatching')} "<span className="font-semibold">{searchQuery}</span>"</>
               ) : (
-                <>Showing all available tours</>
+                <>{t('search.showingAll')}</>
               )}
             </p>
           </div>
         )}
+
 
         {loading ? (
           <div className="text-center py-20">
             <div className="inline-block mb-8">
               <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-orange-500 mx-auto"></div>
             </div>
-            <h2 className="text-2xl font-semibold text-gray-700">Searching for tours...</h2>
+            <h2 className="text-2xl font-semibold text-gray-700">{t('search.searching')}</h2>
           </div>
+
         ) : error ? (
           <div className="text-center py-20">
             <div className="inline-block mb-8">
@@ -277,15 +289,16 @@ const SearchPage = () => {
                 </div>
               </div>
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Error Loading Tours</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">{t('search.errorLoading')} || {t('common.error')}</h2>
             <p className="text-gray-600 mb-6">{error}</p>
             <button
               onClick={() => fetchTours(searchQuery)}
               className="px-8 py-3 bg-orange-500 text-white rounded-full font-semibold hover:bg-orange-600 transition-colors"
             >
-              Try Again
+              {t('common.retry')}
             </button>
           </div>
+
         ) : tours.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
             {tours.map((tour) => (
@@ -304,13 +317,14 @@ const SearchPage = () => {
             </div>
 
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              {searchQuery ? "No Tours Found" : "No Tours Available"}
+              {searchQuery ? t('search.noToursFound') : t('search.noToursAvailable')}
             </h2>
             <p className="text-gray-600 mb-6 max-w-md mx-auto">
               {searchQuery
-                ? `We couldn't find any tours matching "${searchQuery}". Try searching for a different location, guide, or language.`
-                : "No tours are currently available. Please check back later!"}
+                ? `${t('search.noToursMatching')} "${searchQuery}". ${t('search.trySearchingDifferent')}`
+                : t('search.checkBackLater')}
             </p>
+
             {searchQuery && (
               <button
                 onClick={() => {
@@ -319,8 +333,9 @@ const SearchPage = () => {
                 }}
                 className="px-8 py-3 bg-orange-500 text-white rounded-full font-semibold hover:bg-orange-600 transition-colors"
               >
-                Show All Tours
+                {t('search.showAll')}
               </button>
+
             )}
           </div>
         )}

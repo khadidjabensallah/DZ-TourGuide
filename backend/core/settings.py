@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 from pathlib import Path
 import dotenv
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -24,12 +25,14 @@ dotenv.load_dotenv(os.path.join(BASE_DIR.parent, '.env'))
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-)7al!or!peof7&u9r&$)j#!2a9uf4$u6z8o#tmz-3$x@p@%jm_'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-)7al!or!peof7&u9r&$)j#!2a9uf4$u6z8o#tmz-3$x@p@%jm_')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+if not DEBUG:
+    CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', 'https://*.ondigitalocean.app').split(',')
 
 
 # Application definition
@@ -46,6 +49,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Whitenoise for static files
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',  # CORS middleware (should be early)
     'django.middleware.common.CommonMiddleware',
@@ -61,7 +65,7 @@ ROOT_URLCONF = 'core.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'frontend' / 'templates'],  # Frontend templates
+        'DIRS': [BASE_DIR.parent / 'frontend' / 'templates'],  # Frontend templates
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -79,23 +83,31 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# Default: SQLite for local dev if DATABASE_URL not set
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DATABASE_NAME', 'dz_tourguide'),
-        'USER': os.environ.get('DATABASE_USER', 'dz_user'),
-        'PASSWORD': os.environ.get('DATABASE_PASSWORD', 'dz_tourguide5'),
-        'HOST': os.environ.get('DATABASE_HOST', 'localhost'),
-        'PORT': os.environ.get('DATABASE_PORT', '5432'),
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 
-# Development convenience: when DEBUG=True we often don't have PostgreSQL
-# or psycopg installed in the local environment. To make `runserver`
-# work out-of-the-box for local development, default to SQLite if the
-# environment variable `USE_SQLITE_DEV` is not set to 'false'. This is
-# safe for local testing and reversible for production.
-if DEBUG and os.getenv('USE_SQLITE_DEV', 'True').lower() in ('true', '1', 'yes'):
+# If DATABASE_URL is set (e.g. by DigitalOcean), use it.
+if os.environ.get('DATABASE_URL'):
+    DATABASES['default'] = dj_database_url.config(conn_max_age=600, ssl_require=True)
+else:
+    # Existing fallback logic for local postgres or sqlite
+    if os.environ.get('DATABASE_NAME'):
+         DATABASES['default'] = {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ.get('DATABASE_NAME', 'dz_tourguide'),
+            'USER': os.environ.get('DATABASE_USER', 'dz_user'),
+            'PASSWORD': os.environ.get('DATABASE_PASSWORD', 'dz_tourguide5'),
+            'HOST': os.environ.get('DATABASE_HOST', 'localhost'),
+            'PORT': os.environ.get('DATABASE_PORT', '5432'),
+        }
+
+# Development convenience override
+if DEBUG and os.getenv('USE_SQLITE_DEV', 'True').lower() in ('true', '1', 'yes') and not os.environ.get('DATABASE_URL'):
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -129,6 +141,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Media files
 MEDIA_URL = '/media/'

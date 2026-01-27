@@ -2,10 +2,14 @@
 import React, { useState } from 'react';
 import { KeyRound, Eye, EyeOff, Check, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { AuthAPI } from '../../utils/api';
 
+
 export default function ResetPassword() {
+  const { t } = useTranslation();
   const [password, setPassword] = useState('');
+
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -32,7 +36,7 @@ export default function ResetPassword() {
 
     try {
       const response = await AuthAPI.resetPassword(password, confirmPassword);
-      
+
       if (response.success) {
         const email = response.data?.email || sessionStorage.getItem('reset_email');
 
@@ -43,16 +47,16 @@ export default function ResetPassword() {
             if (signinResp?.success) {
               sessionStorage.setItem('user', JSON.stringify(signinResp.data));
               sessionStorage.setItem('is_authenticated', 'true');
-              
+
               // Clear reset data
               sessionStorage.removeItem('reset_email');
               sessionStorage.removeItem('reset_user_id');
-              
-                // Navigate to success with auto-login info
-                navigate('/password-changed', {
-                state: { 
-                  autoSignedIn: true, 
-                  userData: signinResp.data 
+
+              // Navigate to success with auto-login info
+              navigate('/password-changed', {
+                state: {
+                  autoSignedIn: true,
+                  userData: signinResp.data
                 }
               });
               return;
@@ -65,16 +69,17 @@ export default function ResetPassword() {
         // Clear reset data
         sessionStorage.removeItem('reset_email');
         sessionStorage.removeItem('reset_user_id');
-        
-          // Navigate to success without auto-login
-          navigate('/password-changed', {
+
+        // Navigate to success without auto-login
+        navigate('/password-changed', {
           state: { autoSignedIn: false }
         });
       }
     } catch (err) {
-      const message = err?.data?.message || err.message || 'Failed to reset password';
+      const message = err?.data?.message || err.message || t('auth.unexpectedError');
       setError(message);
     } finally {
+
       setIsLoading(false);
     }
   };
@@ -83,12 +88,13 @@ export default function ResetPassword() {
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 p-4">
       <div className="flex flex-col items-center justify-center min-h-screen relative">
         <button
-           onClick={() => navigate('/verify-reset')}
+          onClick={() => navigate('/verify-reset')}
           className="absolute top-4 left-4 flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
         >
           <ArrowLeft className="w-5 h-5" />
-          Back
+          {t('auth.back')}
         </button>
+
 
         <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md">
           <div className="flex justify-center mb-6">
@@ -99,12 +105,13 @@ export default function ResetPassword() {
 
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Set New Password
+              {t('auth.resetPassword')}
             </h1>
             <p className="text-sm text-gray-600">
-              Create a strong password for your account
+              {t('auth.createNewPassword')}
             </p>
           </div>
+
 
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
@@ -115,8 +122,9 @@ export default function ResetPassword() {
           {/* Password Field */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              New Password
+              {t('auth.newPassword')}
             </label>
+
             <div className="relative">
               <input
                 type={showPassword ? 'text' : 'password'}
@@ -137,16 +145,16 @@ export default function ResetPassword() {
             {/* Password Criteria */}
             <div className="mt-3 space-y-2">
               {[
-                { key: 'length', text: 'At least 8 characters' },
-                { key: 'uppercase', text: 'One uppercase letter' },
-                { key: 'lowercase', text: 'One lowercase letter' },
-                { key: 'number', text: 'One number' },
+                { key: 'length', text: t('auth.atLeast8Chars') || "At least 8 characters" },
+                { key: 'uppercase', text: t('auth.oneUppercase') || "One uppercase letter" },
+                { key: 'lowercase', text: t('auth.oneLowercase') || "One lowercase letter" },
+                { key: 'number', text: t('auth.oneNumber') || "One number" },
               ].map(({ key, text }) => (
+
                 <div
                   key={key}
-                  className={`flex items-center gap-2 text-xs ${
-                    criteria[key] ? 'text-green-600' : 'text-gray-500'
-                  }`}
+                  className={`flex items-center gap-2 text-xs ${criteria[key] ? 'text-green-600' : 'text-gray-500'
+                    }`}
                 >
                   {criteria[key] ? (
                     <Check className="w-4 h-4" />
@@ -162,8 +170,9 @@ export default function ResetPassword() {
           {/* Confirm Password Field */}
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Confirm Password
+              {t('auth.confirmNewPassword')}
             </label>
+
             <div className="relative">
               <input
                 type={showConfirm ? 'text' : 'password'}
@@ -171,11 +180,10 @@ export default function ResetPassword() {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 onPaste={(e) => e.preventDefault()}
                 disabled={isLoading}
-                className={`w-full px-4 py-3 pr-12 border-2 rounded-lg outline-none transition-all ${
-                  confirmPassword && !passwordsMatch
+                className={`w-full px-4 py-3 pr-12 border-2 rounded-lg outline-none transition-all ${confirmPassword && !passwordsMatch
                     ? 'border-red-300 focus:border-red-500 focus:ring-2 focus:ring-red-200'
                     : 'border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200'
-                }`}
+                  }`}
               />
               <button
                 type="button"
@@ -186,21 +194,22 @@ export default function ResetPassword() {
               </button>
             </div>
             {confirmPassword && !passwordsMatch && (
-              <p className="text-xs text-red-500 mt-1">Passwords do not match</p>
+              <p className="text-xs text-red-500 mt-1">{t('auth.passwordsDoNotMatch')}</p>
             )}
+
           </div>
 
           <button
             onClick={handleSubmit}
             disabled={!canSubmit || isLoading}
-            className={`w-full font-semibold py-3 rounded-lg transition-all duration-200 ${
-              !canSubmit || isLoading
+            className={`w-full font-semibold py-3 rounded-lg transition-all duration-200 ${!canSubmit || isLoading
                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 : 'bg-orange-500 hover:bg-orange-600 text-white'
-            }`}
+              }`}
           >
-            {isLoading ? 'Resetting Password...' : 'Reset Password'}
+            {isLoading ? t('auth.resetting') : t('auth.resetPassword')}
           </button>
+
         </div>
       </div>
     </div>

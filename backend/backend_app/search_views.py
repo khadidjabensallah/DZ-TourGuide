@@ -68,11 +68,22 @@ def search_tours(request):
     if debug:
         debug_info['after_guide_filter'] = tours.count()
     
-    # Only show future tours (moved this up before other filters)
+    # Store candidates before date filtering (for fallback)
+    all_active_tours = tours
+    
+    # Only show future tours (including today)
     tours = tours.filter(date__gte=date.today())
     
     if debug:
         debug_info['after_date_filter'] = tours.count()
+    
+    # FALLBACK: If no future tours are found (and no specific date filters were requested),
+    # show the most recent tours instead of an empty list.
+    if not tours.exists() and not date_from and not date_to:
+        tours = all_active_tours.order_by('-date', '-created_at')[:10]
+        if debug:
+            debug_info['fallback_triggered'] = True
+            debug_info['fallback_count'] = tours.count()
     
     # Apply filters
     filters = Q()

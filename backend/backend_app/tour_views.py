@@ -11,6 +11,8 @@ import os
 import uuid
 from decimal import Decimal
 from .models import Guide, Tour, Wilaya
+from .email_utils import send_tour_cancellation_email
+
 #========================================
 # GUIDE - CREATE TOUR
 # ========================================
@@ -185,6 +187,7 @@ def guide_update_tour(request, guide_id, tour_id):
         data = request.POST.dict()
     
     # Update fields
+
     if 'title' in data:
         tour.title = data['title']
     if 'description' in data:
@@ -197,8 +200,12 @@ def guide_update_tour(request, guide_id, tour_id):
         tour.whats_included = data['whats_included']
     if 'whats_excluded' in data:
         tour.whats_excluded = data['whats_excluded']
-    if 'estimated_duration' in data:
-        tour.estimated_duration = Decimal(str(data['estimated_duration']))
+    if 'estimated_duration' in data and data['estimated_duration']:
+        try:
+            tour.estimated_duration = Decimal(str(data['estimated_duration']))
+        except:
+            pass
+
     if 'max_places' in data:
         # When updating max_places, adjust available_places accordingly
         old_max = tour.max_places
@@ -216,7 +223,8 @@ def guide_update_tour(request, guide_id, tour_id):
             }, status=400)
         tour.available_places = new_available
     if 'is_active' in data:
-        tour.is_active = bool(data['is_active'])
+        tour.is_active = str(data['is_active']).lower() in ['true', '1', 'yes']
+
     
     # NEW: Handle missing fields
     if 'wilaya_code' in data:
@@ -242,14 +250,39 @@ def guide_update_tour(request, guide_id, tour_id):
         else:
             tour.scheduled_time = None
 
-    if 'starting_point' in data:
-        tour.starting_point = data['starting_point']
-    if 'latitude' in data:
-        tour.latitude = Decimal(str(data['latitude'])) if data['latitude'] else None
-    if 'longitude' in data:
-        tour.longitude = Decimal(str(data['longitude'])) if data['longitude'] else None
+    if 'latitude' in data and data['latitude']:
+        try:
+            tour.latitude = Decimal(str(data['latitude']))
+        except:
+            pass
+    if 'longitude' in data and data['longitude']:
+        try:
+            tour.longitude = Decimal(str(data['longitude']))
+        except:
+            pass
+
     
+    # Handle photo uploads during update
+    uploaded_files = request.FILES.getlist('photos')
+    if uploaded_files:
+        photo_urls = tour.photo_urls if tour.photo_urls else []
+        photo_dir = os.path.join(settings.MEDIA_ROOT, 'tours')
+        os.makedirs(photo_dir, exist_ok=True)
+        fs = FileSystemStorage(location=photo_dir)
+        
+        for file in uploaded_files:
+            filename = f"{tour.id}_{uuid.uuid4().hex[:6]}_{file.name}"
+            saved_name = fs.save(filename, file)
+            file_path = f"/media/tours/{saved_name}"
+            photo_urls.append(file_path)
+        
+        tour.photo_urls = photo_urls
+        # If no cover photo exists, set the first one as cover
+        if not tour.cover_photo and photo_urls:
+            tour.cover_photo = photo_urls[0]
+            
     tour.save()
+
     
     return JsonResponse({
         'success': True,
@@ -275,18 +308,15 @@ def guide_delete_tour(request, guide_id, tour_id):
     guide = get_object_or_404(Guide, user_id=guide_id)
     tour = get_object_or_404(Tour, id=tour_id, guide=guide)
     
-    # Check if tour has any reservations
-    # ONLY block if the tour is in the future.
-    # If it's a past tour, we allow deletion even if there are "active" (incomplete) reservations
-    # so the guide can clean up their history.
+    # If the tour is in the future, notify all tourists with active reservations
     if tour.date >= timezone.now().date():
-        active_reservations = tour.reservations.filter(completed_at__isnull=True).count()
+        active_reservations = tour.reservations.filter(completed_at__isnull=True)
         
-        if active_reservations > 0:
-            return JsonResponse({
-                'success': False,
-                'message': f'Cannot delete this tour because it has {active_reservations} active reservation(s). Please complete or cancel them first.'
-            }, status=400)
+        # Send cancellation emails
+        for reservation in active_reservations:
+            if reservation.tourist and reservation.tourist.user:
+                send_tour_cancellation_email(reservation.tourist.user, tour)
+
     
     tour_title = tour.title
     tour.delete()

@@ -1,10 +1,33 @@
 import React from "react";
 import logo from "../assets/logo.png";
 import { Facebook, Twitter, Instagram, Github } from "lucide-react";
+import { useTranslation } from "react-i18next";
+
 
 export default function Footer() {
+  const { t } = useTranslation();
   return (
+
     <footer id="footer" className="bg-slate-900 text-white">
+      <div id="contact" className="max-w-7xl mx-auto px-6 sm:px-8 pt-12 sm:pt-16">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12 border-b border-slate-700/50 pb-12">
+          <div>
+            <h4 className="text-orange-500 font-bold mb-4 uppercase tracking-wider text-sm">{t('footer.contactUs')}</h4>
+            <p className="text-gray-300 text-sm leading-relaxed mb-2">Email: contact@tguida.dz</p>
+            <p className="text-gray-300 text-sm leading-relaxed mb-2">Phone: +213 (0) 555 12 34 56</p>
+            <p className="text-gray-300 text-sm leading-relaxed">Address: Algiers, Algeria</p>
+          </div>
+          <div>
+            <h4 className="text-orange-500 font-bold mb-4 uppercase tracking-wider text-sm">{t('footer.support')}</h4>
+            <p className="text-gray-300 text-sm leading-relaxed">{t('footer.supportText')}</p>
+          </div>
+          <div>
+            <h4 className="text-orange-500 font-bold mb-4 uppercase tracking-wider text-sm">{t('footer.ourMission')}</h4>
+            <p className="text-gray-300 text-sm leading-relaxed">{t('footer.missionText')}</p>
+          </div>
+        </div>
+      </div>
+
       <div className="max-w-7xl mx-auto px-6 sm:px-8 py-12 sm:py-16">
         {/* Main Footer Content */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 md:gap-0 mb-8">
@@ -23,27 +46,32 @@ export default function Footer() {
               href="#product"
               className="text-gray-300 hover:text-white transition-colors duration-300 text-sm sm:text-base font-medium"
             >
-              Product
+              {t('footer.product')}
             </a>
+
             <a
               href="#features"
               className="text-gray-300 hover:text-white transition-colors duration-300 text-sm sm:text-base font-medium"
             >
-              Features
+              {t('footer.features')}
             </a>
+
             <a
               href="#pricing"
               className="text-gray-300 hover:text-white transition-colors duration-300 text-sm sm:text-base font-medium"
             >
-              Pricing
+              {t('footer.pricing')}
             </a>
+
             <a
               href="#resources"
               className="text-gray-300 hover:text-white transition-colors duration-300 text-sm sm:text-base font-medium"
             >
-              Resources
+              {t('footer.resources')}
             </a>
+
           </nav>
+
 
           {/* Social Media Icons */}
           <div className="flex items-center gap-4 justify-center md:justify-end">
@@ -84,9 +112,10 @@ export default function Footer() {
         {/* Copyright Text */}
         <div className="text-center">
           <p className="text-gray-400 text-xs sm:text-sm tracking-wide">
-            © 2025 Tguida. All rights reserved.
+            © 2025 Tguida. {t('footer.rightsReserved')}
           </p>
         </div>
+
       </div>
     </footer>
   );
