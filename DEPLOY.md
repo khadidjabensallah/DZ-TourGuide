@@ -34,6 +34,26 @@ Click **Edit** next to Environment Variables and add the following:
 1. Click **Next** until you reach the Review page.
 2. Click **Create Resources**.
 
-## 6. Post-Deployment
-- Once the build finishes, you will get a live URL ending in `ondigitalocean.app`.
-- **Update Environment Variables**: Go back to Settings -> Environment Variables and update `CSRF_TRUSTED_ORIGINS` with your actual live URL (e.g., `https://sea-lion-app-pj4s.ondigitalocean.app`).
+## 6. Post-Deployment (Database Initialization)
+After the app is deployed, you need to create the database tables and an admin user.
+
+1. Go to your App details page.
+2. Click on the **Console** tab.
+3. In the console terminal, run the following commands:
+
+   **Apply Migrations (Create Tables):**
+   ```bash
+   python manage.py migrate
+   ```
+
+   **Create Admin User:**
+   ```bash
+   python manage.py createsuperuser
+   ```
+   (Follow the prompts to set username, email, and password).
+
+   **Verify:**
+   Visit your app URL `/admin` and log in with the superuser you just created.
+
+## 7. Troubleshooting
+- If forms fail (CSRF Error), update `CSRF_TRUSTED_ORIGINS` in Environment Variables with your actual live URL (e.g., `https://sea-lion-app-pj4s.ondigitalocean.app`).
