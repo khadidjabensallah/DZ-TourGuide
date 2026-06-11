@@ -195,8 +195,6 @@ export default function SignUpGuideP2() {
       });
 
       const responseText = await response.text();
-      console.log('Response status:', response.status);
-      console.log('Response body:', responseText);
 
       if (!response.ok) {
         throw new Error(`Server error: ${response.status} - ${responseText}`);

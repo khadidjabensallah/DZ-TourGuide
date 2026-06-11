@@ -114,7 +114,6 @@ export default function CreateNewTour() {
 
     const isValid = Object.keys(newErrors).length === 0;
     if (!isValid) {
-      console.log('Validation errors:', newErrors);
       // Scroll to first error
       const firstErrorField = Object.keys(newErrors)[0];
       const element = document.querySelector(`[name="${firstErrorField}"], input[value*="${firstErrorField}"]`);
@@ -132,12 +131,10 @@ export default function CreateNewTour() {
   };
 
   const handleCreateTour = async () => {
-    console.log('Create tour button clicked');
 
     // Validate form first
     const isValid = validateForm();
     if (!isValid) {
-      console.log('Form validation failed');
       setError('Please fill in all required fields correctly. Check the form for highlighted errors.');
       // Scroll to top to show error message
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -153,7 +150,6 @@ export default function CreateNewTour() {
       return;
     }
 
-    console.log('Creating tour for guide ID:', currentGuideId);
     setLoading(true);
     setError(null);
 
@@ -177,12 +173,9 @@ export default function CreateNewTour() {
         photos: images, // File objects
       };
 
-      console.log('Tour data prepared:', { ...tourData, photos: `${images.length} files` });
-      console.log('Calling TourAPI.createTour with guideId:', currentGuideId);
 
       const response = await TourAPI.createTour(currentGuideId, tourData);
 
-      console.log('API Response:', response);
 
       if (response.success) {
         setShowModal(true);
@@ -604,7 +597,6 @@ export default function CreateNewTour() {
               type="button"
               onClick={(e) => {
                 e.preventDefault();
-                console.log('Button clicked, calling handleCreateTour');
                 handleCreateTour();
               }}
               disabled={loading}

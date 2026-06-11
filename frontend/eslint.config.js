@@ -5,7 +5,9 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  // `dist` is build output; `static`/`public` hold legacy non-module scripts
+  // (the old Django-template frontend) that aren't part of the React app.
+  globalIgnores(['dist', 'static', 'public']),
   {
     files: ['**/*.{js,jsx}'],
     extends: [

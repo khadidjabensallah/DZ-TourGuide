@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Star, Clock, MapPin, FileText, AlertCircle } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import Header from "../../Layout/Header";
-import { GuideAPI } from "../../utils/api";
+import { GuideAPI, resolveMediaUrl } from "../../utils/api";
 
 // Sidebar Component
 const Sidebar = ({ pricingGrid, coverageZone, certifications }) => {
@@ -81,7 +81,7 @@ const Sidebar = ({ pricingGrid, coverageZone, certifications }) => {
         </h3>
         <div className="grid grid-cols-2 gap-2">
           {certifications.length > 0 ? certifications.map((cert, index) => {
-            const imageUrl = cert.startsWith('http') ? cert : `http://127.0.0.1:8000${cert}`;
+            const imageUrl = resolveMediaUrl(cert);
             return (
               <div
                 key={index}
@@ -293,9 +293,7 @@ const GuestProfile = () => {
             bio: guide_info.biography || "",
             languages: guide_info.languages || [],
             is_verified: guide_info.is_verified,
-            profileImage: user_info.photo_url
-              ? (user_info.photo_url.startsWith('http') ? user_info.photo_url : `http://127.0.0.1:8000${user_info.photo_url}`)
-              : "https://via.placeholder.com/150?text=Guide",
+            profileImage: resolveMediaUrl(user_info.photo_url, "https://via.placeholder.com/150?text=Guide"),
           });
 
           setPricingGrid({
@@ -324,9 +322,7 @@ const GuestProfile = () => {
             city: t.wilaya,
             date: t.date ? t.date : new Date(t.created_at).toLocaleDateString(),
             scheduled_time: t.scheduled_time ? t.scheduled_time.substring(0, 5) : null,
-            image: t.cover_photo
-              ? (t.cover_photo.startsWith('http') ? t.cover_photo : `http://127.0.0.1:8000${t.cover_photo}`)
-              : "https://via.placeholder.com/400x300?text=Tour",
+            image: resolveMediaUrl(t.cover_photo, "https://via.placeholder.com/400x300?text=Tour"),
           }));
           setTours(mappedTours);
         }

@@ -24,8 +24,18 @@ const API_BASE_URL = (() => {
     }
 })();
 
-console.log('🌐 API Base URL:', API_BASE_URL);
-console.log('🔗 Current Origin:', window.location.origin);
+// Backend origin without the trailing `/api` — used to resolve relative media
+// paths (profile photos, certifications, tour covers) returned by the backend.
+export const SERVER_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, '');
+
+/**
+ * Resolve a possibly-relative media path from the backend to an absolute URL.
+ * Absolute URLs are returned unchanged; falsy paths return the provided fallback.
+ */
+export function resolveMediaUrl(path, fallback = '') {
+    if (!path) return fallback;
+    return /^https?:\/\//.test(path) ? path : `${SERVER_ORIGIN}${path}`;
+}
 
 
 /**
@@ -33,7 +43,6 @@ console.log('🔗 Current Origin:', window.location.origin);
  */
 export async function apiRequest(endpoint, options = {}) {
     const url = `${API_BASE_URL}${endpoint}`;
-    console.log(`Making API request to: ${url}`, options);
 
     const defaultOptions = {
         headers: {
@@ -66,7 +75,7 @@ export async function apiRequest(endpoint, options = {}) {
         if (contentType.includes('application/json')) {
             try {
                 data = await response.json();
-            } catch (err) {
+            } catch {
                 const text = await response.text();
                 const message = text || 'Invalid JSON response from server';
                 const parseError = new Error(message);
@@ -227,7 +236,7 @@ export const AuthAPI = {
         try {
             const email = sessionStorage.getItem('reset_email');
             if (email) formData.append('email', email);
-        } catch (e) {
+        } catch {
             // sessionStorage may be unavailable in some test environments
         }
 

@@ -177,16 +177,6 @@ const TouristProfile = () => {
         );
     };
 
-    // Function to handle edit navigation
-    const handleEditCustomTour = (tourId) => {
-        navigate(`/CustomTourEdit/${tourId}`);
-    };
-
-    // Function to handle back navigation
-    const handleBackClick = () => {
-        navigate(-1); // Go back to previous page
-    };
-
     const handleOpenReview = (res) => {
         setSelectedRes(res);
         setReviewForm({ rating: 5, comment: "" });

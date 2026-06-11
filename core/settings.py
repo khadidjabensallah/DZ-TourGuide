@@ -163,8 +163,9 @@ if RESEND_API_KEY:
         "RESEND_API_KEY": RESEND_API_KEY,
     }
     # While testing with Resend's free tier (no domain), 
-    # the sender MUST be onboarding@resend.dev
-    DEFAULT_FROM_EMAIL = 'onboarding@resend.dev'
+    # On Resend's free tier (no verified domain) the sender MUST be
+    # onboarding@resend.dev. Once a domain is verified, override via env.
+    DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'onboarding@resend.dev').strip()
 
 else:
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -175,12 +176,12 @@ else:
 SITE_URL = os.getenv('SITE_URL', 'https://dz-tourguide-backend.onrender.com')
 
 
-# Force real email delivery
-FORCE_REAL_EMAIL = True
+# In development, use the console backend (prints emails to the terminal) unless
+# real delivery is explicitly forced or a Resend key is configured. Production
+# (DEBUG=False) always uses the backend selected above.
+FORCE_REAL_EMAIL = os.getenv('FORCE_REAL_EMAIL', 'True').lower() in ('true', '1', 'yes')
 
-SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY') # Added to avoid NameError in logic below
-
-if DEBUG and not os.getenv('FORCE_REAL_EMAIL', 'True').lower() in ('true', '1', 'yes') and not SENDGRID_API_KEY:
+if DEBUG and not FORCE_REAL_EMAIL and not RESEND_API_KEY:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 
@@ -189,18 +190,27 @@ CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https://.*\.onrender\.com$",
+    r"^https://.*\.vercel\.app$",         # Vercel preview + production frontend
+    r"^https://.*\.ondigitalocean\.app$",  # DigitalOcean app platform
     r"^http://localhost:5173$",
-    r"^https://.*\.ondigitalocean\.app$", # Added DigitalOcean support
+    r"^http://127\.0\.0\.1:5173$",
 ]
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
+# Additional exact origins (e.g. a custom domain) supplied at deploy time as a
+# comma-separated list, so the frontend URL can change without a code edit.
+CORS_ALLOWED_ORIGINS = [
+    o.strip() for o in os.getenv('CORS_ALLOWED_ORIGINS', '').split(',') if o.strip()
+]
+
+ALLOWED_HOSTS = [h.strip() for h in os.getenv('ALLOWED_HOSTS', '*').split(',') if h.strip()]
 
 CSRF_TRUSTED_ORIGINS = [
     'https://dz-tourguide-frontend.onrender.com',
     'https://dz-tourguide-backend.onrender.com',
     'https://dz-tourguide-4pjy.onrender.com',
-    'https://*.ondigitalocean.app', # Added DigitalOcean support
-]
+    'https://*.vercel.app',
+    'https://*.ondigitalocean.app',
+] + CORS_ALLOWED_ORIGINS
 
 # Support for env-var based CSRF trusted origins too
 if os.environ.get('CSRF_TRUSTED_ORIGINS'):

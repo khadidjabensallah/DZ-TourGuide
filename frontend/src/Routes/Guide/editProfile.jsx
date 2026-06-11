@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { ChevronLeft, Upload, X, CheckCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { GuideAPI, SearchAPI } from "../../utils/api";
+import { GuideAPI, SearchAPI, resolveMediaUrl } from "../../utils/api";
 import GuideHeader from "../../Layout/GuideHeader";
 
 const EditProfilePage = () => {
@@ -91,11 +91,7 @@ const EditProfilePage = () => {
             familyName: data.user_info?.lastname || "",
             biography: data.guide_info?.biography || "",
             phone: data.guide_info?.phone_digits || "",
-            profileImage: data.user_info?.photo_url
-              ? (data.user_info.photo_url.startsWith('http')
-                ? data.user_info.photo_url
-                : `http://127.0.0.1:8000${data.user_info.photo_url}`)
-              : "https://via.placeholder.com/150?text=Guide",
+            profileImage: resolveMediaUrl(data.user_info?.photo_url, "https://via.placeholder.com/150?text=Guide"),
           });
 
           // Set Pricing

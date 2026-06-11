@@ -73,7 +73,6 @@ const TourDetail = () => {
           if (response.success && response.weather) {
             setWeatherInfo(response.weather);
           } else {
-            console.log("Weather not available:", response.message);
             setWeatherInfo(null);
           }
         })

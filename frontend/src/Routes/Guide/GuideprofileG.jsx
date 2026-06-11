@@ -88,7 +88,6 @@ const EditProfilePage = () => {
 
   const handleFileUpload = (e) => {
     // Ready for file upload API integration
-    console.log("File upload:", e.target.files);
   };
 
   const handleRemoveCertificate = (index) => {
@@ -109,7 +108,6 @@ const EditProfilePage = () => {
       pricing,
     };
 
-    console.log("Data to save:", dataToSave);
 
     // TODO: Replace with actual API call
     // await fetch('/api/profile/update', {

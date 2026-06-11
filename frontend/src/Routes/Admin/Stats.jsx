@@ -44,7 +44,6 @@ export default function AdminDashboard() {
             try {
                 setLoading(true);
                 const userStr = sessionStorage.getItem('user');
-                console.log("ADMIN DASHBOARD - Raw user session:", userStr);
 
                 if (!userStr) {
                     console.error("ADMIN DASHBOARD - No user found in session");
@@ -55,7 +54,6 @@ export default function AdminDashboard() {
 
                 const user = JSON.parse(userStr);
                 const adminId = user?.user_id || user?.userId;
-                console.log("ADMIN DASHBOARD - Detected adminId:", adminId);
 
                 if (!adminId) {
                     console.error("ADMIN DASHBOARD - admin_id missing from user object", user);

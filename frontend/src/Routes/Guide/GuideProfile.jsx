@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import GuideHeader from "../../Layout/GuideHeader";
-import { GuideAPI, TourAPI } from "../../utils/api";
+import { GuideAPI, TourAPI, resolveMediaUrl } from "../../utils/api";
 
 // Sidebar Component
 const Sidebar = ({ pricingGrid, coverageZone, certifications, onDeleteCertification }) => {
@@ -133,9 +133,7 @@ const Sidebar = ({ pricingGrid, coverageZone, certifications, onDeleteCertificat
         <div className="grid grid-cols-2 gap-2">
           {certifications && certifications.length > 0 ? (
             certifications.map((cert, index) => {
-              const imageUrl = cert.startsWith('http')
-                ? cert
-                : `http://127.0.0.1:8000${cert}`;
+              const imageUrl = resolveMediaUrl(cert);
 
               return (
                 <div key={index} className="aspect-square rounded-md overflow-hidden border border-gray-100 group relative">
@@ -453,11 +451,7 @@ const GuideProfileG = () => {
             bio: data.guide_info?.biography || '',
             languages: data.guide_info?.languages || [],
             verified: data.guide_info?.is_verified || false,
-            profileImage: data.user_info?.photo_url
-              ? (data.user_info.photo_url.startsWith('http')
-                ? data.user_info.photo_url
-                : `http://127.0.0.1:8000${data.user_info.photo_url}`)
-              : "https://via.placeholder.com/150?text=Guide",
+            profileImage: resolveMediaUrl(data.user_info?.photo_url, "https://via.placeholder.com/150?text=Guide"),
           });
 
           // Set pricing
@@ -491,11 +485,7 @@ const GuideProfileG = () => {
             city: tour.wilaya || '',
             date: tour.date ? tour.date : (tour.created_at ? new Date(tour.created_at).toLocaleDateString() : ''),
             scheduled_time: tour.scheduled_time ? tour.scheduled_time.substring(0, 5) : null,
-            image: tour.cover_photo
-              ? (tour.cover_photo.startsWith('http')
-                ? tour.cover_photo
-                : `http://127.0.0.1:8000${tour.cover_photo}`)
-              : "https://via.placeholder.com/400x300?text=Tour",
+            image: resolveMediaUrl(tour.cover_photo, "https://via.placeholder.com/400x300?text=Tour"),
           }));
           setTours(mappedTours);
         }
@@ -554,7 +544,6 @@ const GuideProfileG = () => {
   };
 
   const handleAddTour = () => {
-    console.log("Add new tour");
     // Will be linked to add tour functionality
     navigate("/CreateTour");
   };

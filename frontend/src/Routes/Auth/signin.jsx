@@ -92,8 +92,6 @@ export default function SignInPage() {
           sessionStorage.setItem("is_authenticated", "true");
         }
 
-        console.log("LOGIN SUCCESS - Full Response:", JSON.stringify(response, null, 2));
-        console.log("LOGIN SUCCESS - Response Data:", response.data);
 
         // Try multiple possible property names for user type
         const userType = (
@@ -105,7 +103,6 @@ export default function SignInPage() {
           ""
         ).toLowerCase().trim();
 
-        console.log("DETECTED USER TYPE:", userType);
 
         // Show a brief success message before redirecting
         setSuccessMessage(t('auth.signInSuccess'));
@@ -113,7 +110,6 @@ export default function SignInPage() {
 
         // Navigation to home regardless of user type
         setTimeout(() => {
-          console.log("✅ Navigating to Homepage: /");
           navigate("/", { replace: true });
         }, 500); // 500ms delay to ensure user sees the message and logs are visible
       }

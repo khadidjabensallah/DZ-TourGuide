@@ -14,9 +14,6 @@ import {
 import TouristHeader from "../../Layout/TouristHeader";
 
 const EditCustomTourPage = () => {
-    // This would come from props or route params in a real app
-    const tourId = 1;
-
     const [showSuccessModal, setShowSuccessModal] = useState(false);
 
     const [formData, setFormData] = useState({
@@ -46,14 +43,11 @@ Time to enjoy traditional Algerian cuisine in a local restaurant`,
     };
 
     const handleCancel = () => {
-        console.log("Cancel clicked - Navigate back");
         // In real app: navigate(-1) or navigate('/tourist/profile')
         window.history.back(); // This will go to the previous page
     };
 
     const handleSubmit = () => {
-        console.log("Form submitted:", formData);
-        console.log("Tour ID:", tourId);
         // In real app:
         // await api.updateTour(tourId, formData);
 
