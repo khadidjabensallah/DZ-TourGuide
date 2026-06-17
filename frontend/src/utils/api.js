@@ -6,7 +6,7 @@
 // Determine API Base URL with proper fallback handling
 const API_BASE_URL = (() => {
     const envUrl = import.meta.env.VITE_API_URL;
-    const fallbackUrl = 'https://dz-tourguide-backend.onrender.com/api';
+    const fallbackUrl = 'https://dz-tourguide-backend-c2q2.onrender.com/api';
 
     if (envUrl) {
         // If VITE_API_URL is set, ensure it ends with /api
