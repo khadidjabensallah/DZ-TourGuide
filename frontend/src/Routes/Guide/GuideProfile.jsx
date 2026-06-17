@@ -166,7 +166,7 @@ const Sidebar = ({ pricingGrid, coverageZone, certifications, onDeleteCertificat
                         e.preventDefault();
                         onDeleteCertification(cert);
                       }}
-                      className="absolute top-2 right-2 bg-white/90 p-1.5 rounded-full text-red-500 hover:bg-red-500 hover:text-white transition-colors shadow-sm opacity-0 group-hover:opacity-100"
+                      className="absolute top-2 right-2 bg-white/90 p-1.5 rounded-full text-red-500 hover:bg-red-500 hover:text-white transition-colors shadow-sm opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
                       title="Delete Certification"
                     >
                       <Trash2 size={14} />
@@ -334,15 +334,15 @@ const TourCard = ({ tour, onDelete, onEdit, onView }) => {
 const ProfileHeader = ({ guideData, onEditProfile }) => {
   const { t } = useTranslation();
   return (
-    <div className="bg-orange-500 rounded-lg p-6 mb-6 text-white">
+    <div className="bg-orange-500 rounded-lg p-5 sm:p-6 mb-6 text-white">
 
-      <div className="flex items-start gap-6">
+      <div className="flex flex-col items-center text-center gap-4 sm:flex-row sm:items-start sm:text-left sm:gap-6">
 
-        <div className="relative">
+        <div className="relative shrink-0">
           <img
             src={guideData.profileImage}
             alt={guideData.name}
-            className="w-32 h-32 rounded-full object-cover border-4 border-white"
+            className="w-28 h-28 sm:w-32 sm:h-32 rounded-full object-cover border-4 border-white"
           />
           <button
             onClick={onEditProfile}
@@ -352,10 +352,10 @@ const ProfileHeader = ({ guideData, onEditProfile }) => {
             <Edit className="w-5 h-5 text-orange-500" />
           </button>
         </div>
-        <div className="flex-1"></div>
-        <div className="flex-1">
-          <h2 className="text-3xl font-bold mb-2">{guideData.name}</h2>
-          <div className="flex items-center gap-2 mb-4">
+        <div className="hidden sm:block sm:flex-1"></div>
+        <div className="flex-1 w-full">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-2">{guideData.name}</h2>
+          <div className="flex items-center justify-center sm:justify-start gap-2 mb-4">
             <span className="text-2xl font-bold">{guideData.rating}</span>
             <Star className="fill-white" size={20} />
             <span className="text-sm">({guideData.totalReviews} {t('tourDetails.reviews')})</span>
@@ -363,7 +363,7 @@ const ProfileHeader = ({ guideData, onEditProfile }) => {
 
 
           <p className="mb-4 text-orange-100">{guideData.bio}</p>
-          <div className="flex items-center gap-4 text-sm">
+          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-2 text-sm">
             <div className="flex items-center gap-2">
               🗣️ {guideData.languages.join(", ")}
             </div>
@@ -619,11 +619,11 @@ const GuideProfileG = () => {
       <GuideHeader />
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-6 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <div className="flex justify-end mb-4">
           <button
             onClick={handleAddTour}
-            className="px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 font-medium"
+            className="w-full sm:w-auto px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 font-medium"
           >
             {t('profile.addNewTour')}
           </button>
