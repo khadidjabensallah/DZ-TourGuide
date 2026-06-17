@@ -8,6 +8,8 @@ import {
   Trash2,
   Edit,
   FileText,
+  BadgeCheck,
+  Eye,
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import GuideHeader from "../../Layout/GuideHeader";
@@ -130,20 +132,33 @@ const Sidebar = ({ pricingGrid, coverageZone, certifications, onDeleteCertificat
         </h3>
 
 
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {certifications && certifications.length > 0 ? (
             certifications.map((cert, index) => {
               const imageUrl = resolveMediaUrl(cert);
 
               return (
-                <div key={index} className="aspect-square rounded-md overflow-hidden border border-gray-100 group relative">
+                <div
+                  key={index}
+                  className="group relative aspect-[4/3] rounded-xl overflow-hidden border border-gray-200 bg-gray-50 shadow-sm ring-1 ring-black/5 transition-shadow hover:shadow-lg"
+                >
                   <a href={imageUrl} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
                     <img
                       src={imageUrl}
                       alt={`Certification ${index + 1}`}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                     />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-2">
+                      <span className="inline-flex items-center gap-1 text-white text-xs font-medium">
+                        <Eye size={13} /> View
+                      </span>
+                    </div>
                   </a>
+
+                  <span className="absolute top-2 left-2 inline-flex items-center gap-1 bg-emerald-500/95 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full shadow">
+                    <BadgeCheck size={12} /> Verified
+                  </span>
+
                   {onDeleteCertification && (
                     <button
                       onClick={(e) => {
@@ -151,7 +166,7 @@ const Sidebar = ({ pricingGrid, coverageZone, certifications, onDeleteCertificat
                         e.preventDefault();
                         onDeleteCertification(cert);
                       }}
-                      className="absolute top-1 right-1 bg-white/90 p-1.5 rounded-full text-red-500 hover:bg-red-500 hover:text-white transition-colors shadow-sm opacity-0 group-hover:opacity-100"
+                      className="absolute top-2 right-2 bg-white/90 p-1.5 rounded-full text-red-500 hover:bg-red-500 hover:text-white transition-colors shadow-sm opacity-0 group-hover:opacity-100"
                       title="Delete Certification"
                     >
                       <Trash2 size={14} />
@@ -161,7 +176,7 @@ const Sidebar = ({ pricingGrid, coverageZone, certifications, onDeleteCertificat
               );
             })
           ) : (
-            <p className="text-gray-500 text-xs col-span-2 text-center py-4 bg-gray-50 rounded-lg border border-dashed">{t('profile.noCertificates')}</p>
+            <p className="text-gray-500 text-xs col-span-full text-center py-6 bg-gray-50 rounded-lg border border-dashed">{t('profile.noCertificates')}</p>
           )}
 
         </div>

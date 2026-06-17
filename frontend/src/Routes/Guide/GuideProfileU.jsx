@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Star, Clock, MapPin, FileText, AlertCircle } from "lucide-react";
+import { Star, Clock, MapPin, FileText, AlertCircle, BadgeCheck, Eye } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import Header from "../../Layout/Header";
 import { GuideAPI, resolveMediaUrl } from "../../utils/api";
@@ -79,24 +79,32 @@ const Sidebar = ({ pricingGrid, coverageZone, certifications }) => {
         <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
           🎓 Certifications
         </h3>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {certifications.length > 0 ? certifications.map((cert, index) => {
             const imageUrl = resolveMediaUrl(cert);
             return (
               <div
                 key={index}
-                className="aspect-square rounded-md overflow-hidden border border-gray-100 group cursor-pointer"
+                className="group relative aspect-[4/3] rounded-xl overflow-hidden border border-gray-200 bg-gray-50 shadow-sm ring-1 ring-black/5 transition-shadow hover:shadow-lg cursor-pointer"
                 onClick={() => window.open(imageUrl, '_blank')}
               >
                 <img
                   src={imageUrl}
                   alt={`Certification ${index + 1}`}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-2">
+                  <span className="inline-flex items-center gap-1 text-white text-xs font-medium">
+                    <Eye size={13} /> View
+                  </span>
+                </div>
+                <span className="absolute top-2 left-2 inline-flex items-center gap-1 bg-emerald-500/95 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full shadow">
+                  <BadgeCheck size={12} /> Verified
+                </span>
               </div>
             );
           }) : (
-            <p className="text-gray-500 text-xs col-span-2 text-center py-4 bg-gray-50 rounded-lg border border-dashed">No certifications uploaded</p>
+            <p className="text-gray-500 text-xs col-span-full text-center py-6 bg-gray-50 rounded-lg border border-dashed">No certifications uploaded</p>
           )}
         </div>
       </div>
