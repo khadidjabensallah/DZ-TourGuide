@@ -3,6 +3,7 @@ import { ArrowLeft, ChevronDown, Check } from "lucide-react";
 
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from "react-i18next";
+import { SERVER_ORIGIN } from "../../../utils/api";
 
 
 export default function SignUpGuideP2() {
@@ -189,9 +190,10 @@ export default function SignUpGuideP2() {
         });
       }
 
-      const response = await fetch('/api/signup/guide/', {
+      const response = await fetch(`${SERVER_ORIGIN}/api/signup/guide/`, {
         method: 'POST',
         body: formDataToSend,
+        credentials: 'include',
       });
 
       const responseText = await response.text();
