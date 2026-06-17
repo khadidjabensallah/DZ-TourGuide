@@ -154,15 +154,25 @@ EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'tguidadz@gmail.com').strip()
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '').replace(' ', '').strip()
-# --- RESEND API CONFIGURATION ---
+# --- Transactional email provider (HTTPS APIs — Render free tier blocks SMTP) ---
+# Priority: Brevo > Resend > SMTP. Brevo delivers to ANY recipient on its free
+# tier once you verify a sender email (no domain required), so it's preferred.
+BREVO_API_KEY = os.getenv('BREVO_API_KEY')
 RESEND_API_KEY = os.getenv('RESEND_API_KEY')
 
-if RESEND_API_KEY:
+if BREVO_API_KEY:
+    EMAIL_BACKEND = "anymail.backends.brevo.EmailBackend"
+    ANYMAIL = {
+        "BREVO_API_KEY": BREVO_API_KEY,
+    }
+    # Must be a sender verified in your Brevo account (Senders & IPs).
+    DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER).strip()
+
+elif RESEND_API_KEY:
     EMAIL_BACKEND = "anymail.backends.resend.EmailBackend"
     ANYMAIL = {
         "RESEND_API_KEY": RESEND_API_KEY,
     }
-    # While testing with Resend's free tier (no domain), 
     # On Resend's free tier (no verified domain) the sender MUST be
     # onboarding@resend.dev. Once a domain is verified, override via env.
     DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'onboarding@resend.dev').strip()
@@ -181,7 +191,7 @@ SITE_URL = os.getenv('SITE_URL', 'https://dz-tourguide-backend.onrender.com')
 # (DEBUG=False) always uses the backend selected above.
 FORCE_REAL_EMAIL = os.getenv('FORCE_REAL_EMAIL', 'True').lower() in ('true', '1', 'yes')
 
-if DEBUG and not FORCE_REAL_EMAIL and not RESEND_API_KEY:
+if DEBUG and not FORCE_REAL_EMAIL and not RESEND_API_KEY and not BREVO_API_KEY:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 
