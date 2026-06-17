@@ -22,7 +22,7 @@ class Command(BaseCommand):
             {"code": "13", "name": "Tlemcen", "longitude": "-1.316667", "latitude": "34.883333"},
             {"code": "14", "name": "Tiaret", "longitude": "1.316667", "latitude": "35.383333"},
             {"code": "15", "name": "Tizi Ouzou", "longitude": "4.050000", "latitude": "36.716667"},
-            {"code": "16", "name": "Alger", "longitude": "3.050000", "latitude": "36.750000"},
+            {"code": "16", "name": "Algiers", "longitude": "3.050000", "latitude": "36.750000"},
             {"code": "17", "name": "Djelfa", "longitude": "3.250000", "latitude": "34.666667"},
             {"code": "18", "name": "Jijel", "longitude": "5.766667", "latitude": "36.816667"},
             {"code": "19", "name": "Sétif", "longitude": "5.383333", "latitude": "36.183333"},
@@ -59,34 +59,38 @@ class Command(BaseCommand):
             {"code": "50", "name": "Bordj Badji Mokhtar", "longitude": "0.266667", "latitude": "21.366667"},
             {"code": "51", "name": "Ouled Djellal", "longitude": "5.083333", "latitude": "34.333333"},
             {"code": "52", "name": "Béni Abbès", "longitude": "-2.166667", "latitude": "29.566667"},
-            {"code": "53", "name": "In Salah", "longitude": "2.483333", "latitude": "27.250000"},
-            {"code": "54", "name": "In Guezzam", "longitude": "5.769444", "latitude": "19.572222"},
+            {"code": "53", "name": "Aïn Salah", "longitude": "2.483333", "latitude": "27.250000"},
+            {"code": "54", "name": "Aïn Guezzam", "longitude": "5.769444", "latitude": "19.572222"},
             {"code": "55", "name": "Touggourt", "longitude": "6.066667", "latitude": "33.100000"},
             {"code": "56", "name": "Djanet", "longitude": "9.500000", "latitude": "24.550000"},
             {"code": "57", "name": "El M'Ghair", "longitude": "6.100000", "latitude": "34.133333"},
             {"code": "58", "name": "El Menia", "longitude": "2.883333", "latitude": "28.583333"}
         ]
 
+        created_count = 0
         updated_count = 0
         for wilaya_data in wilaya_coordinates:
             try:
-                wilaya = Wilaya.objects.get(code=wilaya_data['code'])
-                wilaya.latitude = Decimal(wilaya_data['latitude'])
-                wilaya.longitude = Decimal(wilaya_data['longitude'])
-                wilaya.save()
-                updated_count += 1
-                self.stdout.write(
-                    self.style.SUCCESS(f'✓ Updated {wilaya.name} ({wilaya.code})')
+                _, was_created = Wilaya.objects.update_or_create(
+                    code=wilaya_data['code'],
+                    defaults={
+                        'name': wilaya_data['name'],
+                        'latitude': Decimal(wilaya_data['latitude']),
+                        'longitude': Decimal(wilaya_data['longitude']),
+                    },
                 )
-            except Wilaya.DoesNotExist:
+                if was_created:
+                    created_count += 1
+                else:
+                    updated_count += 1
                 self.stdout.write(
-                    self.style.WARNING(f'✗ Wilaya {wilaya_data["code"]} not found in database')
+                    self.style.SUCCESS(f'✓ {"Created" if was_created else "Updated"} {wilaya_data["name"]} ({wilaya_data["code"]})')
                 )
             except Exception as e:
                 self.stdout.write(
-                    self.style.ERROR(f'✗ Error updating {wilaya_data["code"]}: {str(e)}')
+                    self.style.ERROR(f'✗ Error for {wilaya_data["code"]}: {str(e)}')
                 )
 
         self.stdout.write(
-            self.style.SUCCESS(f'\n✓ Successfully updated {updated_count} wilayas with coordinates')
+            self.style.SUCCESS(f'\n✓ Seeded {created_count} new + {updated_count} updated = {created_count + updated_count} wilayas')
         )
