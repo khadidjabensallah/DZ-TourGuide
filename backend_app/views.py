@@ -162,25 +162,21 @@ Best regards,
 TGUIDA Team
         """
         
-        # Send email asynchronously
-        def send_async():
-            try:
-                send_mail(
-                    subject,
-                    message,
-                    settings.DEFAULT_FROM_EMAIL,
-                    [user.email],
-                    fail_silently=False,
-                )
-                print(f"✅ Password reset email sent to {user.email}")
-            except Exception as e:
-                print(f"❌ Error sending password reset email: {e}")
-        
-        thread = threading.Thread(target=send_async)
-        thread.daemon = True
-        thread.start()
-        
-        return { 'sent': True, 'code': code }
+        # Send synchronously (Render free tier suspends idle instances, which
+        # stalled background-thread sends for minutes).
+        try:
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+                fail_silently=False,
+            )
+            print(f"✅ Password reset email sent to {user.email}")
+            return { 'sent': True, 'code': code }
+        except Exception as e:
+            print(f"❌ Error sending password reset email: {e}")
+            return { 'sent': False, 'code': code }
     except Exception as e:
         print(f"Error preparing password reset email: {e}")
         return { 'sent': False, 'code': None }
