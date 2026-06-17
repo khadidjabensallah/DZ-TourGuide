@@ -1,33 +1,25 @@
-import threading
 from django.core.mail import send_mail
 from django.conf import settings
 
 def send_generic_email(subject, message, recipient_list):
     """
-    Core email dispatcher. 
-    Uses standard Django send_mail, which is intercepted by django-resend if configured.
-    """
-    def send_async():
-        try:
-            from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'tguidadz@gmail.com')
-            
-            print(f"📨 Sending email to {recipient_list} (Subject: {subject})...")
-            send_mail(
-                subject,
-                message,
-                from_email,
-                recipient_list,
-                fail_silently=False,
-            )
-            print(f"✅ EMAIL SENT to {recipient_list}")
-                
-        except Exception as e:
-            print(f"❌ EMAIL FAILED ({recipient_list}): {str(e)}")
+    Core email dispatcher. Sends synchronously via Django's send_mail (routed to
+    Brevo/Resend by ANYMAIL when configured).
 
-    thread = threading.Thread(target=send_async)
-    thread.daemon = True
-    thread.start()
-    return True
+    Sent inline rather than in a background thread: on Render's free tier the
+    instance is suspended when idle, which stalled daemon-thread sends for many
+    minutes. Inline keeps verification codes prompt and reports real success.
+    Failures are caught so a mail problem never blocks signup.
+    """
+    from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'tguidadz@gmail.com')
+    try:
+        print(f"📨 Sending email to {recipient_list} (Subject: {subject})...")
+        send_mail(subject, message, from_email, recipient_list, fail_silently=False)
+        print(f"✅ EMAIL SENT to {recipient_list}")
+        return True
+    except Exception as e:
+        print(f"❌ EMAIL FAILED ({recipient_list}): {str(e)}")
+        return False
 
 
 def send_tour_cancellation_email(tourist_user, tour):
