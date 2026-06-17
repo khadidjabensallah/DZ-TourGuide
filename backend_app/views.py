@@ -1,6 +1,7 @@
 from django.shortcuts import get_object_or_404
 from django.core.files.storage import FileSystemStorage
 from django.conf import settings
+from .storage_utils import save_upload
 from django.core.mail import send_mail
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
@@ -358,17 +359,9 @@ def guide_signup(request):
         uploaded_files = request.FILES.getlist('certification_files')
         
         if uploaded_files:
-            cert_dir = os.path.join(settings.MEDIA_ROOT, 'certifications')
-            os.makedirs(cert_dir, exist_ok=True)
-            
-            fs = FileSystemStorage(location=cert_dir)
-            
             for file in uploaded_files:
-                filename = f"{user.id}_{uuid.uuid4().hex[:6]}_{file.name}"
-                saved_name = fs.save(filename, file)
-                file_path = f"/media/certifications/{saved_name}"
-                certification_paths.append(file_path)
-            
+                certification_paths.append(save_upload(file, 'certifications', prefix=f"{user.id}_"))
+
             guide.certifications_files = certification_paths
             guide.save()
         

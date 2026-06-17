@@ -141,6 +141,15 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Cloudinary — durable media storage for user uploads (certifications, profile
+# photos, tour photos). Render's free disk is ephemeral and /media/ isn't served
+# when DEBUG=False, so uploads must go to the cloud. Set CLOUDINARY_URL on the
+# host (cloudinary://<api_key>:<api_secret>@<cloud_name>).
+CLOUDINARY_ENABLED = bool(os.getenv('CLOUDINARY_URL'))
+if CLOUDINARY_ENABLED:
+    import cloudinary
+    cloudinary.config(secure=True)  # credentials read from CLOUDINARY_URL env
+
 # Email Configuration (environment-driven)
 # By default the project will use SMTP. In development (DEBUG=True)
 # the console backend will be used unless `FORCE_REAL_EMAIL` is set to a

@@ -6,6 +6,7 @@ from django.views.decorators.http import require_http_methods
 from django.utils import timezone
 from django.core.files.storage import FileSystemStorage
 from django.conf import settings
+from .storage_utils import save_upload
 import json
 import os
 import uuid
@@ -128,16 +129,9 @@ def guide_create_tour(request, guide_id):
         uploaded_files = request.FILES.getlist('photos')
         
         if uploaded_files:
-            photo_dir = os.path.join(settings.MEDIA_ROOT, 'tours')
-            os.makedirs(photo_dir, exist_ok=True)
-            fs = FileSystemStorage(location=photo_dir)
-            
             for file in uploaded_files:
-                filename = f"{tour.id}_{uuid.uuid4().hex[:6]}_{file.name}"
-                saved_name = fs.save(filename, file)
-                file_path = f"/media/tours/{saved_name}"
-                photo_urls.append(file_path)
-            
+                photo_urls.append(save_upload(file, 'tours', prefix=f"{tour.id}_"))
+
             tour.photo_urls = photo_urls
             if photo_urls:
                 tour.cover_photo = photo_urls[0]
@@ -266,16 +260,9 @@ def guide_update_tour(request, guide_id, tour_id):
     uploaded_files = request.FILES.getlist('photos')
     if uploaded_files:
         photo_urls = tour.photo_urls if tour.photo_urls else []
-        photo_dir = os.path.join(settings.MEDIA_ROOT, 'tours')
-        os.makedirs(photo_dir, exist_ok=True)
-        fs = FileSystemStorage(location=photo_dir)
-        
         for file in uploaded_files:
-            filename = f"{tour.id}_{uuid.uuid4().hex[:6]}_{file.name}"
-            saved_name = fs.save(filename, file)
-            file_path = f"/media/tours/{saved_name}"
-            photo_urls.append(file_path)
-        
+            photo_urls.append(save_upload(file, 'tours', prefix=f"{tour.id}_"))
+
         tour.photo_urls = photo_urls
         # If no cover photo exists, set the first one as cover
         if not tour.cover_photo and photo_urls:

@@ -5,6 +5,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.core.files.storage import FileSystemStorage
 from django.conf import settings
+from .storage_utils import save_upload
 from django.utils import timezone
 import json
 import os
@@ -240,15 +241,9 @@ def guide_upload_photo(request, guide_id):
     
     photo = request.FILES['photo']
     
-    # Save photo
-    photo_dir = os.path.join(settings.MEDIA_ROOT, 'profiles')
-    os.makedirs(photo_dir, exist_ok=True)
-    
-    fs = FileSystemStorage(location=photo_dir)
-    filename = f"guide_{guide.user_id}_{uuid.uuid4().hex[:6]}_{photo.name}"
-    saved_name = fs.save(filename, photo)
-    file_path = f"/media/profiles/{saved_name}"
-    
+    # Save photo (Cloudinary in prod, local disk in dev)
+    file_path = save_upload(photo, 'profiles', prefix=f"guide_{guide.user_id}_")
+
     # Update user photo
     guide.user.photo_url = file_path
     guide.user.save(update_fields=['photo_url'])
@@ -279,15 +274,9 @@ def guide_upload_certification(request, guide_id):
     
     cert_file = request.FILES['certification']
     
-    # Save file
-    cert_dir = os.path.join(settings.MEDIA_ROOT, 'certifications')
-    os.makedirs(cert_dir, exist_ok=True)
-    
-    fs = FileSystemStorage(location=cert_dir)
-    filename = f"cert_{guide.user_id}_{uuid.uuid4().hex[:6]}_{cert_file.name}"
-    saved_name = fs.save(filename, cert_file)
-    file_path = f"/media/certifications/{saved_name}"
-    
+    # Save file (Cloudinary in prod, local disk in dev)
+    file_path = save_upload(cert_file, 'certifications', prefix=f"cert_{guide.user_id}_")
+
     # Update guide certifications list
     # Ensure it's a list
     if not isinstance(guide.certifications_files, list):

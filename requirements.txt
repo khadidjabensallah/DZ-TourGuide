@@ -11,3 +11,4 @@ whitenoise==6.9.0
 dj-database-url==2.3.0
 djangorestframework
 django-anymail[brevo,resend]==14.0
+cloudinary==1.41.0
